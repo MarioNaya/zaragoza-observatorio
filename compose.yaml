@@ -1,9 +1,18 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    # Misma imagen que Testcontainers (TestcontainersConfiguration). PostGIS es necesario para geo (SPEC.md §4.2).
+    image: 'postgis/postgis:17-3.5'
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=observatorio'
+      - 'POSTGRES_PASSWORD=observatorio'
+      - 'POSTGRES_USER=observatorio'
     ports:
       - '5432'
+    volumes:
+      - 'postgres-data:/var/lib/postgresql/data'
+    labels:
+      # Boot solo autodetecta la imagen "postgres"; esta etiqueta fuerza la service connection JDBC.
+      org.springframework.boot.service-connection: postgres
+
+volumes:
+  postgres-data:
