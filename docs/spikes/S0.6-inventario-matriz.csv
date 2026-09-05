@@ -1,0 +1,437 @@
+id;título;materia;periodicidad;modified;geo;territorial;por qué;temporal;por qué;vivo;api;tag swagger;formatos;palabras inversión;abierto;explorable;candidato
+13;Arte Público;Cultura y Ocio;P3M;2019-10-23;S;sí;geo=S;sí;periodicidad P3M, palabra:históric;no (ratio 27,9);sí;Cultura: Arte en la via publica;api;patrimonio subvenci;sí;no;no
+67;Incidencias en la Vía Pública;Transporte;P0DT1S;2018-05-03;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Incidencias en la Via Publica;api solr;;sí;sí;no
+87;Farmacias;Salud;P1Y;2022-06-16;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 4,2);sí;Equipamientos y movilidad: Farmacias;api;equipamiento;sí;sí;no
+24;Indicadores Sostenibilidad;Medio Ambiente;P1Y;2013-04-29;N;no;;sí;periodicidad P1Y;no (ratio 13,4);sí;;json text/csv text/xml;;sí;no;no
+27;Mapa Estratégico de Ruido de Zaragoza;Medio Ambiente;P5Y;2010-11-17;S;sí;geo=S, palabra:mapa, spatialRepresentationTypeCode;sí;periodicidad P5Y, palabra:2002;no (ratio 3,2);no;;;;sí;no;no
+28;Calidad del Agua;Medio Ambiente;P1M;2019-10-23;S;sí;geo=S;sí;periodicidad P1M;no (ratio 83,6);sí;Medio Ambiente: Calidad del Agua;api;;sí;no;no
+69;Alojamientos;Turismo;-;2015-02-09;S;sí;geo=S;no;;no (4226 d, sin periodicidad);sí;Turismo: Alojamientos;api solr sparql-query;;sí;no;no
+132;Censo de Asociaciones;Sociedad y Bienestar;P0DT1S;-;N;no;;sí;tiempo real;no evaluable (sin modified);sí;Gobierno abierto: Censo de Asociaciones;api solr;;sí;no;no
+33;Puntos Limpios;Medio Ambiente;P1Y;2023-10-26;S;sí;geo=S, formato geo;sí;periodicidad P1Y;no (ratio 2,9);no;;text/xml+georss;equipamiento;sí;no;no
+23;Puntos de interés;Urbanismo e Infraestructuras;-;-;S;sí;geo=S;no;;no evaluable (sin modified);sí;Puntos de interes de la ciudad;api sparql-query;;sí;no;no
+22;Callejero;Urbanismo e Infraestructuras;P0DT1S;2016-03-01;S;sí;geo=S, palabra:calle, formato geo, spatialRepresentationTypeCode;sí;tiempo real, palabra:1960;no evaluable (tiempo real);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+49;Centros y Pabellones Deportivos;Deporte;P0DT1S;2022-06-17;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;;json ms-excel text/csv;;sí;sí;no
+55;Aparcamientos Públicos;Transporte;P0DT1S;2022-06-16;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Aparcamientos públicos;api json sparql-query;equipamiento;sí;sí;no
+2220;Periodo medio de pago;Economía;P1M;2025-01-28;N;no;;sí;periodicidad P1M, palabra:mensual;no (ratio 19,5);sí;Ayuntamiento: Periodo Medio de Pago a Proveedores;api;;sí;no;no
+147;Contratación Pública;Sector Público;P0DT1S;2020-03-06;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Contratacion publica;api sparql-query;contrat infraestructura licitaci obra;sí;sí;no
+70;Estaciones y Usos de Bizi Zaragoza;Transporte;P0DT1S;2017-10-27;S;sí;geo=S, formato geo;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Estaciones Bizi;api ogc.wfs_xml ogc.wms_xml text/csv;equipamiento;sí;no;no
+30;Plano del Cementerio de Torrero;Urbanismo e Infraestructuras;P1Y;2011-11-21;S;sí;geo=S, palabra:mapa, formato geo;sí;periodicidad P1Y;no (ratio 14,8);no;;text/xml+georss;equipamiento;sí;no;no
+85;Organismos públicos no municipales;Sector Público;P0DT1S;2022-06-17;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;;json solr text/csv;equipamiento;sí;sí;no
+131;Calidad del Aire;Medio Ambiente;P1D;2026-06-25;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1D, palabra:1921;no (ratio 72,0);sí;Medio Ambiente: Calidad del Aire;api sparql-query;;sí;sí;no
+1020;Presupuesto Municipal 2014;Hacienda;-;-;N;no;;sí;palabra:2014;no evaluable (sin modified);no;;json ms-excel oasis.opendocument.spreadsheet text/csv;ejecución gasto ingreso presupuest;sí;no;no
+54;Estaciones de Servicio;Transporte;P0DT1S;2023-10-23;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Estaciones de servicio;api sparql-query;equipamiento;sí;no;no
+3;Cartografía Base del Municipio de Zaragoza;Urbanismo e Infraestructuras;P1Y;2025-04-22;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 1,4);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+247;Clavos Topográficos;Urbanismo e Infraestructuras;P0DT1S;2007-05-21;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;tiempo real;no evaluable (tiempo real);sí;Urbanismo: Clavos Topograficos;api ogc.wfs_xml ogc.wms_xml;;sí;no;no
+29;Cartografía Histórica;Urbanismo e Infraestructuras;-;2008-05-15;N;sí;palabra:cartograf;sí;palabra:históric;no (6687 d, sin periodicidad);no;;text/html zip;;sí;no;no
+262;Anuncios para Jóvenes del CIPAJ;Sociedad y Bienestar;P0DT1S;-;N;no;;sí;tiempo real;no evaluable (sin modified);sí;Juventud: Anuncios;api rss+xml;;sí;no;no
+261;Noticias CIPAJ;Sociedad y Bienestar;P1D;-;N;no;;sí;periodicidad P1D;no evaluable (sin modified);no;;rss+xml;;sí;no;no
+268;Zaragoza Sin Barreras;Sociedad y Bienestar;P1D;2019-07-11;N;no;;sí;periodicidad P1D;no (ratio 2613,0);no;;rss+xml;equipamiento;sí;no;no
+20;Información polínica;Medio Ambiente;P1D;2015-05-08;N;no;;sí;periodicidad P1D, palabra:semanal;no (ratio 4138,0);sí;Medio Ambiente: Informacion polinica;api sparql-query;;sí;sí;no
+260;Tablón Municipal;Sector Público;P0DT1S;-;N;no;;sí;tiempo real;no evaluable (sin modified);sí;Ayuntamiento: Tablon municipal;api;;sí;no;no
+1460;Indicadores Demográficos: Distribución de la Población;Demografía;P1Y;2019-07-30;S;sí;geo=S, palabra:cartograf;sí;periodicidad P1Y;no (ratio 7,1);no;;json ms-excel oasis.opendocument.spreadsheet text/csv;;sí;no;no
+216;Boletín Económico Ciudad de  Zaragoza Nº 1 (1er Trimestre 2010);Economía;-;2010-03-16;N;no;;sí;palabra:trimestr;no (6017 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+273;Catálogo de datos;Sector Público;P0DT1S;-;N;no;;sí;tiempo real;no evaluable (sin modified);sí;Gobierno abierto: Datos abiertos;api atom+xml solr sparql-query text/rdf+n3;infraestructura;sí;no;no
+285;Restaurantes;Turismo;P1M;2019-10-24;S;sí;geo=S;sí;periodicidad P1M;no (ratio 83,6);sí;Turismo: Restaurantes;api solr sparql-query;;sí;no;no
+292;Boletín Económico Ciudad de  Zaragoza Nº 6 (2º Trimestre 2011);Economía;-;2011-04-26;N;no;;sí;palabra:trimestr;no (5611 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+289;Trámites y Servicios;Sector Público;P0DT1S;2024-09-25;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Tramites y servicios;api solr sparql-query;;sí;no;no
+296;AparcaBicis;Transporte;P0DT1S;2022-07-08;S;sí;geo=S, formato geo;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Aparcamientos para bicicletas;api ogc.wfs_xml ogc.wms_xml sparql-query zip;equipamiento;sí;sí;no
+145;Normativa Municipal;Legislación y Justicia;P0DT1S;2022-05-24;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Normativa;api sparql-query;;sí;no;no
+217;Boletín Económico Ciudad de Zaragoza Nº 0 (4º Trimestre 2009);Economía;-;2009-10-20;N;no;;sí;palabra:trimestr;no (6164 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+72;Centros de Salud;Salud;-;2022-06-16;S;sí;geo=S;no;;no (1542 d, sin periodicidad);no;;text/xml;equipamiento;sí;sí;no
+272;Novedades de la Sede Electrónica;Sector Público;P0DT1S;2019-05-16;N;no;;sí;tiempo real;no evaluable (tiempo real);no;;rss+xml;;sí;no;no
+282;Agenda de Zaragoza;Cultura y Ocio;P0DT1S;2022-05-04;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Agenda Zaragoza;api solr sparql-query;;sí;sí;no
+283;Zonas verdes de Zaragoza;Medio Ambiente;-;2022-06-16;S;sí;geo=S;no;;no (1542 d, sin periodicidad);no;;solr sparql-query;equipamiento;sí;sí;no
+284;Edificios históricos en Zaragoza;Cultura y Ocio;P1Y;2015-02-09;S;sí;geo=S;sí;periodicidad P1Y, palabra:históric;no (ratio 11,6);sí;Turismo: Edificios historico artisticos;api solr sparql-query;equipamiento patrimonio;sí;no;no
+293;Boletín Económico Ciudad de  Zaragoza Nº 5 (1º Trimestre 2011);Economía;-;2011-01-18;N;no;;sí;palabra:trimestr;no (5709 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+290;Centros proveedores de servicios públicos;Sector Público;P3M;2022-06-17;S;sí;geo=S;sí;periodicidad P3M;no (ratio 17,1);no;;rdf+xml sparql-results+json sparql-results+xml text/rdf+n3 x-turtle;;sí;sí;no
+79;Puntos WIFI;Ciencia y Tecnología;-;2015-03-06;S;sí;geo=S;no;;no (4201 d, sin periodicidad);sí;Equipamientos y movilidad: Puntos wifi;api;;sí;no;no
+218;Boletín Económico Ciudad de  Zaragoza Nº 2 (2º Trimestre 2010);Economía;-;2010-04-15;N;no;;sí;palabra:trimestr;no (5987 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+219;Boletín Económico Ciudad de  Zaragoza Nº 4 (4º Trimestre 2010);Economía;-;2010-10-18;N;no;;sí;palabra:trimestr;no (5801 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+146;Oferta de Empleo;Empleo;P0DT1S;-;N;no;;sí;tiempo real;no evaluable (sin modified);sí;Ayuntamiento: Oferta de empleo;api sparql-query;contrat;sí;no;no
+86;Monumentos;Cultura y Ocio;P0DT1S;2015-02-09;S;sí;geo=S;sí;tiempo real, palabra:históric;no evaluable (tiempo real);sí;Turismo: Monumentos;api solr sparql-query text/xml;patrimonio;sí;no;no
+1080;Mapas colaborativos ;Sector Público;P0DT1S;2014-07-08;S;sí;geo=S, palabra:mapa;sí;tiempo real;no evaluable (tiempo real);sí;Gobierno abierto: Mapas colaborativos;api;;sí;no;no
+299;Desarrollo de Planeamiento;Urbanismo e Infraestructuras;P1Y;2012-01-12;N;no;;sí;periodicidad P1Y;no (ratio 14,7);no;;ms-excel oasis.opendocument.spreadsheet;urbaniz;sí;no;no
+315;Bomberos;Seguridad;-;2026-07-14;N;no;;sí;palabra:anual;sí (53 d, sin periodicidad);no;;ms-excel text/csv;;no;no;no
+319;Agenda Juvenil;Cultura y Ocio;P0DT1S;2024-02-23;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);no;;solr;equipamiento;sí;no;no
+1260;Cita previa;Sector Público;P0DT1S;2019-05-08;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Cita Previa;api;;sí;no;no
+302;Datos Demográficos Totales de Zaragoza;Demografía;-;2013-02-05;N;no;;no;;no (4960 d, sin periodicidad);no;;json ms-excel text/csv;;sí;no;no
+314;Recogida de Residuos;Medio Ambiente;-;-;N;no;;sí;palabra:anual;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+334;Estacionamientos motos;Transporte;-;2022-06-16;S;sí;geo=S;no;;no (1542 d, sin periodicidad);sí;Equipamientos y movilidad: Aparcamientos para motos;api sparql-query;;sí;sí;no
+2700;Fiestas del Pilar;Cultura y Ocio;-;2022-09-23;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (1443 d, sin periodicidad);sí;Agenda Zaragoza;api;;sí;sí;no
+306;Modelado 3D de edificios;Ciencia y Tecnología;-;2012-03-30;N;no;;no;;no (5272 d, sin periodicidad);no;;zip;;sí;no;no
+308;Climatología, Territorio y Medio Ambiente;Medio Ambiente;-;-;N;no;;no;;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+309;Economía;Economía;-;-;N;no;;no;;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+316;Policia Local;Seguridad;-;-;N;no;;sí;palabra:anual;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+317;Elecciones Municipales;Sociedad y Bienestar;-;-;N;no;;sí;palabra:2007;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+318;Elecciones Generales;Sociedad y Bienestar;-;-;N;no;;sí;palabra:2008;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+321;Piscinas de Verano;Deporte;P0DT1S;2022-06-16;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;;json ms-excel text/csv;equipamiento;sí;sí;no
+304;Taxi;Transporte;P1Y;2017-05-12;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 9,3);sí;Equipamientos y movilidad: Paradas de taxi;api sparql-query;;no;no;no
+322;Boletín Económico Ciudad de Zaragoza Nº 3 (3er Trimestre 2010);Economía;-;2010-07-19;N;no;;sí;palabra:trimestr;no (5892 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet;contrat licencia;sí;no;no
+325;Presupuesto Municipal 2010;Hacienda;P1Y;2010-02-11;N;no;;sí;periodicidad P1Y, palabra:2010;no (ratio 16,6);no;;json ms-excel oasis.opendocument.spreadsheet;ejecución gasto ingreso presupuest;sí;no;no
+326;Presupuestos Municipales Anteriores (2004-2009);Hacienda;-;2009-03-03;N;no;;sí;palabra:2004;no (6395 d, sin periodicidad);no;;text/html;presupuest;sí;no;no
+298;Presupuesto Municipal 2011;Hacienda;P1Y;2011-02-04;N;no;;sí;periodicidad P1Y, palabra:2011;no (ratio 15,6);no;;json ms-excel oasis.opendocument.spreadsheet;ejecución gasto ingreso presupuest;sí;no;no
+300;Equipamientos;Urbanismo e Infraestructuras;P1D;2020-07-03;S;sí;geo=S;sí;periodicidad P1D;no (ratio 2255,0);sí;Equipamientos y movilidad: Recursos de la ciudad;api solr sparql-query;equipamiento;sí;sí;no
+301;Impresos;Sector Público;P0DT1S;2019-05-08;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;;solr;subvenci;sí;no;no
+310;Consumo;Comercio;-;-;N;no;;no;;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+311;Matriculación de Vehículos;Transporte;P1Y;2018-05-03;N;no;;sí;periodicidad P1Y;no (ratio 8,3);no;;ms-excel text/csv;;sí;no;no
+312;Catastro;Urbanismo e Infraestructuras;-;-;N;sí;palabra:parcela;no;;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+324;Presupuesto Municipal 2012;Hacienda;P1Y;2012-06-15;N;no;;sí;periodicidad P1Y, palabra:2012;no (ratio 14,2);no;;json ms-excel oasis.opendocument.spreadsheet;ejecución gasto ingreso presupuest;sí;no;no
+328;Presupuesto Municipal 2013;Hacienda;-;-;N;no;;sí;palabra:2013;no evaluable (sin modified);no;;json ms-excel oasis.opendocument.spreadsheet;ejecución gasto ingreso presupuest;sí;no;no
+335;Líneas paradas y tiempos de Autobus Urbano;Transporte;-;2018-01-28;S;sí;geo=S;no;;no (3142 d, sin periodicidad);sí;Equipamientos y movilidad: Transporte urbano;api;infraestructura;sí;no;no
+1281;Aplicaciones Desarrolladas;Ciencia y Tecnología;-;-;N;no;;no;;no evaluable (sin modified);sí;Gobierno abierto: Aplicaciones desarrolladas;api solr;;sí;no;no
+1040;Campos de Fútbol;Deporte;P1Y;2022-06-16;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 4,2);sí;;json ms-excel oasis.opendocument.spreadsheet text/csv;equipamiento;sí;sí;no
+327;Tranvía de Zaragoza;Transporte;-;2019-05-16;S;sí;geo=S;no;;no (2669 d, sin periodicidad);sí;Equipamientos y movilidad: Transporte urbano;api json;infraestructura;sí;no;no
+329;Parquímetros;Transporte;-;2013-04-03;S;sí;geo=S;no;;no (4903 d, sin periodicidad);sí;Equipamientos y movilidad: Parquimetros;api;;sí;no;no
+332;Zonas de estacionamiento regulado;Transporte;P0DT1S;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;tiempo real;no evaluable (tiempo real);no;;json ogc.wfs_xml ogc.wms_xml;;sí;no;no
+1100;Subvenciones 2013;Economía;P1Y;2014-07-17;N;no;;sí;periodicidad P1Y, palabra:2013;no (ratio 12,1);no;;json text/csv text/xml;convenio subvenci;sí;no;no
+1340;Presupuesto Municipal 2015;Hacienda;P1Y;-;N;no;;sí;periodicidad P1Y, palabra:2015;no evaluable (sin modified);no;;json ms-excel text/csv;presupuest;sí;no;no
+1120;Clima del termino municipal de Zaragoza;Medio Ambiente;-;-;N;no;;sí;palabra:serie;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+1202;Datos económicos, sociales y medioambientales de las empresas que se incuban en  CIEM Zaragoza y CIEM Torre Delicias;Ciencia y Tecnología;P1Y;-;N;no;;sí;periodicidad P1Y, palabra:serie;no evaluable (sin modified);no;;ms-excel text/csv;;sí;no;no
+336;Ejecución Presupuestaria;Hacienda;P1M;2021-04-12;N;no;;sí;periodicidad P1M, palabra:trimestr;no (ratio 65,7);sí;Ayuntamiento: Presupuestos;api;ejecución gasto ingreso presupuest;sí;no;no
+1062;Servicio de Quejas y Sugerencias;Sector Público;P0DT1S;2022-06-16;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Gobierno Abierto: Solicitudes de Información Pública y Quejas - sugerencias;api;infraestructura;sí;sí;no
+1300;Adopción de Animales;Medio Ambiente;P0DT1S;2015-03-18;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Adopción de animales;api;;sí;no;no
+1680;Agenda Institucional;Sector Público;P0DT1S;2017-05-25;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento de Zaragoza: Agenda institucional;api;;sí;sí;no
+1700;Bienes Inmuebles;Sector Público;P1Y;2017-05-25;N;no;;sí;periodicidad P1Y;no (ratio 9,3);sí;Ayuntamiento: Bienes inmuebles;api;patrimonio;sí;no;no
+1821;Servicios de Bomberos;Seguridad;P0DT1S;2017-05-30;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Servicios de bomberos;api;;sí;no;no
+1140;Ayudas y Subvenciones para el Sector Cultural;Cultura y Ocio;-;-;N;no;;no;;no evaluable (sin modified);no;;ms-excel;subvenci;sí;no;no
+1160;Plantilla Municipal;Sector Público;P1Y;2020-06-12;N;no;;sí;periodicidad P1Y;no (ratio 6,2);no;;oasis.opendocument.spreadsheet;contrat;sí;sí;no
+1161;Relación de Puestos de Trabajo RPT;Sector Público;P1Y;2024-10-18;N;no;;sí;periodicidad P1Y, palabra:mensual;sí (ratio 1,9);no;;ms-excel oasis.opendocument.spreadsheet;;sí;no;no
+1620;Renta neta media y niveles de formación en los distritos municipales de Zaragoza;Sociedad y Bienestar;-;2017-10-19;S;sí;geo=S, palabra:distrito;no;;no (3243 d, sin periodicidad);no;;json ms-excel;;sí;no;no
+1400;Ayudas y Subvenciones;Economía;-;-;N;no;;no;;no evaluable (sin modified);sí;Ayuntamiento: Ayudas y Subvenciones;api;convenio subvenci;sí;no;no
+1540;Presupuesto Municipal 2016;Hacienda;P1Y;-;N;no;;sí;periodicidad P1Y, palabra:2016;no evaluable (sin modified);no;;json;ejecución gasto ingreso presupuest;sí;no;no
+1741;Noticias;Sector Público;P0DT1S;2017-05-26;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Noticias;api rss+xml solr;;sí;no;no
+1820;Catálogo de Transparencia;Sector Público;P0DT1S;2017-05-30;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Gobierno abierto: Catalogo de transparencia;api;;sí;no;no
+1520;Registro de Solares;Urbanismo e Infraestructuras;-;2016-03-15;S;sí;geo=S;no;;no (3826 d, sin periodicidad);sí;Equipamientos y movilidad: Solares de la ciudad;api;;no;no;no
+1782;Vehículos municipales;Sector Público;P1Y;2017-05-29;N;no;;sí;periodicidad P1Y;no (ratio 9,3);sí;Ayuntamiento: Vehiculos municipales;api;;sí;no;no
+1840;Entornos BIC;Urbanismo e Infraestructuras;-;2017-06-05;N;no;;no;;no (3379 d, sin periodicidad);sí;Equipamientos y movilidad: Entornos BIC;api;patrimonio;no;no;no
+1500;Accidentes de Tráfico;Transporte;NEVER;2018-11-23;S;sí;geo=S;no;;no (2843 d, sin periodicidad);sí;Equipamientos y movilidad: Accidentes de trafico;api sparql-query;;sí;no;no
+1800;Datos de entrada de agua a la Planta potabilizadora;Medio Ambiente;P1W;2017-05-29;N;no;;sí;periodicidad P1W;no (ratio 483,7);sí;Medio Ambiente: Datos Planta Potabilizadora;api;;sí;no;no
+4940;Control Ambiental de Vertidos;Medio Ambiente;P1Y;2026-01-01;N;no;;sí;periodicidad P1Y;sí (ratio 0,7);no;;;;no;no;no
+2021;Indicadores Demográficos: Migraciones;Demografía;P1Y;2020-04-21;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 6,4);no;;json ms-excel oasis.opendocument.spreadsheet text/csv zip;;sí;no;no
+2180;Evolución de la facturación por tramos de valor catastral IBI;Hacienda;-;2019-01-24;N;no;;sí;palabra:evolución;no (2781 d, sin periodicidad);no;;ms-excel;factura;sí;no;no
+1640;Estudio sobre la organización social de los cuidados en el municipio de Zaragoza;Sociedad y Bienestar;-;2017-10-25;S;sí;geo=S;no;;no (3237 d, sin periodicidad);no;;json;;sí;no;no
+2020;Indicadores Demográficos: Hogares;Demografía;P1Y;2020-04-20;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 6,4);no;;json ms-excel oasis.opendocument.spreadsheet text/csv;;sí;no;no
+2240;Coste Efectivo de los servicios prestados por el Ayuntamiento y sus entidades dependientes;Economía;P1Y;2019-06-07;N;no;;sí;periodicidad P1Y, palabra:2075;no (ratio 7,3);no;;ms-excel oasis.opendocument.spreadsheet;;sí;no;no
+1742;Organización Municipal;Sociedad y Bienestar;P0DT1S;2017-05-26;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Organizacion municipal;api sparql-query;;sí;no;no
+1780;Tablón de Edictos;Sector Público;P0DT1S;2017-05-29;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Tablón de edictos;api;;sí;no;no
+1900;Censo de locales Vacíos;Comercio;P0DT1S;2017-07-27;S;sí;geo=S;sí;tiempo real;no evaluable (tiempo real);sí;Urbanismo: Locales vacios;api;;sí;no;no
+1920;Artistas y Creadores;Cultura y Ocio;P1Y;2017-08-01;N;no;;sí;periodicidad P1Y;no (ratio 9,1);sí;Cultura: Artistas y Creadores;api;;sí;no;no
+2400;Encuesta Condiciones de vida, percepcion y valoracion emocional de la ciudadania durante el confinamiento;Sociedad y Bienestar;-;2020-08-11;N;no;;no;;no (2216 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet zip;;sí;no;no
+1560;Licencias urbanisticas Obras de nueva construcción, Rehabilitación integral, Demolición y Ocupación;Urbanismo e Infraestructuras;P0DT1S;2026-06-30;S;sí;geo=S;sí;tiempo real, palabra:2015;no evaluable (tiempo real);sí;Urbanismo: Obras de nueva construccion, Rehabilitacion integral, Demolicion y Ocupacion;api;licencia obra;sí;no;no
+2100;Deuda financiera y préstamos municipales;Hacienda;P1Y;2021-11-26;N;no;;sí;periodicidad P1Y, palabra:evolución;no (ratio 4,8);no;;ms-excel text/csv;deuda;sí;no;no
+2420;Mapas de Zaragoza Histórica;Sociedad y Bienestar;-;2020-10-07;S;sí;geo=S, palabra:mapa, formato geo, spatialRepresentationTypeCode;sí;palabra:históric;no (2159 d, sin periodicidad);no;;ogc.wms_xml;;sí;no;no
+1420;Licencias urbanísticas de locales;Urbanismo e Infraestructuras;P0DT1S;2019-03-01;N;no;;sí;tiempo real, palabra:2003;no evaluable (tiempo real);sí;Urbanismo: Licencias de Locales de la ciudad;api;licencia;sí;no;no
+1740;Convenios;Hacienda;P1Y;2022-06-17;N;no;;sí;periodicidad P1Y;no (ratio 4,2);sí;Ayuntamiento: Convenios;api;convenio;sí;sí;no
+1760;Premios y Concursos;Cultura y Ocio;-;2017-05-26;N;no;;no;;no (3389 d, sin periodicidad);sí;Ayuntamiento: Premios y Concursos;api;;sí;no;no
+2040;Encuesta de Satisfacción de los Servicios Municipales;Sociedad y Bienestar;-;2021-12-27;N;no;;no;;no (1713 d, sin periodicidad);no;;ms-excel;;sí;no;no
+2080;Gastos de contrato de mediación Prensa;Sector Público;P3M;2023-08-02;N;no;;sí;periodicidad P3M;no (ratio 12,6);no;;ms-excel text/csv;contrat gasto;sí;sí;no
+1440;Registro de Facturas;Economía;P0DT1S;2022-06-16;N;no;;sí;tiempo real, palabra:2012;no evaluable (tiempo real);sí;Ayuntamiento: Facturas;api;factura;sí;sí;no
+1681;Catálogo de Publicaciones;Educación;P0DT1S;2017-05-25;N;no;;sí;tiempo real;no evaluable (tiempo real);sí;Ayuntamiento: Catálogo de publicaciones;api;;sí;no;no
+2380;Indicadores demográficos: Formación;Demografía;P1Y;2020-04-20;N;no;;sí;periodicidad P1Y;no (ratio 6,4);no;;ms-excel oasis.opendocument.spreadsheet text/csv;;sí;no;no
+1960;Datos de Uso Bus y tranvía;Urbanismo e Infraestructuras;-;2018-09-12;N;no;;sí;palabra:2013;no (2915 d, sin periodicidad);no;;ms-excel;;sí;no;no
+2300;Indicadores de Tráfico y Movilidad;Transporte;P0DT1S;2020-03-06;S;sí;geo=S, spatialRepresentationTypeCode;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Indicadores de tráfico y movilidad;api;;sí;no;no
+2000;Indicadores Demográficos: Estructura de Edad;Demografía;P1Y;2017-10-25;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 8,9);no;;json ms-excel oasis.opendocument.spreadsheet text/csv;;sí;no;no
+2160;Datos de uso de la Tarjeta Interbus;Urbanismo e Infraestructuras;NEVER;2018-09-27;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:2013;no (2900 d, sin periodicidad);no;;text/csv zip;;sí;no;no
+2200;Indicadores Económicos Financieros;Economía;P1Y;2019-05-14;N;no;;sí;periodicidad P1Y, palabra:evolución;no (ratio 7,3);sí;Ayuntamiento: Presupuestos;api;;sí;no;no
+2280;Tiempos de Recorrido;Transporte;P0DT1S;2020-03-04;S;sí;geo=S, spatialRepresentationTypeCode;sí;tiempo real;no evaluable (tiempo real);sí;Equipamientos y movilidad: Tiempos de recorrido;api;;sí;no;no
+2360;Renta 2016;Economía;P1Y;2020-06-25;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2016;no (ratio 6,2);no;;ms-excel oasis.opendocument.spreadsheet text/csv zip;;sí;no;no
+1980;Proximidad a equipamientos;Sociedad y Bienestar;-;2017-10-25;S;sí;geo=S;no;;no (3237 d, sin periodicidad);no;;json;equipamiento;sí;no;no
+2201;Indicadores Económicos Presupuestarios;Economía;P1Y;2019-05-14;N;no;;sí;periodicidad P1Y;no (ratio 7,3);sí;Ayuntamiento: Presupuestos;api;presupuest;sí;no;no
+2123;Cuentas bancarias abiertas;Sector Público;P1Y;2026-05-12;N;no;;sí;periodicidad P1Y, palabra:2017;sí (ratio 0,3);sí;Ayuntamiento: Cuentas Bancarias;api;;sí;no;no
+1922;Especies de árboles y arbustos;Medio Ambiente;-;2017-08-01;S;sí;geo=S;no;;no (3322 d, sin periodicidad);sí;Medio Ambiente: Especies en parques;api;;sí;no;no
+2140;Indicadores Demográficos: Infancia y Juventud;Demografía;P1Y;2018-09-25;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 8,0);no;;json;;sí;no;no
+2340;Indicadores demográficos: Pacientes Covid-19;Salud;-;2021-05-21;S;sí;geo=S;no;;no (1933 d, sin periodicidad);no;;ms-excel oasis.opendocument.spreadsheet pdf text/csv zip;;sí;no;no
+2203;Morosidad;Economía;P3M;2026-03-10;N;no;;sí;periodicidad P3M;sí (ratio 2,0);sí;;api;factura;sí;no;no
+2440;Instalaciones Deportivas Elementales (potreros);Deporte;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2460;Piscinas cubiertas;Deporte;P1Y;2022-06-16;S;sí;geo=S;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2480;Reciclaje de Residuos;Medio Ambiente;-;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (1542 d, sin periodicidad);sí;;json text/csv;;sí;sí;no
+2500;Entidades dependientes;Sector Público;-;2021-11-05;-;no;;no;;no (1765 d, sin periodicidad);no;;oasis.opendocument.spreadsheet text/csv text/xml;;sí;no;no
+2520;Secciones Censales;Sector Público;-;2022-04-21;S;sí;geo=S, palabra:seccion, spatialRepresentationTypeCode;no;;no (1598 d, sin periodicidad);no;;json;;sí;no;no
+2642;Centros de Documentación;Cultura y Ocio;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2640;Archivos;Cultura y Ocio;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2641;Bibliotecas;Cultura y Ocio;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2643;Zona Joven;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2644;Centros Municipales de Servicios Sociales Especializados;Sector Público;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2645;Centros de Tiempo Libre;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2693;Ciclos Formativos;Educación;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+3021;Procedimientos asociados a Cuadro de Clasificación Funcional;Ciencia y Tecnología;P0DT1S;2024-09-25;-;no;;sí;tiempo real;no evaluable (tiempo real);sí;;json text/csv;;sí;no;no
+2649;Teatros;Cultura y Ocio;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2652;Educación Secundaria;Educación;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2840;Temperatura Superficial;Medio Ambiente;P1M;2023-05-09;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 40,5);no;;ogc.wms_xml;;sí;no;no
+2860;Fuentes de agua para beber;Medio Ambiente;-;2023-07-13;S;sí;geo=S, formato geo;no;;no (1150 d, sin periodicidad);no;;json ogc.wfs_xml ogc.wms_xml;equipamiento;sí;sí;no
+2646;Ludotecas;Educación;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2647;Museos;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2648;Salas de Exposiciones;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2650;Educación Infantil;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2651;Educación Primaria;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2653;Educación Especial;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2654;Educación para Adultos;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2656;Escuelas Taller;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2657;Centros Ocupacionales;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2658;Centros Sociolaborales;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+3061;Manzanas;Urbanismo e Infraestructuras;P1M;2024-09-24;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1M, palabra:1960;no (ratio 23,7);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+4520;Datos origen IPPU - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+2661;Centros de Convivencia;Sociedad y Bienestar;P1Y;2022-06-14;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2662;Centros Cívicos;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2663;Policía Local;Seguridad;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2664;Protección Civil;Seguridad;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2666;Centros Municipales de Servicios Sociales;Sector Público;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2667;Cementerios;Urbanismo e Infraestructuras;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;infraestructura;sí;sí;no
+2668;Mercados;Urbanismo e Infraestructuras;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento infraestructura;sí;sí;no
+2669;Oficinas de Turismo;Turismo;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2670;Parques de Bomberos;Seguridad;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2671;Educación Universitaria;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2672;Escuelas Infantiles;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2673;Libreria;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2674;Galerías de Arte;Cultura y Ocio;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2675;Formación Profesional;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2676;Idiomas;Educación;P1Y;2022-06-15;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2677;Justicia;Seguridad;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2678;Oficinas de Empleo INAEM;Empleo;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2679;Policia Nacional;Seguridad;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2655;Centros de Formación Musical;Educación;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2665;Protección del Consumidor;Salud;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2680;Hospitales;Transporte;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2681;Oficinas de Correos;Sociedad y Bienestar;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2682;Transporte;Transporte;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2683;Salas de Música;Cultura y Ocio;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2684;Parque Empresarial;Empleo;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2685;Residencias;Sociedad y Bienestar;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2687;Centros de día Servicios Sociales;Sociedad y Bienestar;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2688;Centros de Atención;Sociedad y Bienestar;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2689;Viviendas Tuteladas;Sociedad y Bienestar;P1Y;2022-05-27;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,3);sí;;json text/csv;equipamiento;sí;sí;no
+2690;Puntos de recogida urbana de Aceite Vegetal usado;Medio Ambiente;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+2691;Productos ecológicos;Comercio;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;;sí;sí;no
+2692;Bachillerato;Educación;P1Y;2022-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;no (ratio 4,2);sí;;json text/csv;equipamiento;sí;sí;no
+3040;Clasificación Urbanística del municipio de Zaragoza;Urbanismo e Infraestructuras;-;2024-02-24;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (924 d, sin periodicidad);no;;ogc.wms_xml;;sí;no;no
+3062;Parcelas;Urbanismo e Infraestructuras;P1M;2024-09-24;S;sí;geo=S, palabra:parcela, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1M, palabra:1960;no (ratio 23,7);no;;ogc.wfs_xml ogc.wms_xml;licencia;sí;no;no
+2880;Aforos Bicicleta y VMP;Transporte;P1M;2026-05-05;-;no;;sí;periodicidad P1M, palabra:trimestr;no (ratio 4,1);no;;ms-excel;;sí;no;no
+2960;Cuadro de Clasificación Funcional y valoración de series documentales;Sector Público;P0DT1S;2024-08-16;-;no;;sí;tiempo real, palabra:serie;no evaluable (tiempo real);no;;json text/csv;;sí;no;no
+2741;Reserva de espacios para carga y descarga;Transporte;-;2022-11-04;S;sí;geo=S;no;;no (1401 d, sin periodicidad);sí;Equipamientos y movilidad: Reserva de espacios;api;;sí;sí;no
+2961;Tipos documentales;Sector Público;P0DT1S;2024-08-16;-;no;;sí;tiempo real;no evaluable (tiempo real);sí;;json text/csv;;sí;no;no
+3744;Vivienda para menores de 20 años Zaragoza;;-;2025-12-18;-;no;;no;;sí (261 d, sin periodicidad);no;;;;no;sí;no
+3360;indicadores sociodemográficos básicos;Demografía;P1Y;2026-08-11;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:1900;sí (ratio 0,1);no;;json text/csv;;sí;no;sí
+3520;Hogares;Demografía;-;2025-07-11;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (421 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3522;Renta 2022;Economía;-;2025-07-11;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:2022;no (421 d, sin periodicidad);no;;json text/csv;ingreso;sí;sí;no
+3120;Termino Municipal;Urbanismo e Infraestructuras;NEVER;2025-05-16;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;sí;palabra:1960;no (477 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3320;Equipamientos estructurantes: Población por grupo de edad a menos de 300 metros de a nivel de sección censal;Sociedad y Bienestar;-;2025-06-18;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;no (444 d, sin periodicidad);no;;ms-excel;equipamiento;sí;sí;no
+3241;Equipamientos: Infraestructura verde y descripción sociodemográfica de la población a menos de 300 metros;Sociedad y Bienestar;-;2025-06-13;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (449 d, sin periodicidad);no;;json;equipamiento infraestructura;sí;sí;no
+3701;Hemeroteca digital;Sociedad y Bienestar;-;2025-07-31;-;no;;sí;palabra:históric;no (401 d, sin periodicidad);sí;;json;obra;sí;no;no
+3480;Nivel de formación académica;Demografía;-;2025-07-07;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (425 d, sin periodicidad);no;;json text/csv;licencia;sí;sí;no
+3400;Grupos de Edad;Demografía;-;2025-07-04;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (428 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3581;Índice de Feminidad;Demografía;-;2025-07-15;-;no;;no;;no (417 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3260;Indicador Sintético de Vulnerabilidad;Demografía;NEVER;2025-06-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:1940;no (446 d, sin periodicidad);sí;;json text/csv;equipamiento;sí;no;no
+3580;Origen de los residentes;Demografía;-;2025-07-15;-;no;;no;;no (417 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3521;Edificación y  vivienda;Vivienda;-;2025-07-11;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (421 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3720;Viviendas empadronadas en edificios;Demografía;-;2025-10-31;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (309 d, sin periodicidad);no;;json ms-excel;;sí;sí;no
+3781;Vivienda unipersonal Manzana Centroide;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3321;Equipamientos estructurantes: Población por grupo de edad a menos de 300 metros de a nivel de manzana;Sociedad y Bienestar;-;2025-06-18;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (444 d, sin periodicidad);no;;;equipamiento;sí;sí;no
+3460;Población de nacionalidad extranjera;Demografía;-;2025-07-09;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:2024;no (423 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3541;Índice de Natalidad;Demografía;-;2025-07-14;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (418 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3540;Ternario de grupos de población mayores de 65 años;Demografía;-;2025-07-14;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (418 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3502;Vivienda por personas;Vivienda;-;2025-07-10;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (422 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3301;Equipamientos estructurantes: Población por grupo de edad a menos de 300 metros de a nivel de junta;Sociedad y Bienestar;P2Y;2025-06-17;S;sí;geo=S, palabra:junta, spatialRepresentationTypeCode;sí;periodicidad P2Y;sí (ratio 0,6);no;;ms-excel;equipamiento;sí;sí;sí
+3560;Ternario de grupos de población menor de 18 años;Demografía;-;2025-07-15;-;no;;no;;no (417 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3740;Superficie Media Vivienda por Tipo para Zaragoza;Sociedad y Bienestar;-;2025-12-18;-;no;;no;;sí (261 d, sin periodicidad);no;;ms-excel;;sí;sí;no
+3742;Vivienda por Tipo y edad Zaragoza;Sociedad y Bienestar;-;2025-12-18;-;no;;no;;sí (261 d, sin periodicidad);no;;;;no;sí;no
+3786;Indicadores Huerva;;-;2025-12-19;-;no;;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3782;Vivienda unipersonal escala poligono Distrito;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S, palabra:distrito;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3900;Elementos Catalogados;Urbanismo e Infraestructuras;NEVER;2024-02-24;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:históric;no (924 d, sin periodicidad);no;;;;no;no;no
+3960;Elementos Catalogados Medio Rural;Urbanismo e Infraestructuras;-;2024-02-24;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:históric;no (924 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+3961;Áreas de Referencia;Urbanismo e Infraestructuras;P0DT1S;2024-02-24;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;sí;tiempo real;no evaluable (tiempo real);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3995;Puntos de Recarga VE;Transporte;NEVER;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3998;ZBE;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+4000;Veladores en calzada;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3783;Vivienda unipersonal Manzana Poligono;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3640;Población mayor de 80 años;Demografía;-;2025-07-18;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (414 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3784;Vivienda unipersonal SC Centroide;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3785;Vivienda unipersonal SC Poligono;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3980;Aparcamientos Bici;Transporte;IRREG;2026-06-20;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (77 d, sin periodicidad);no;;;;no;no;no
+3964;Juntas Municipales y Vecinales;Urbanismo e Infraestructuras;NEVER;2026-03-18;S;sí;geo=S, palabra:junta, formato geo, spatialRepresentationTypeCode;no;;sí (171 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3988;Fichas Aforos Vehículos;Transporte;NEVER;2024-12-31;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (613 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+3992;Estacionamientos;Transporte;NEVER;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+3993;Jerarquía Viaria;Transporte;NEVER;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+3982;Badenes;Transporte;NEVER;2025-01-01;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (612 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+3983;Estaciones Bizi;Transporte;NEVER;2025-07-25;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (407 d, sin periodicidad);no;;;;no;no;no
+3996;Reservas;Transporte;NEVER;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3780;vivienda unipersonal Distrito Centroide;Sociedad y Bienestar;-;2025-12-19;S;sí;geo=S, palabra:distrito;no;;sí (260 d, sin periodicidad);no;;;;no;sí;no
+3963;Equipamientos Urbanismo;Urbanismo e Infraestructuras;P3M;2024-02-24;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P3M;no (ratio 10,3);no;;ogc.wfs_xml ogc.wms_xml;equipamiento;sí;no;no
+3984;Ubicación aforos Bici y VMP;Transporte;NEVER;2025-07-15;S;sí;geo=S, palabra:ubicación, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+3990;Comparativas viales IML 2023 y 2024;Transporte;P1Y;2024-12-31;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2023;sí (ratio 1,7);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+3997;Vías Ciclables;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:serie;no (417 d, sin periodicidad);no;;json ogc.wfs_xml ogc.wms_xml zip;;sí;no;no
+3600;Distribución de población por generaciones;Demografía;-;2025-07-16;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:1948;no (416 d, sin periodicidad);no;;json text/csv;;sí;sí;no
+3985;Comparativa Bici 2023 y 2024;Transporte;P1Y;2024-12-21;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2023;sí (ratio 1,7);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+4001;Cámaras Tráfico;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4002;Semáforos 1;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4003;Semáforos 2;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4020;Comparativa Anual de Uso de Carriles Bici;Transporte;P1Y;2024-01-01;-;no;;sí;periodicidad P1Y, palabra:anual;no (ratio 2,7);no;;;;sí;no;no
+4023;Comparativa Viales;Transporte;P1Y;2024-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:anual;no (ratio 2,7);no;;;;sí;no;no
+4024;Intensidad Media en día Laborable en diferentes años;Transporte;P1Y;2025-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 1,7);no;;;;sí;no;sí
+4080;Equipamientos: Distancia media para la población empadronada en juntas;Sociedad y Bienestar;P4Y;2026-02-06;S;sí;geo=S, palabra:junta, spatialRepresentationTypeCode;sí;periodicidad P4Y, palabra:2020;sí (ratio 0,1);no;;;equipamiento infraestructura;no;sí;sí
+4100;Equipamientos: Distancia media para la población empadronada en manzanas;Sociedad y Bienestar;P4Y;2026-02-09;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P4Y, palabra:2020;sí (ratio 0,1);no;;;equipamiento;no;no;sí
+4101;Equipamientos estructurantes : Distancia media para la población empadronada en juntas en tres categorías de edad (todos - adultos - menores);Sociedad y Bienestar;-;2026-02-09;-;sí;palabra:junta;sí;palabra:2022;sí (208 d, sin periodicidad);no;;;equipamiento infraestructura;no;no;sí
+4004;Señalización Horizontal;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4005;Señalización Vertical;Transporte;IRREG;2025-07-15;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;;;no;no;no
+4006;Líneas Bus;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4060;Seguimiento de Proyectos;Urbanismo e Infraestructuras;IRREG;2022-05-31;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (1558 d, sin periodicidad);no;;;infraestructura;no;no;no
+4064;Inventario de pavimentos;Urbanismo e Infraestructuras;IRREG;2020-01-01;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (2439 d, sin periodicidad);no;;;;no;no;no
+4021;Carriles Bici IML uso anual;Transporte;P1Y;2024-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:anual;no (ratio 2,7);no;;;;sí;no;no
+4061;Seguimiento de Obras;Urbanismo e Infraestructuras;P1M;2022-12-12;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 45,4);no;;;adjudicaci ejecución infraestructura obra;no;no;no
+4062;Certificaciones Obras en Ejecución;Urbanismo e Infraestructuras;P1M;2022-12-15;N;no;;sí;periodicidad P1M, palabra:mensual;no (ratio 45,3);no;;;ejecución obra presupuest;no;no;no
+4007;Línea Tranvía;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4063;Rebajes pasos de peatones;Urbanismo e Infraestructuras;P1M;2024-03-04;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 30,5);no;;;;no;no;no
+4065;Inventario de puentes y estructuras similares;Urbanismo e Infraestructuras;P1M;2008-01-01;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 227,4);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4066;Inspección de puentes y estructuras similares;Urbanismo e Infraestructuras;P1M;2008-01-01;N;no;;sí;periodicidad P1M;no (ratio 227,4);no;;;;no;no;no
+4067;Deterioros en puentes y estructuras similares;Urbanismo e Infraestructuras;P1M;2008-01-01;-;no;;sí;periodicidad P1M;no (ratio 227,4);no;;;;no;no;no
+4068;Titularidad de infraestructuras viales;Urbanismo e Infraestructuras;IRREG;2005-12-19;S;sí;geo=S, spatialRepresentationTypeCode;no;;no (7565 d, sin periodicidad);no;;;infraestructura;no;no;no
+4069;Alumbrado Público - Centros de Mando;Urbanismo e Infraestructuras;P1M;2025-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 20,4);no;;;;no;no;no
+4070;Alumbrado Público - Arquetas;Urbanismo e Infraestructuras;P1M;2025-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 20,4);no;;;;no;no;no
+4008;Paradas Bus;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4009;Paradas Taxi;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4010;Paradas Tranvía;Transporte;IRREG;2025-07-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;no (417 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4071;Alumbrado Público - Soportes;Urbanismo e Infraestructuras;P1M;2025-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 20,4);no;;;;no;no;no
+4072;Alumbrado Público - Tramos;Urbanismo e Infraestructuras;P1M;2025-01-01;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;no (ratio 20,4);no;;;;no;no;no
+4132;Datos Fuente - Mapa del Ruido 2025;Medio Ambiente;NEVER;2025-07-30;S;sí;geo=S, palabra:mapa;sí;palabra:2025;no (402 d, sin periodicidad);no;;;;no;no;no
+4140;Equipamientos estructurantes: % de Población por grupo de edad a menos de 300 metros de a nivel de junta;Urbanismo e Infraestructuras;P2Y;2026-02-10;-;sí;palabra:junta;sí;periodicidad P2Y, palabra:2022;sí (ratio 0,3);no;;;equipamiento infraestructura;no;no;sí
+4141;Equipamientos Estructurantes: Distancia media para la población empadronada en Zaragoza y grupos de edad (todos - adultos - menores);Urbanismo e Infraestructuras;P2Y;2026-02-10;N;no;;sí;periodicidad P2Y, palabra:2022;sí (ratio 0,3);no;;;equipamiento infraestructura;no;no;no
+4160;Equipamientos estructurantes: Población total y proporción de la misma a menos de 300 metros a escala de manzana.;Urbanismo e Infraestructuras;P2Y;2026-02-10;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P2Y;sí (ratio 0,3);no;;;equipamiento infraestructura;no;no;sí
+4162;Equipamientos estructurantes: Población total y relativa por grupo de edad a menos de 300 metros de a nivel de Zaragoza;Urbanismo e Infraestructuras;P2Y;2026-02-10;-;no;;sí;periodicidad P2Y;sí (ratio 0,3);no;;;equipamiento infraestructura;no;no;no
+3962;Distritos Municipales;Urbanismo e Infraestructuras;NEVER;2024-02-24;S;sí;geo=S, palabra:distrito, formato geo, spatialRepresentationTypeCode;sí;palabra:1960;no (924 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+4480;Datos origen Absorciones por Arbolado - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4501;Datos origen Transporte Privado - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4500;Datos origen Industrial - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4522;Datos origen Institucional y Servicios - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;equipamiento;no;no;sí
+5461;Planeamiento urbanístico;Urbanismo e Infraestructuras;P1M;2026-07-28;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1M;sí (ratio 1,3);no;;;;no;no;sí
+5460;Catastro: Edificación y Viviendas;;-;2026-04-22;-;sí;formato geo;no;;sí (136 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+4523;Datos origen Transporte Público - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4524;Datos origen Residencial - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4525;Datos origen Residuos - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4526;Datos origen Agrícola - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4620;Callejero Semántico;Urbanismo e Infraestructuras;P0DT1S;2010-01-01;-;sí;palabra:calle;sí;tiempo real;no evaluable (tiempo real);no;;json rdf+xml text/xml;;sí;no;no
+4380;Mallado 100x100 metros;Urbanismo e Infraestructuras;P1Y;2026-02-16;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,6);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+4521;Datos origen Ganadería - Inventario de Emisiones;Medio Ambiente;P1Y;2026-02-19;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4780;Datos Fuente - Mapa del Ruido 2016;Medio Ambiente;NEVER;2016-12-31;S;sí;geo=S, palabra:mapa, spatialRepresentationTypeCode;sí;palabra:2016;no (3535 d, sin periodicidad);no;;;;no;no;no
+5082;Datos origen Flota Municipal - Inventario de Emisiones;Medio Ambiente;P1Y;2019-12-31;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;no (ratio 6,7);no;;;;no;no;no
+4863;Datos origen Transporte Aéreo - Inventario de Emisiones;Medio Ambiente;P1Y;2026-03-02;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,5);no;;;;no;no;sí
+4781;Inventario de emisiones;Medio Ambiente;-;2026-02-25;-;no;;sí;palabra:2030;sí (192 d, sin periodicidad);no;;;;no;no;no
+5700;Población de nacionalidad extranjera;Demografía;P1Y;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2024;sí (ratio 0,4);no;;;;no;no;sí
+5701;Población de nacionalidad extranjera a escala de sección censal;Demografía;-;2026-04-24;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5741;Hogares;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+6001;Protección cultural autonómica (PCA_tabla);Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml;patrimonio;no;no;no
+5680;Nivel de formación académica para Sección Censal;Demografía;-;2026-04-22;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;licencia;no;no;no
+5663;Índice de Feminidad a escala Sección Censal;Demografía;-;2026-04-22;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+5664;Índice de Feminidad a escala de manzana;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+5980;Planeamiento de desarrollo;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5981;Estructura urbanística;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wms_xml;;sí;no;no
+6000;Protección cultural autonómica (PCA);Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;patrimonio;no;no;no
+5707;Origen de los residentes  (Zaragoza);Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5720;Grupos de Edad a escala de Sección censal;Demografía;-;2026-04-24;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5721;Grupos de Edad a escala de manzana;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5722;Grupos de Edad a escala de Zaragoza;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5842;Vulnerabilidad e islas de calor;Medio Ambiente;-;2026-04-30;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:1940;sí (128 d, sin periodicidad);no;;;;sí;no;sí
+5703;Población de nacionalidad extranjera a escala de Zaragoza;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5740;Ternario de grupos de población mayores de 65 años;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5702;Población de nacionalidad extranjera a escala de manzana;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5380;Indicadores sociodemográficos básicos a escala de manzana;Demografía;P1Y;2026-04-17;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;ogc.wfs_xml ogc.wms_xml;;no;no;sí
+5080;Datos origen AFOLU - Inventario de Emisiones;Medio Ambiente;P1Y;2024-12-31;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2024;sí (ratio 1,7);no;;;;no;no;sí
+6041;Estaciones de medición de calidad del aire - INSPIRE EF;Medio Ambiente;NEVER;2026-06-12;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+6042;Unidades administrativas - INSPIRE AU;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+6060;Red viaria - Tramos INSPIRE TN-RO;Transporte;NEVER;2026-06-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (82 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+5644;Nivel de formación académica para Zaragoza;Educación;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;licencia;no;no;no
+5400;Indicadores sociodemográficos básicos a escala código postal;Demografía;-;2026-04-17;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (141 d, sin periodicidad);no;;;;no;no;no
+5940;Arbolado en vía Pública;Medio Ambiente;-;2026-05-11;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (117 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5642;Índice de Feminidad para Zaragoza;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+5643;Nivel de formación académica;;-;2026-04-22;-;no;;no;;sí (136 d, sin periodicidad);no;;;licencia;no;no;no
+5640;Índice de Natalidad;Demografía;P1Y;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+6020;Reparto Modal Bicis y VMP;Transporte;P1Y;2026-06-12;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,2);no;;;;sí;no;sí
+6061;Red viaria - Vías INSPIRE TN-RO;Urbanismo e Infraestructuras;NEVER;2026-06-15;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (82 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+5021;Datos origen Institucional y Servicios 2023 - Inventario de Emisiones;Medio Ambiente;NEVER;2023-12-31;S;sí;geo=S, spatialRepresentationTypeCode;sí;palabra:2023;no (979 d, sin periodicidad);no;;;equipamiento;no;no;no
+5498;IML Viales 2025;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:2025;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+5780;Equipamientos estructurantes: Población a menos de 300 metros;Urbanismo e Infraestructuras;-;2026-04-29;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (129 d, sin periodicidad);no;;;equipamiento;no;no;no
+5800;Policía Local - Capas SIG;Sector Público;NEVER;2026-07-28;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;;;no;no;no
+5960;Subvención Acción Social;Sociedad y Bienestar;P2Y;2026-07-28;S;sí;geo=S;sí;periodicidad P2Y;sí (ratio 0,1);no;;;subvenci;no;no;sí
+5961;Incidencias Oficina de Atención a la Ciudadanía y Buenas Prácticas;Sociedad y Bienestar;P1D;2026-07-28;S;sí;geo=S;sí;periodicidad P1D, palabra:2026;no (ratio 39,0);no;;;;no;no;no
+5962;Consejo Sectorial de Acción Social;Sociedad y Bienestar;P6M;2026-07-28;N;no;;sí;periodicidad P6M;sí (ratio 0,2);no;;;;no;no;no
+5963;Encuesta Bienestar Subjetivo Infancia;Sociedad y Bienestar;NEVER;2026-07-28;S;sí;geo=S;sí;palabra:2022;sí (39 d, sin periodicidad);no;;;;no;no;sí
+5964;Encuesta Satisfacción Usuarios Albergue Municipal;Sociedad y Bienestar;NEVER;2026-07-28;N;no;;sí;palabra:2023;sí (39 d, sin periodicidad);no;;;;no;no;no
+5965;Recuento Personas sin Hogar;Sociedad y Bienestar;P2Y;2026-07-28;S;sí;geo=S;sí;periodicidad P2Y, palabra:2010;sí (ratio 0,1);no;;;;no;no;sí
+5966;Seguimiento Plan Estratégico de Subvenciones;Sociedad y Bienestar;P1Y;2026-07-28;N;no;;sí;periodicidad P1Y;sí (ratio 0,1);no;;;subvenci;no;no;no
+5200;Inventario de Emisiones de Zaragoza;Medio Ambiente;P1Y;2026-03-26;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:1920;sí (ratio 0,4);no;;;;sí;no;sí
+5967;Seguimiento II Plan Local de Infancia y Adolescencia de Zaragoza;Sociedad y Bienestar;P1Y;2026-07-28;N;no;;sí;periodicidad P1Y, palabra:anual;sí (ratio 0,1);no;;;ejecución presupuest;no;no;no
+5480;Alturas de edificios;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5482;Zona menor de agua;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5495;Fichas Aforos Vehículos 2025;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:2025;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+5520;Comparativa viales IML 2024 vs 2023;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:2024;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+5521;Aparcamientos de motos;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5522;Zonas de transporte actuales;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5523;Zonas de transporte mejoradas;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5524;Parking Car Sharing (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5585;Vivienda por personas a escala Zaragoza;Demografía;-;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (137 d, sin periodicidad);no;;;;no;no;no
+5586;Vivienda por personas a escala Zaragoza;Demografía;-;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (137 d, sin periodicidad);no;;;;no;no;no
+5479;Solares;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:parcela, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5483;Líneas de edificaciones;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;sí;palabra:1960;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+5484;Parcelas con más de 2 sótanos;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:parcela, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5485;Portales completo;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:portal, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5486;Licencias urbanísticas;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;licencia;no;no;no
+5487;Equipamientos tabla auxiliar;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;equipamiento;no;no;no
+5499;Reguladores semafóricos;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5492;Vivienda por persona;Demografía;P1Y;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5493;Comparativa uso carriles bici 2024 y 2025;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:2024;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;sí
+5580;Escaleras urbanas (gestión interna);Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;infraestructura;no;no;no
+5581;Reposición de arbolado urbano;Medio Ambiente;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:2025;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;infraestructura;sí;no;sí
+5582;Viviendas empadronadas en edificios a escala de Zaragoza;Demografía;P1Y;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5583;Viviendas empadronadas en edificios a escala de Sección Censal;Demografía;-;2026-04-21;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (137 d, sin periodicidad);no;;;;no;no;no
+5584;Viviendas empadronadas en edificios a escala de Manzana;Demografía;-;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (137 d, sin periodicidad);no;;;;no;no;no
+5587;Vivienda por personas a escala de Manzana;Demografía;-;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (137 d, sin periodicidad);no;;;;no;no;no
+5641;Índice de Feminidad;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+6043;Direcciones - INSPIRE AD;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, palabra:direccion, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml ogc.wfs_xml xml;;no;no;no
+6044;Parcelas catastrales - INSPIRE CP;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, palabra:parcela, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+6045;Manzanas catastrales - INSPIRE CP;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml gml+xml ogc.wfs_xml;;sí;no;no
+6046;Uso del suelo - INSPIRE LU;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml ogc.wfs_xml xml;;no;no;no
+6047;Sitios protegidos - INSPIRE PS;Urbanismo e Infraestructuras;NEVER;2026-06-12;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (85 d, sin periodicidad);no;;atom+xml ogc.wfs_xml xml;patrimonio;no;no;no
+5481;Líneas de ordenación;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;urbaniz;sí;no;no
+5321;Renta a escala sección censal;Economía;P1Y;2026-04-09;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:2024;sí (ratio 0,4);no;;;ingreso;no;no;sí
+5440;Renta de la población por juntas;Economía;P1Y;2026-04-21;S;sí;geo=S, palabra:junta, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;ingreso;no;no;sí
+5301;Hogares a escala Zaragoza;Demografía;P1Y;2026-04-09;-;no;;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;no
+5302;Hogares a escala Sección Censal;Demografía;P1Y;2026-04-09;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5260;Renta;Economía;P1Y;2026-04-08;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;ingreso;no;no;sí
+5300;Hogares;Demografía;P1Y;2026-04-09;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5303;Hogares a escala Manzana;Demografía;P1Y;2026-04-09;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5681;Nivel de formación académica para Manzana;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;licencia;no;no;no
+5920;Arbolado ornamental del Jardín Botánico;Medio Ambiente;-;2026-05-07;-;no;;no;;sí (121 d, sin periodicidad);no;;json text/csv;;sí;no;no
+5341;Indicadores sociodemográficos básicos a escala de sección censal;Demografía;P1Y;2026-04-10;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5704;Origen de los residentes;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5705;Origen de los residentes (sección censal);Demografía;-;2026-04-24;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5706;Origen de los residentes  (manzana);Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5420;INE: Atlas de distribución de renta de los hogares;Economía;P1Y;2026-04-22;-;no;;sí;periodicidad P1Y;sí (ratio 0,4);no;; zip;;no;no;no
+5281;Edificación y  vivienda a escala de Zaragoza;Vivienda;P1Y;2026-04-09;-;no;;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;no
+5320;Renta a escala de Zaragoza;Economía;P1Y;2026-04-09;-;no;;sí;periodicidad P1Y, palabra:2024;sí (ratio 0,4);no;;;ingreso;no;no;no
+5840;Monitorización e Indicadores de Isla de Calor Urbana.;Medio Ambiente;P1Y;2026-04-30;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:1941;sí (ratio 0,4);no;;;infraestructura;sí;no;sí
+5660;Índice de Natalidad para Zaragoza;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+5661;Índice de Natalidad para Secciones Censales;Demografía;-;2026-04-22;S;sí;geo=S, palabra:seccion, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+5662;Índice de Natalidad para Manzanas;Demografía;-;2026-04-22;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (136 d, sin periodicidad);no;;;;no;no;no
+6080;Equipamientos estructurantes: Distancia media;Sociedad y Bienestar;NEVER;2026-07-02;-;no;;no;;sí (65 d, sin periodicidad);no;;;equipamiento infraestructura;no;no;no
+5280;Edificación y Vivienda;Vivienda;-;2026-04-09;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (149 d, sin periodicidad);no;;;;no;no;no
+5282;Edificación y  vivienda a escala de Sección Censal;Vivienda;P1Y;2026-04-09;S;sí;geo=S, palabra:sección, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5283;Edificación y  vivienda a escala de manzana;Vivienda;P1Y;2026-04-09;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5500;Textos de edificaciones;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5501;Ejes de vías previstos;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:cartograf, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;ejecución;no;no;no
+5502;Protección cultural autonómica (PCA);Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;patrimonio;no;no;no
+5503;Parcelas con más de 10 plantas;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, palabra:parcela, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5505;Espectro de cámaras de tráfico;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5506;Paneles informativos de tráfico;Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;sí;no;no
+5507;Aparcamientos bici (borrador);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5708;Grupos de Edad;Demografía;-;2026-04-24;S;sí;geo=S, spatialRepresentationTypeCode;no;;sí (134 d, sin periodicidad);no;;;;no;no;no
+5760;Caracterización Técnica y Demográfica de la Edificación;Urbanismo e Infraestructuras;-;2026-04-27;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (131 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5508;Badenes (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5509;Estacionamientos (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5512;Puntos de recarga VE (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5513;Reservas (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5514;Veladores (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5515;Vías ciclables (versión anterior);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;sí;palabra:históric;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;sí
+5516;Aparcamientos bici v2 (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5517;Carriles bici (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5518;Aparcamientos de motos (completa);Transporte;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;;no;no;no
+5519;Accidentes de tráfico;Transporte;P1Y;2026-07-28;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y, palabra:serie;sí (ratio 0,1);no;;;;no;no;sí
+5540;Viviendas empadronadas en edificios;Demografía;P1Y;2026-04-21;S;sí;geo=S, spatialRepresentationTypeCode;sí;periodicidad P1Y;sí (ratio 0,4);no;;;;no;no;sí
+5560;Escaleras urbanas;Urbanismo e Infraestructuras;NEVER;2026-07-28;S;sí;geo=S, formato geo, spatialRepresentationTypeCode;no;;sí (39 d, sin periodicidad);no;;ogc.wfs_xml ogc.wms_xml;infraestructura;sí;no;no
