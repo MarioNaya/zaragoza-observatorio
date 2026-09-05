@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: observatorio-zaragoza
+  jpa:
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,modulith
+
+# Fuentes municipales (SPEC.md §2, docs/spikes/README.md). Solo declaradas; el cliente llega en fase 1.
+zaragoza:
+  api:
+    base-url: https://www.zaragoza.es
+    open311-base-url: https://www.zaragoza.es/api/recurso/open311
+
+---
+# Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).
+spring:
+  config:
+    activate:
+      on-profile: prod
+logging:
+  structured:
+    format:
+      console: ecs
