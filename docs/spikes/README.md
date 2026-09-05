@@ -8,12 +8,19 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 
 | Spike | Pregunta | Clase | Informe | Estado |
 |---|---|---|---|---|
-| S0.1 | Estructura y fechas del catálogo de datasets | `S01CatalogSpike` | `S0.1-catalogo.md` | pendiente |
-| S0.2 | Volumen, campos y localización en OCDS | `S02OcdsSpike` | `S0.2-ocds.md` | pendiente |
-| S0.3 | Open311: endpoint, geolocalización, cierre, taxonomía | `S03Open311Spike` | `S0.3-open311.md` | pendiente |
-| S0.4 | Geometrías de juntas/barrios y padrón | `S04GeoSpike` | `S0.4-geo.md` | pendiente |
-| S0.5 | Comportamiento de la API: límites, paginación, cabeceras | `S05ApiBehaviourSpike` | `S0.5-api.md` | pendiente |
-| S0.6 | Inventario sistemático del catálogo | `S06InventorySpike` | `S0.6-inventario.md` | pendiente |
+| S0.1 | Estructura y fechas del catálogo de datasets | `S01CatalogSpike` | [`S0.1-catalogo.md`](S0.1-catalogo.md) | hecho 2026-09-05 |
+| S0.2 | Volumen, campos y localización en OCDS | `S02OcdsSpike` | [`S0.2-ocds.md`](S0.2-ocds.md) | hecho 2026-09-05 |
+| S0.3 | Open311: endpoint, geolocalización, cierre, taxonomía | `S03Open311Spike` | [`S0.3-open311.md`](S0.3-open311.md) | hecho 2026-09-05 |
+| S0.4 | Geometrías de juntas/barrios y padrón | `S04GeoSpike` | [`S0.4-geo.md`](S0.4-geo.md) | hecho 2026-09-05 |
+| S0.5 | Comportamiento de la API: límites, paginación, cabeceras | `S05ApiBehaviourSpike` | [`S0.5-api.md`](S0.5-api.md) | hecho 2026-09-05 |
+| S0.6 | Inventario sistemático del catálogo | `S06InventorySpike` | [`S0.6-inventario.md`](S0.6-inventario.md) + [matriz CSV](S0.6-inventario-matriz.csv) | hecho 2026-09-05 |
+
+## Conclusiones de fase 0 (criterio de salida de SPEC.md §3)
+
+- **(a) Cruce territorial inversión–quejas: no viable** con los datos abiertos actuales. OCDS no tiene ningún campo de localización (S0.2); presupuesto y subvenciones tampoco; no existen presupuestos participativos ni obras con importe (S0.6). El eje territorial se sostiene con quejas geolocalizadas (~50 %), juntas y padrón (S0.3, S0.4).
+- **(b) Contexto de gasto**: propuesta `spending` = OCDS + presupuesto (snapshots de ejecución) + subvenciones, sin entidades territoriales. Decisión pendiente en ADR-003.
+- **(c) Modelos** revisados en cada informe: `catalog` (S0.1), `spending` (S0.2, S0.6), `citizen` (S0.3), `geo` (S0.4: la unidad es la **junta**, no el barrio).
+- Reglas del cliente HTTP de `ingestion` en S0.5.
 
 ## Hechos ya verificados el 2026-09-05 (previos a los spikes)
 
