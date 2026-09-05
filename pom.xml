@@ -29,6 +29,10 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-modulith.version>2.1.1</spring-modulith.version>
+		<!-- ArchUnit no está en ningún BOM: versión verificada en Maven Central el 2026-09-05 (regla 15) -->
+		<archunit.version>1.4.1</archunit.version>
+		<!-- Los spikes (@Tag("spike")) quedan fuera del build por defecto; el perfil "spikes" los activa (ADR-002) -->
+		<spikes.excludedGroups>spike</spikes.excludedGroups>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -148,6 +152,12 @@
 			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit-junit5</artifactId>
+			<version>${archunit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -167,7 +177,35 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludedGroups>${spikes.excludedGroups}</excludedGroups>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<!-- .\mvnw.cmd test -Pspikes : ejecuta solo los spikes (red real, lentos). ADR-002 -->
+			<id>spikes</id>
+			<properties>
+				<spikes.excludedGroups>none</spikes.excludedGroups>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<groups>spike</groups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
