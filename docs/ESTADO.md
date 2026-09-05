@@ -35,7 +35,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 1. Arrancar Docker Desktop y comprobar `docker info` (Testcontainers y Compose lo necesitan).
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real; debe estar en verde antes de tocar nada.
-4. Leer `CLAUDE.md` (reglas 1–19) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
+4. Leer `CLAUDE.md` (reglas 1–20) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
 5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde.
 
 Comandos útiles:
