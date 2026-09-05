@@ -18,7 +18,7 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 ## Conclusiones de fase 0 (criterio de salida de SPEC.md §3)
 
 - **(a) Cruce territorial inversión–quejas: no viable** con los datos abiertos actuales. OCDS no tiene ningún campo de localización (S0.2); presupuesto y subvenciones tampoco; no existen presupuestos participativos ni obras con importe (S0.6). El eje territorial se sostiene con quejas geolocalizadas (~50 %), juntas y padrón (S0.3, S0.4).
-- **(b) Contexto de gasto**: propuesta `spending` = OCDS + presupuesto (snapshots de ejecución) + subvenciones, sin entidades territoriales. Decisión pendiente en ADR-003.
+- **(b) Contexto de gasto**: `spending` = OCDS + presupuesto (snapshots de ejecución) + subvenciones, sin entidades territoriales. Decidido en [ADR-003](../decisions/ADR-003-contexto-spending.md) el 2026-09-05.
 - **(c) Modelos** revisados en cada informe: `catalog` (S0.1), `spending` (S0.2, S0.6), `citizen` (S0.3), `geo` (S0.4: la unidad es la **junta**, no el barrio).
 - Reglas del cliente HTTP de `ingestion` en S0.5.
 

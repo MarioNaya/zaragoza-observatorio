@@ -1,6 +1,6 @@
 # CLAUDE.md — Observatorio de Datos Abiertos de Zaragoza
 
-La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de arquitectura están en `docs/decisions/`. Los hechos verificados sobre la API municipal están en `docs/spikes/`: **son la única fuente válida de endpoints, campos y formatos**; nada se escribe de memoria.
+La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de arquitectura están en `docs/decisions/`. Los hechos verificados sobre la API municipal están en `docs/spikes/`: **son la única fuente válida de endpoints, campos y formatos**; nada se escribe de memoria. **Al empezar una sesión, leer `docs/ESTADO.md`** (qué está hecho, qué toca ahora, cómo arrancar). Los diagramas de arquitectura están en `docs/arquitectura.md`.
 
 ## Reglas de trabajo (copia de SPEC.md §8)
 
@@ -30,6 +30,7 @@ La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de a
 17. **Stack real**: Spring Boot 4.1.x (starters modulares: `spring-boot-starter-webmvc`, `-restclient`, `-flyway`…), Spring Modulith 2.1.x vía BOM, Java 21, Jackson 3 (`tools.jackson`). Cuando dudes de un paquete o artefacto, mira `pom.xml` y `.\mvnw.cmd dependency:tree`, no la memoria.
 18. **API municipal, reglas verificadas (S0.5)**: URL siempre con extensión `.json`/`.geojson` y `srsname=wgs84`; `rows` tope 500 en la sede (sin tope en OCDS y Open311); `start` ignorado en OCDS; `If-Modified-Since` nunca se honra y solo Open311 honra `ETag`; `Last-Modified` llega con zona `CET/CEST` (no RFC 1123); fechas sin zona son hora local, presupuesto usa `yyyyMMdd`; FIQL (`q`) tiene lista blanca de campos por endpoint. Los detalles y excepciones están en `docs/spikes/`.
 19. **Unidad territorial = junta municipal o vecinal (29)**, opcionalmente sección censal (491). No existen barrios como dato abierto (S0.4). El gasto público (OCDS, presupuesto, subvenciones) **no tiene dimensión territorial** (S0.2, S0.6): no se inventa geocodificación.
+20. **El contexto de gasto se llama `spending`** (ADR-003): OCDS + presupuesto + subvenciones, sin entidades territoriales; `spending` no depende de `geo` y `territory` no depende de `spending`. Licencias, locales y obras en vía pública quedan fuera (candidato posterior `urban-activity`, con ADR propia).
 
 ## Contexto operativo (máquina de desarrollo)
 

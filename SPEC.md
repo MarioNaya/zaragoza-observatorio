@@ -1,6 +1,6 @@
 # Observatorio de Datos Abiertos de Zaragoza — Especificación inicial
 
-Versión 0.3 · 5 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 (`docs/spikes/`); las decisiones marcadas «ADR-003 pendiente» siguen abiertas.
+Versión 0.4 · 5 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 (`docs/spikes/`) y con las ADR-001 a ADR-003 (`docs/decisions/`). Estado del proyecto y arranque de sesión: `docs/ESTADO.md`. Diagramas: `docs/arquitectura.md`.
 
 Este documento fija el propósito, el alcance, la arquitectura y las reglas de trabajo del proyecto. Es una especificación viva: las decisiones marcadas como "a verificar" deben resolverse con spikes antes de construir sobre ellas, y el documento debe actualizarse cuando se resuelvan.
 
@@ -77,7 +77,7 @@ Objetivo: resolver las incógnitas que condicionan el diseño. Cada spike produc
 
 Criterio de salida: decisión documentada sobre (a) si el cruce territorial inversión–quejas es viable, (b) la composición definitiva del contexto de inversión y (c) el modelo de datos de cada módulo.
 
-**Estado (2026-09-05)**: spikes ejecutados; informes en `docs/spikes/` (índice y conclusiones en `docs/spikes/README.md`). (a) El cruce territorial inversión–quejas **no es viable** con los datos abiertos actuales; (b) composición del contexto de gasto pendiente de **ADR-003** (propuesta `spending` = OCDS + presupuesto + subvenciones, sin territorio); (c) modelos revisados en §4.6.
+**Estado (2026-09-05)**: spikes ejecutados; informes en `docs/spikes/` (índice y conclusiones en `docs/spikes/README.md`). (a) El cruce territorial inversión–quejas **no es viable** con los datos abiertos actuales; (b) contexto de gasto = **`spending`** (OCDS + presupuesto + subvenciones, sin entidades territoriales; ADR-003); (c) modelos revisados en §4.6.
 
 ### Fase 1 — Núcleo: ingesta y monitor de frescura
 
@@ -94,7 +94,7 @@ Criterio de salida: decisión documentada sobre (a) si el cruce territorial inve
 
 ### Fase 3 — Inversión y gasto público
 
-- Módulo de gasto público (nombre pendiente de ADR-003; propuesta `spending`): ingesta OCDS, presupuesto (snapshots de ejecución) y subvenciones; modelo de contrato/adjudicatario/adjudicación, partida presupuestaria con snapshot y subvención; agregaciones por área, órgano, adjudicatario, tipo y tiempo. **Sin asignación territorial**: ninguna fuente de gasto la tiene (S0.2, S0.6); no hay propuestas participativas ni obras con importe en datos abiertos.
+- Módulo `spending` (ADR-003): ingesta OCDS, presupuesto (snapshots de ejecución) y subvenciones; modelo de contrato/adjudicatario/adjudicación, partida presupuestaria con snapshot y subvención; agregaciones por área, órgano, adjudicatario, tipo y tiempo. **Sin asignación territorial**: ninguna fuente de gasto la tiene (S0.2, S0.6); no hay propuestas participativas ni obras con importe en datos abiertos.
 - Distinción explícita en el modelo entre **gasto ejecutado** (contratos adjudicados, ejecución presupuestaria) y **gasto previsto** (participativos aprobados pendientes, presupuesto aprobado).
 
 ### Fase 4 — Cruce territorial y frontend
@@ -113,6 +113,8 @@ Fuera de alcance inicial: email/contraseña propios, alertas y notificaciones, c
 ---
 
 ## 4. Arquitectura
+
+Diagramas de flujo de datos, módulos y estructura hexagonal: `docs/arquitectura.md`.
 
 ### 4.1 Decisión principal
 
@@ -142,13 +144,13 @@ observatorio/
 ├── catalog/        # dominio: datasets del catálogo, frescura, histórico
 ├── geo/            # shared kernel de dominio: barrios, juntas, padrón, resolución espacial
 ├── citizen/        # dominio: incidencias Open311 y sus agregaciones
-├── spending/       # dominio: gasto público (OCDS, presupuesto, subvenciones); nombre definitivo pendiente de ADR-003
+├── spending/       # dominio: gasto público (OCDS, presupuesto, subvenciones), sin territorio (ADR-003)
 ├── territory/      # composición de lectura: ficha por barrio (sin estado propio)
 ├── identity/       # usuarios y autenticación (fase 5)
 └── workspace/      # búsquedas guardadas, dashboards, instantáneas (fase 5)
 ```
 
-Sobre el contexto de gasto: S0.6 confirmó fuentes adicionales de gasto (presupuesto con ejecución, subvenciones) pero **ninguna con dimensión territorial**, y no existen presupuestos participativos ni obras con importe en datos abiertos. Propuesta: contexto `spending` con OCDS + presupuesto + subvenciones y sin entidades territoriales; decisión en ADR-003. No se crea un módulo por dataset.
+Sobre el contexto de gasto: S0.6 confirmó fuentes adicionales de gasto (presupuesto con ejecución, subvenciones) pero **ninguna con dimensión territorial**, y no existen presupuestos participativos ni obras con importe en datos abiertos. Decisión (ADR-003): contexto `spending` con OCDS + presupuesto + subvenciones y sin entidades territoriales; `spending` no depende de `geo` y `territory` no depende de `spending`. No se crea un módulo por dataset.
 
 Reglas de dependencia (verificadas con `ApplicationModules.verify()`):
 
@@ -198,7 +200,7 @@ Idempotencia: cada ingesta debe poder repetirse sin duplicar datos. Los payloads
 
 **citizen** (S0.3): `ServiceRequest` (id origen, código y nombre de servicio, título, descripción, estado, `requestedAt`, `closedAt` = `updated_datetime` solo en cerradas, punto WGS84 nullable, dirección textual nullable, nombre de junta de origen nullable, junta resuelta nullable), `Category` (taxonomía `services.json` tal cual más la jerarquía `parent` de `statistics`). No hay canal de entrada en los datos.
 
-**spending** (S0.2, S0.6; nombre pendiente de ADR-003): `ContractingProcess` (ocid, fechas de publicación y release, tags, licitación con importe estimado, procedimiento, categoría, CPV, órgano; **sin localización ni junta**), `Award` (importe, fecha, estado, adjudicatarios), `Supplier`, `Contract` (importe, fecha de firma, periodo, estado), `BudgetSnapshot` (fecha `yyyyMMdd`) con `BudgetLine` (área, programa, órgano, capítulo, partida; crédito inicial, modificaciones, definitivo, comprometido, obligación neta, pago neto), `Grant` (adjudicatario, importe, aplicación presupuestaria, área, línea, instrumento, fecha). Todo registro de gasto lleva `stage` con valores `planned` / `committed` / `executed`: en OCDS solo `planned` (licitación activa) y `committed` (adjudicación/contrato); `executed` sale del presupuesto (obligaciones/pagos) y de subvenciones. Eliminados `ParticipatoryProposal` y `PublicWork` (fuentes inexistentes en datos abiertos).
+**spending** (S0.2, S0.6, ADR-003): `ContractingProcess` (ocid, fechas de publicación y release, tags, licitación con importe estimado, procedimiento, categoría, CPV, órgano; **sin localización ni junta**), `Award` (importe, fecha, estado, adjudicatarios), `Supplier`, `Contract` (importe, fecha de firma, periodo, estado), `BudgetSnapshot` (fecha `yyyyMMdd`) con `BudgetLine` (área, programa, órgano, capítulo, partida; crédito inicial, modificaciones, definitivo, comprometido, obligación neta, pago neto), `Grant` (adjudicatario, importe, aplicación presupuestaria, área, línea, instrumento, fecha). Todo registro de gasto lleva `stage` con valores `planned` / `committed` / `executed`: en OCDS solo `planned` (licitación activa) y `committed` (adjudicación/contrato); `executed` sale del presupuesto (obligaciones/pagos) y de subvenciones. Eliminados `ParticipatoryProposal` y `PublicWork` (fuentes inexistentes en datos abiertos).
 
 **identity**: `User` (id interno, proveedor, id en el proveedor, correo, fecha de alta, fecha de último acceso). Nada más.
 
@@ -307,7 +309,7 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
 ## 9. Decisiones abiertas
 
 - ~~Nombre definitivo del proyecto y del repositorio~~ → `observatorio-zaragoza`, groupId y paquete base `es.zaragoza.observatory` (2026-09-05).
-- **ADR-003 pendiente**: nombre y composición del contexto de gasto. Propuesta S0.6: `spending` = OCDS + presupuesto + subvenciones, sin territorio; `licencia-obra`, `registro-licencia`, `locales-vacios` y `via-publica` como candidato posterior `urban-activity` (actividad privada, no inversión).
+- ~~Nombre y composición del contexto de gasto~~ → `spending` sin entidades territoriales (ADR-003, 2026-09-05). `licencia-obra`, `registro-licencia`, `locales-vacios` y `via-publica` quedan como candidato posterior `urban-activity` (actividad privada, no inversión; requerirá ADR propia).
 - Correspondencia exacta entre `distrito.id` e `idpadron`/`id_padron` de los datasets de población (S0.4): verificar en fase 2.
 - Tamaño real y criterio de publicación del listado de quejas de sede (50.000–100.000 registros frente a ~40.000 cerradas/año en `statistics`, S0.3): entender antes de publicar volúmenes.
 - jOOQ vs. SQL nativo con JPA para agregaciones (decidir en fase 2 con datos reales).
@@ -324,5 +326,5 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
 1. Alta como reutilizador en el portal municipal (pendiente; aprovechar para solicitar datos de inversión por junta y presupuestos participativos).
 2. ~~Crear repositorio con esqueleto Spring Boot + Modulith + Maven + Docker Compose (PostGIS) + Flyway + Testcontainers. Copiar §8 a `CLAUDE.md`.~~ Hecho el 2026-09-05 (Boot 4.1.1, ADR-001).
 3. ~~Ejecutar spikes S0.1–S0.6 y documentarlos.~~ Hecho el 2026-09-05 (`docs/spikes/`, ADR-002).
-4. Revisar este documento con los resultados de los spikes: **v0.3 (este documento)**; queda fijar ADR-003 (contexto de gasto) y confirmar el modelo de fase 1 (§4.6 `catalog`).
+4. ~~Revisar este documento con los resultados de los spikes~~ Hecho: v0.4 con ADR-003. El modelo de fase 1 (§4.6 `catalog`) se confirma al implementarlo.
 5. Implementar módulo `ingestion` y módulo `catalog` (fase 1), con las reglas de cliente HTTP de S0.5.
