@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Arquitectura del Observatorio de Datos Abiertos de Zaragoza. Documento autónomo: abrir con doble clic.
+     Las fuentes se cargan de Google Fonts; sin red se usan las alternativas del sistema. Los diagramas son SVG inline.
+     Fuente de verdad: SPEC.md y docs/arquitectura.md. Si cambian módulos o flujo, actualizar este fichero y la version Mermaid. -->
+<title>Arquitectura del Observatorio Zaragoza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #F2F5F7;
+    --surface: #FFFFFF;
+    --ink: #17222B;
+    --muted: #5C6B76;
+    --line: #C9D3DA;
+    --grid: #E3E9ED;
+    --ext: #A6512A;
+    --ext-fill: #F7E8DF;
+    --sys: #1D5F7A;
+    --sys-fill: #DDEBF1;
+    --core-fill: #C7DEE8;
+    --store: #5B6770;
+    --store-fill: #E9EDF0;
+    --future: #8A96A0;
+    --band-fill: #E6ECF0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F171D;
+      --surface: #16222B;
+      --ink: #E6ECF0;
+      --muted: #98A8B3;
+      --line: #33434E;
+      --grid: #22303A;
+      --ext: #E0906A;
+      --ext-fill: #3A2419;
+      --sys: #6FBBD8;
+      --sys-fill: #14313D;
+      --core-fill: #1B4252;
+      --store: #A6B3BC;
+      --store-fill: #1F2C35;
+      --future: #6E7D88;
+      --band-fill: #1A2731;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F171D;
+    --surface: #16222B;
+    --ink: #E6ECF0;
+    --muted: #98A8B3;
+    --line: #33434E;
+    --grid: #22303A;
+    --ext: #E0906A;
+    --ext-fill: #3A2419;
+    --sys: #6FBBD8;
+    --sys-fill: #14313D;
+    --core-fill: #1B4252;
+    --store: #A6B3BC;
+    --store-fill: #1F2C35;
+    --future: #6E7D88;
+    --band-fill: #1A2731;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 72px; display: grid; gap: 56px; }
+  h1, h2, h3 {
+    font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.05; }
+  h2 { font-size: 1.6rem; line-height: 1.15; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0; }
+  .prose { max-width: 68ch; }
+  .eyebrow, .badge, th, .legend span, .meta {
+    font-family: "IBM Plex Mono", Consolas, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  code, .mono { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 0.9em; }
+  header { display: grid; gap: 14px; }
+  header .lede { font-size: 1.15rem; max-width: 62ch; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0.01em; font-size: 0.8rem; }
+  .sw { width: 22px; height: 14px; border: 1.5px solid; border-radius: 2px; flex: none; }
+  .sw.ext { border-color: var(--ext); background: var(--ext-fill); }
+  .sw.sys { border-color: var(--sys); background: var(--sys-fill); }
+  .sw.store { border-color: var(--store); background: var(--store-fill); }
+  .sw.future { border-color: var(--future); border-style: dashed; background: transparent; }
+
+  section { display: grid; gap: 20px; }
+  .section-head { display: grid; gap: 8px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  .fig-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); padding: 16px 12px; }
+  .fig-scroll svg { display: block; min-width: 780px; width: 100%; height: auto; color: var(--ink); }
+  figcaption { color: var(--muted); font-size: 0.92rem; max-width: 80ch; }
+
+  /* SVG roles */
+  .n-ext rect { fill: var(--ext-fill); stroke: var(--ext); stroke-width: 1.4; }
+  .n-sys rect { fill: var(--sys-fill); stroke: var(--sys); stroke-width: 1.4; }
+  .n-core rect { fill: var(--core-fill); stroke: var(--sys); stroke-width: 1.8; }
+  .n-store rect { fill: var(--store-fill); stroke: var(--store); stroke-width: 1.4; }
+  .n-band rect { fill: var(--band-fill); stroke: var(--line); stroke-width: 1; }
+  .n-frame rect { fill: none; stroke: var(--line); stroke-width: 1.2; }
+  .n-inner rect { fill: var(--surface); stroke: var(--sys); stroke-width: 1; }
+  .n-future rect { fill: none; stroke: var(--future); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  svg text { font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif; font-size: 12px; fill: currentColor; }
+  svg text.t-title { font-size: 13px; font-weight: 600; }
+  svg text.t-big { font-size: 15px; font-weight: 600; font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; }
+  svg text.t-mono { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 11px; }
+  svg text.t-small { font-size: 11px; fill: var(--muted); }
+  svg text.t-hdr { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 10.5px; letter-spacing: 0.08em; fill: var(--muted); }
+  svg text.t-badge { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 9.5px; letter-spacing: 0.08em; fill: var(--sys); }
+  svg text.t-ext { fill: var(--ext); }
+  svg .edge { stroke: currentColor; stroke-width: 1.3; fill: none; }
+  svg .edge-ev { stroke: var(--sys); stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; }
+  svg .edge-future { stroke: var(--future); stroke-width: 1.2; fill: none; stroke-dasharray: 5 4; }
+  svg .edge-impl { stroke: currentColor; stroke-width: 1.2; fill: none; stroke-dasharray: 4 3; }
+
+  ol.steps { margin: 0; padding-left: 1.4em; max-width: 78ch; display: grid; gap: 6px; }
+  ol.steps li::marker { font-family: "IBM Plex Mono", Consolas, monospace; color: var(--muted); }
+  ul.rules { margin: 0; padding-left: 1.2em; max-width: 78ch; display: grid; gap: 6px; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { border-bottom: 1px solid var(--line); font-weight: 500; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td .mono { font-size: 0.82rem; word-break: break-all; }
+  .badge { display: inline-block; padding: 2px 6px; border: 1px solid var(--line); border-radius: 2px; letter-spacing: 0.08em; font-size: 0.68rem; color: var(--sys); border-color: var(--sys); }
+  .badge.done { color: var(--muted); border-color: var(--line); }
+  footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 18px; }
+  a { color: var(--sys); }
+  a:focus-visible { outline: 2px solid var(--sys); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Observatorio de Datos Abiertos de Zaragoza · monolito modular</p>
+    <h1>Arquitectura del Observatorio</h1>
+    <p class="lede">Cómo viajan los datos desde la API municipal hasta la API propia, qué módulos existen y qué dependencias se permiten entre ellos, y cómo se organiza cada módulo por dentro. Refleja la especificación v0.4 tras la fase 0.</p>
+    <div class="meta">
+      <span>Fecha <b>2026-09-05</b></span>
+      <span>Stack <b>Spring Boot 4.1 · Modulith 2.1 · Java 21 · PostgreSQL + PostGIS</b></span>
+      <span>Decisiones <b>ADR-001 Boot 4 · ADR-002 spikes · ADR-003 spending</b></span>
+    </div>
+  </header>
+
+  <div class="legend" aria-label="Leyenda de colores">
+    <span><i class="sw ext"></i> Fuera del sistema: API del Ayuntamiento</span>
+    <span><i class="sw sys"></i> Módulos y componentes propios</span>
+    <span><i class="sw store"></i> Almacenamiento (tablas por módulo)</span>
+    <span><i class="sw future"></i> Discontinuo: evento, implementación de puerto o enlace condicionado</span>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>1. Flujo de datos</h2>
+      <p class="prose">Nunca se hace proxy de la API municipal: todo se ingesta a tablas propias por jobs programados y se sirve desde ahí. El módulo <code>ingestion</code> no conoce ningún dominio; cada dominio traduce el JSON municipal en su adaptador anti-corrupción y escribe solo en sus tablas.</p>
+    </div>
+    <figure>
+      <div class="fig-scroll">
+        <svg viewBox="0 0 1200 610" role="img" aria-label="Seis fuentes de la API municipal entran al módulo ingestion, que entrega payloads crudos a los adaptadores de catalog, citizen, geo y spending; cada adaptador escribe en sus tablas de PostgreSQL/PostGIS; la API REST lee esas tablas y sirve JSON a los consumidores.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+            </marker>
+            <marker id="arr-sys" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--sys)"></path>
+            </marker>
+          </defs>
+
+          <text class="t-hdr" x="20" y="24">FUENTES MUNICIPALES · WWW.ZARAGOZA.ES</text>
+          <text class="t-hdr" x="380" y="24">MÓDULO INGESTION</text>
+          <text class="t-hdr" x="690" y="24">ADAPTADORES ANTI-CORRUPCIÓN</text>
+          <text class="t-hdr" x="970" y="24">POSTGRESQL + POSTGIS</text>
+
+          <!-- Sources -->
+          <g class="n-ext">
+            <rect x="20" y="44" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="64">Catálogo de datasets</text>
+            <text class="t-small" x="290" y="64" text-anchor="end">436 datasets</text>
+            <text class="t-mono" x="30" y="82">web/espacio-de-datos/…/catalogo.json</text>
+
+            <rect x="20" y="112" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="132">Swagger de la API</text>
+            <text class="t-small" x="290" y="132" text-anchor="end">496 endpoints</text>
+            <text class="t-mono" x="30" y="150">sede/servicio/catalogo/api.json</text>
+
+            <rect x="20" y="180" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="200">Quejas y sugerencias (+ Open311)</text>
+            <text class="t-small" x="290" y="200" text-anchor="end">~40.000/año</text>
+            <text class="t-mono" x="30" y="218">sede/…/quejas-sugerencias/list.json</text>
+
+            <rect x="20" y="248" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="268">Juntas y padrón</text>
+            <text class="t-small" x="290" y="268" text-anchor="end">29 juntas</text>
+            <text class="t-mono" x="30" y="286">sede/servicio/distrito*.json</text>
+
+            <rect x="20" y="316" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="336">Contratación OCDS</text>
+            <text class="t-small" x="290" y="336" text-anchor="end">5.720 ocids</text>
+            <text class="t-mono" x="30" y="354">…/ocds/contracting-process.json</text>
+
+            <rect x="20" y="384" width="280" height="54" rx="3"></rect>
+            <text class="t-title" x="30" y="404">Presupuesto y subvenciones</text>
+            <text class="t-small" x="290" y="404" text-anchor="end">140 snapshots</text>
+            <text class="t-mono" x="30" y="422">presupuesto/* · ayuda-subvencion.json</text>
+          </g>
+
+          <!-- Source -> ingestion arrows -->
+          <g class="edge" marker-end="url(#arr)">
+            <line x1="300" y1="71" x2="378" y2="71"></line>
+            <line x1="300" y1="139" x2="378" y2="139"></line>
+            <line x1="300" y1="207" x2="378" y2="207"></line>
+            <line x1="300" y1="275" x2="378" y2="275"></line>
+            <line x1="300" y1="343" x2="378" y2="343"></line>
+            <line x1="300" y1="411" x2="378" y2="411"></line>
+          </g>
+          <text class="t-small" x="340" y="98" text-anchor="middle">GET .json</text>
+          <text class="t-small" x="340" y="111" text-anchor="middle">rows ≤ 500</text>
+          <text class="t-small" x="340" y="124" text-anchor="middle">FIQL · after</text>
+
+          <!-- ingestion -->
+          <g class="n-sys">
+            <rect x="380" y="44" width="220" height="394" rx="3"></rect>
+          </g>
+          <text class="t-big" x="394" y="67">ingestion</text>
+          <text class="t-badge" x="586" y="66" text-anchor="end">FASE 1</text>
+          <g class="n-inner">
+            <rect x="394" y="84" width="192" height="52" rx="2"></rect>
+            <text class="t-title" x="404" y="104">Scheduler</text>
+            <text class="t-small" x="404" y="120">@Scheduled + ShedLock</text>
+
+            <rect x="394" y="146" width="192" height="52" rx="2"></rect>
+            <text class="t-title" x="404" y="166">Cliente HTTP</text>
+            <text class="t-small" x="404" y="182">RestClient · retry · breaker</text>
+
+            <rect x="394" y="208" width="192" height="52" rx="2"></rect>
+            <text class="t-title" x="404" y="228">Descriptor de fuente</text>
+            <text class="t-small" x="404" y="244">URL .json, rows, ventanas</text>
+
+            <rect x="394" y="270" width="192" height="52" rx="2"></rect>
+            <text class="t-title" x="404" y="290">IngestionRun</text>
+            <text class="t-small" x="404" y="306">inicio, fin, filas, error</text>
+
+            <rect x="394" y="332" width="192" height="52" rx="2"></rect>
+            <text class="t-title" x="404" y="352">raw_payload + evento</text>
+            <text class="t-small" x="404" y="368">retención · DatasetIngested</text>
+          </g>
+
+          <!-- ingestion -> adapters -->
+          <g class="edge" marker-end="url(#arr)">
+            <line x1="600" y1="105" x2="688" y2="105"></line>
+            <line x1="600" y1="207" x2="688" y2="207"></line>
+            <line x1="600" y1="275" x2="688" y2="275"></line>
+            <line x1="600" y1="377" x2="688" y2="377"></line>
+          </g>
+          <line class="edge-ev" x1="600" y1="60" x2="688" y2="60" marker-end="url(#arr-sys)"></line>
+          <text class="t-small" x="645" y="78" text-anchor="middle">DatasetIngested</text>
+          <text class="t-small" x="645" y="90" text-anchor="middle">(evento)</text>
+          <text class="t-small" x="645" y="150" text-anchor="middle">payload crudo</text>
+          <text class="t-small" x="645" y="163" text-anchor="middle">+ metadatos</text>
+
+          <!-- adapters -->
+          <g class="n-sys">
+            <rect x="690" y="44" width="200" height="122" rx="3"></rect>
+            <text class="t-title" x="700" y="64">catalog</text>
+            <text class="t-badge" x="880" y="63" text-anchor="end">FASE 1</text>
+            <text class="t-small" x="700" y="84">catalogo.json → Dataset</text>
+            <text class="t-small" x="700" y="100">tag Swagger → endpoint</text>
+            <text class="t-small" x="700" y="116">muestreo → FreshnessSnapshot</text>
+            <text class="t-small" x="700" y="132">declarada vs observada</text>
+            <text class="t-small" x="700" y="148">escucha todos los eventos</text>
+
+            <rect x="690" y="180" width="200" height="54" rx="3"></rect>
+            <text class="t-title" x="700" y="198">citizen</text>
+            <text class="t-badge" x="880" y="197" text-anchor="end">FASE 2</text>
+            <text class="t-small" x="700" y="213">list.json → ServiceRequest</text>
+            <text class="t-small" x="700" y="226">geometry → punto WGS84</text>
+
+            <rect x="690" y="248" width="200" height="54" rx="3"></rect>
+            <text class="t-title" x="700" y="266">geo</text>
+            <text class="t-badge" x="880" y="265" text-anchor="end">FASE 2</text>
+            <text class="t-small" x="700" y="281">distrito.json → District</text>
+            <text class="t-small" x="700" y="294">indicadores → PopulationRecord</text>
+
+            <rect x="690" y="316" width="200" height="122" rx="3"></rect>
+            <text class="t-title" x="700" y="336">spending</text>
+            <text class="t-badge" x="880" y="335" text-anchor="end">FASE 3</text>
+            <text class="t-small" x="700" y="356">release → ContractingProcess</text>
+            <text class="t-small" x="700" y="372">→ Award, Contract, Supplier</text>
+            <text class="t-small" x="700" y="388">gasto-corriente → BudgetLine</text>
+            <text class="t-small" x="700" y="404">ayuda-subvencion → Grant</text>
+            <text class="t-small" x="700" y="420">sin localización (ADR-003)</text>
+          </g>
+
+          <!-- adapters -> tables -->
+          <g class="edge" marker-end="url(#arr)">
+            <line x1="890" y1="105" x2="968" y2="105"></line>
+            <line x1="890" y1="207" x2="968" y2="207"></line>
+            <line x1="890" y1="275" x2="968" y2="275"></line>
+            <line x1="890" y1="377" x2="968" y2="377"></line>
+          </g>
+          <text class="t-small" x="930" y="150" text-anchor="middle">upsert</text>
+          <text class="t-small" x="930" y="163" text-anchor="middle">idempotente</text>
+
+          <!-- tables -->
+          <g class="n-store">
+            <rect x="970" y="44" width="210" height="122" rx="3"></rect>
+            <text class="t-title" x="980" y="64">catalog</text>
+            <text class="t-mono" x="980" y="84">dataset</text>
+            <text class="t-mono" x="980" y="100">dataset_distribution</text>
+            <text class="t-mono" x="980" y="116">freshness_snapshot</text>
+            <text class="t-mono" x="980" y="132">freshness_threshold (config)</text>
+
+            <rect x="970" y="180" width="210" height="54" rx="3"></rect>
+            <text class="t-title" x="980" y="198">citizen</text>
+            <text class="t-mono" x="980" y="213">service_request (point 4326)</text>
+            <text class="t-mono" x="980" y="226">service_category</text>
+
+            <rect x="970" y="248" width="210" height="54" rx="3"></rect>
+            <text class="t-title" x="980" y="266">geo</text>
+            <text class="t-mono" x="980" y="281">district, census_section</text>
+            <text class="t-mono" x="980" y="294">population_record (año)</text>
+
+            <rect x="970" y="316" width="210" height="122" rx="3"></rect>
+            <text class="t-title" x="980" y="336">spending</text>
+            <text class="t-mono" x="980" y="356">contracting_process, award,</text>
+            <text class="t-mono" x="980" y="372">contract, supplier</text>
+            <text class="t-mono" x="980" y="388">budget_snapshot, budget_line</text>
+            <text class="t-mono" x="980" y="404">grant</text>
+            <text class="t-mono" x="980" y="420">(sin columnas geográficas)</text>
+
+            <rect x="380" y="452" width="220" height="44" rx="3"></rect>
+            <text class="t-mono" x="390" y="470">ingestion_run · raw_payload</text>
+            <text class="t-mono" x="390" y="486">event_publication (Modulith)</text>
+          </g>
+          <line class="edge" x1="490" y1="438" x2="490" y2="450" marker-end="url(#arr)"></line>
+
+          <!-- tables -> API -->
+          <line class="edge" x1="1075" y1="438" x2="1075" y2="528" marker-end="url(#arr)"></line>
+          <text class="t-small" x="1085" y="488">lee read models</text>
+
+          <!-- API band -->
+          <g class="n-sys">
+            <rect x="380" y="530" width="800" height="52" rx="3"></rect>
+          </g>
+          <text class="t-title" x="394" y="551">API REST /api/v1 · lectura pública</text>
+          <text class="t-small" x="394" y="569">paginación page/size · sort explícito · agregaciones con denominador y caveats · sourceDataset e ingestedAt en cada respuesta</text>
+
+          <!-- consumers -->
+          <g class="n-frame">
+            <rect x="20" y="530" width="280" height="52" rx="3"></rect>
+          </g>
+          <text class="t-title" x="30" y="551">Consumidores</text>
+          <text class="t-small" x="30" y="569">Angular (fase 4) · reutilizadores · workspace (fase 5)</text>
+          <line class="edge" x1="380" y1="556" x2="302" y2="556" marker-end="url(#arr)"></line>
+          <text class="t-small" x="340" y="548" text-anchor="middle">JSON</text>
+        </svg>
+      </div>
+      <figcaption>Figura 1. La lectura nunca toca la API municipal: si el Ayuntamiento cae, se sirve el último dato bueno con su fecha. El monitor de frescura (<code>catalog</code>) escucha todos los eventos <code>DatasetIngested</code>, además de ingerir su propio catálogo.</figcaption>
+    </figure>
+    <ol class="steps">
+      <li>El scheduler dispara un job para un <code>DatasetRef</code>.</li>
+      <li><code>ingestion</code> consulta la fuente con la estrategia incremental de esa fuente: FIQL por fecha en quejas, <code>after</code> en OCDS, recarga completa en juntas. <code>If-Modified-Since</code> no sirve: la API no lo honra (S0.5).</li>
+      <li>Pagina con <code>rows</code>/<code>start</code> o por ventanas, aplica retry y circuit breaker, y entrega los payloads crudos al adaptador del módulo de dominio.</li>
+      <li>El adaptador traduce y persiste con upsert idempotente por identificador de origen; reejecutar un job nunca duplica datos.</li>
+      <li>Se registra el <code>IngestionRun</code> (inicio, fin, registros, estado, error) y se publica <code>DatasetIngested</code> a través del registro de eventos de Modulith.</li>
+      <li><code>catalog</code> recibe todos los <code>DatasetIngested</code> y actualiza la frescura observada de cada dataset.</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>2. Módulos Modulith y dependencias permitidas</h2>
+      <p class="prose">Cada flecha es una dependencia que <code>ApplicationModules.verify()</code> acepta; cualquier otra rompe el build. Los dominios hablan con <code>ingestion</code> a través de puertos y con <code>geo</code> solo por su API pública. <code>shared</code> es la base común y no depende de nadie.</p>
+    </div>
+    <figure>
+      <div class="fig-scroll">
+        <svg viewBox="0 0 1100 600" role="img" aria-label="Nueve módulos en capas: workspace e identity (fase 5) a la izquierda; territory (fase 4) arriba a la derecha; catalog, spending y citizen como dominios; ingestion y geo debajo; shared como banda base. Las flechas muestran las dependencias permitidas; spending no tiene flecha hacia geo.">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+            </marker>
+            <marker id="arr2-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--future)"></path>
+            </marker>
+          </defs>
+
+          <!-- Row 1 -->
+          <g class="n-sys">
+            <rect x="40" y="120" width="180" height="64" rx="3"></rect>
+            <text class="t-title" x="50" y="140">workspace</text>
+            <text class="t-badge" x="210" y="139" text-anchor="end">FASE 5</text>
+            <text class="t-small" x="50" y="157">SavedQuery, Dashboard</text>
+            <text class="t-small" x="50" y="171">definiciones, no datos</text>
+
+            <rect x="740" y="120" width="200" height="64" rx="3"></rect>
+            <text class="t-title" x="750" y="140">territory</text>
+            <text class="t-badge" x="930" y="139" text-anchor="end">FASE 4</text>
+            <text class="t-small" x="750" y="157">ficha por junta · sin tablas</text>
+            <text class="t-small" x="750" y="171">compone citizen + geo</text>
+          </g>
+
+          <!-- Row 2 -->
+          <g class="n-sys">
+            <rect x="40" y="250" width="180" height="72" rx="3"></rect>
+            <text class="t-title" x="50" y="270">identity</text>
+            <text class="t-badge" x="210" y="269" text-anchor="end">FASE 5</text>
+            <text class="t-small" x="50" y="288">OAuth2 GitHub / Google</text>
+            <text class="t-small" x="50" y="302">Spring Security vive aquí</text>
+
+            <rect x="260" y="250" width="200" height="72" rx="3"></rect>
+            <text class="t-title" x="270" y="270">catalog</text>
+            <text class="t-badge" x="450" y="269" text-anchor="end">FASE 1</text>
+            <text class="t-small" x="270" y="288">Dataset, FreshnessSnapshot</text>
+            <text class="t-small" x="270" y="302">monitor de frescura</text>
+
+            <rect x="500" y="250" width="200" height="72" rx="3"></rect>
+            <text class="t-title" x="510" y="270">spending</text>
+            <text class="t-badge" x="690" y="269" text-anchor="end">FASE 3</text>
+            <text class="t-small" x="510" y="288">OCDS, presupuesto, ayudas</text>
+            <text class="t-small" x="510" y="302">no depende de geo (ADR-003)</text>
+
+            <rect x="740" y="250" width="200" height="72" rx="3"></rect>
+            <text class="t-title" x="750" y="270">citizen</text>
+            <text class="t-badge" x="930" y="269" text-anchor="end">FASE 2</text>
+            <text class="t-small" x="750" y="288">ServiceRequest, Category</text>
+            <text class="t-small" x="750" y="302">punto → junta vía geo</text>
+          </g>
+
+          <!-- Row 3 -->
+          <g class="n-sys">
+            <rect x="380" y="380" width="220" height="64" rx="3"></rect>
+            <text class="t-title" x="390" y="400">ingestion</text>
+            <text class="t-badge" x="590" y="399" text-anchor="end">FASE 1</text>
+            <text class="t-small" x="390" y="417">jobs, cliente HTTP, runs</text>
+            <text class="t-small" x="390" y="431">no conoce ningún dominio</text>
+          </g>
+          <g class="n-core">
+            <rect x="740" y="380" width="220" height="64" rx="3"></rect>
+            <text class="t-title" x="750" y="400">geo · shared kernel</text>
+            <text class="t-badge" x="950" y="399" text-anchor="end">FASE 2</text>
+            <text class="t-small" x="750" y="417">District · CensusSection</text>
+            <text class="t-small" x="750" y="431">PopulationRecord · locate(point)</text>
+          </g>
+
+          <!-- shared band -->
+          <g class="n-band">
+            <rect x="40" y="520" width="1020" height="48" rx="3"></rect>
+          </g>
+          <text class="t-title" x="52" y="540">shared · kernel mínimo</text>
+          <text class="t-small" x="52" y="557">DatasetRef, IngestionRun, UserId, eventos base. Cualquier módulo puede depender de él; él no depende de nadie.</text>
+
+          <!-- Edges -->
+          <g class="edge" marker-end="url(#arr2)">
+            <line x1="360" y1="322" x2="438" y2="378"></line>
+            <line x1="580" y1="322" x2="542" y2="378"></line>
+            <line x1="770" y1="322" x2="602" y2="392"></line>
+            <line x1="860" y1="322" x2="860" y2="378"></line>
+            <line x1="840" y1="184" x2="840" y2="248"></line>
+            <polyline points="940,152 1000,152 1000,412 962,412"></polyline>
+            <line x1="130" y1="184" x2="130" y2="248"></line>
+          </g>
+          <text class="t-small" x="326" y="358">puertos</text>
+          <text class="t-small" x="572" y="356">puertos</text>
+          <text class="t-small" x="690" y="349" text-anchor="middle">puertos</text>
+          <text class="t-small" x="868" y="355">API pública</text>
+          <text class="t-small" x="848" y="222">API pública</text>
+          <text class="t-small" x="1008" y="285">API pública</text>
+          <text class="t-small" x="138" y="222">usuario autenticado</text>
+
+          <polyline class="edge-future" points="740,152 600,152 600,248" marker-end="url(#arr2-f)"></polyline>
+          <text class="t-small" x="610" y="205">si hubiera gasto territorial</text>
+
+          <text class="t-small" x="40" y="498">Ningún módulo depende de territory · workspace no depende de ningún dominio · comunicación entre dominios por eventos · ningún módulo toca las tablas de otro</text>
+        </svg>
+      </div>
+      <figcaption>Figura 2. La ausencia que importa: <code>spending</code> no tiene arista hacia <code>geo</code> porque ninguna fuente de gasto lleva territorio (ADR-003). <code>territory</code> solo compondría <code>spending</code> si el Ayuntamiento publicara inversión por junta.</figcaption>
+    </figure>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Módulo</th><th>Fase</th><th>Responsabilidad</th><th>Depende de</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>shared</code></td><td class="num">1</td><td>Tipos de valor comunes y eventos base</td><td>—</td><td><span class="badge">esqueleto</span></td></tr>
+          <tr><td><code>ingestion</code></td><td class="num">1</td><td>Jobs, cliente HTTP con resiliencia, <code>IngestionRun</code>, <code>raw_payload</code>, evento <code>DatasetIngested</code></td><td><code>shared</code></td><td><span class="badge">siguiente sesión</span></td></tr>
+          <tr><td><code>catalog</code></td><td class="num">1</td><td>436 datasets, frescura declarada y observada, histórico, muestreo</td><td><code>ingestion</code>, <code>shared</code></td><td><span class="badge">siguiente sesión</span></td></tr>
+          <tr><td><code>geo</code></td><td class="num">2</td><td>29 juntas y 491 secciones con geometría, padrón por año, <code>locate(point)</code></td><td><code>shared</code></td><td><span class="badge done">pendiente</span></td></tr>
+          <tr><td><code>citizen</code></td><td class="num">2</td><td>Incidencias desde 2013 (~40.000/año, 50 % con punto), tiempo de respuesta en cerradas</td><td><code>ingestion</code>, <code>geo</code>, <code>shared</code></td><td><span class="badge done">pendiente</span></td></tr>
+          <tr><td><code>spending</code></td><td class="num">3</td><td>OCDS (5.720 ocids), presupuesto (140 snapshots), subvenciones; <code>stage</code> planned / committed / executed</td><td><code>ingestion</code>, <code>shared</code></td><td><span class="badge done">pendiente · ADR-003</span></td></tr>
+          <tr><td><code>territory</code></td><td class="num">4</td><td>Ficha por junta: incidencias, población, sociodemografía; sin tablas</td><td><code>citizen</code>, <code>geo</code></td><td><span class="badge done">pendiente</span></td></tr>
+          <tr><td><code>identity</code></td><td class="num">5</td><td>Usuario autenticado por OAuth2 (GitHub, Google); datos mínimos</td><td><code>shared</code></td><td><span class="badge done">pendiente</span></td></tr>
+          <tr><td><code>workspace</code></td><td class="num">5</td><td>Búsquedas y dashboards como definiciones (endpoint + parámetros + layout)</td><td><code>identity</code>, <code>shared</code></td><td><span class="badge done">pendiente</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>3. Dentro de un módulo</h2>
+      <p class="prose">Arquitectura hexagonal estricta, con <code>catalog</code> como ejemplo. El dominio define entidades y puertos y no importa Spring, JPA ni nada de <code>infrastructure</code>; los adaptadores implementan los puertos. Si el JSON municipal cambia, cambia solo el adaptador anti-corrupción.</p>
+    </div>
+    <figure>
+      <div class="fig-scroll">
+        <svg viewBox="0 0 960 440" role="img" aria-label="Dentro del módulo catalog: una superficie pública CatalogApi; el dominio en el centro con entidades y puertos; application encima; infrastructure/web a la izquierda; infrastructure/zaragoza e infrastructure/persistence a la derecha implementando los puertos; fuera del módulo, ingestion entrega payloads al adaptador y PostgreSQL recibe las tablas del módulo.">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+            </marker>
+          </defs>
+
+          <g class="n-frame">
+            <rect x="20" y="20" width="700" height="400" rx="6"></rect>
+          </g>
+          <text class="t-hdr" x="36" y="44">MÓDULO · ES.ZARAGOZA.OBSERVATORY.CATALOG</text>
+
+          <g class="n-sys">
+            <rect x="40" y="56" width="660" height="40" rx="3"></rect>
+          </g>
+          <text class="t-title" x="52" y="81">CatalogApi + eventos publicados</text>
+          <text class="t-small" x="688" y="81" text-anchor="end">única superficie visible para otros módulos (Modulith verify)</text>
+
+          <g class="n-sys">
+            <rect x="260" y="120" width="240" height="52" rx="3"></rect>
+            <text class="t-title" x="272" y="140">application</text>
+            <text class="t-small" x="272" y="158">IngestCatalog · ComputeFreshness</text>
+          </g>
+
+          <g class="n-core">
+            <rect x="260" y="196" width="240" height="118" rx="3"></rect>
+            <text class="t-title" x="272" y="216">domain</text>
+            <text class="t-small" x="272" y="235">Dataset, Distribution</text>
+            <text class="t-small" x="272" y="250">FreshnessSnapshot, FreshnessPolicy</text>
+            <text class="t-small" x="272" y="265">puertos: CatalogSource,</text>
+            <text class="t-small" x="272" y="280">DatasetRepository</text>
+            <text class="t-small" x="272" y="300">sin Spring, JPA ni infrastructure</text>
+          </g>
+
+          <g class="n-sys">
+            <rect x="40" y="196" width="190" height="70" rx="3"></rect>
+            <text class="t-title" x="52" y="216">infrastructure/web</text>
+            <text class="t-small" x="52" y="235">CatalogController</text>
+            <text class="t-small" x="52" y="250">GET /api/v1/catalog/…</text>
+
+            <rect x="520" y="120" width="180" height="84" rx="3"></rect>
+            <text class="t-title" x="532" y="140">infrastructure/zaragoza</text>
+            <text class="t-small" x="532" y="158">anti-corruption layer</text>
+            <text class="t-small" x="532" y="173">CatalogApiAdapter</text>
+            <text class="t-small" x="532" y="188">implementa CatalogSource</text>
+
+            <rect x="520" y="230" width="180" height="84" rx="3"></rect>
+            <text class="t-title" x="532" y="250">persistence (JPA)</text>
+            <text class="t-small" x="532" y="268">JpaDatasetRepository</text>
+            <text class="t-small" x="532" y="283">impl. DatasetRepository</text>
+            <text class="t-small" x="532" y="298">Flyway: db/migration</text>
+          </g>
+
+          <!-- outside the module -->
+          <g class="n-sys">
+            <rect x="760" y="120" width="180" height="84" rx="3"></rect>
+            <text class="t-title" x="772" y="140">módulo ingestion</text>
+            <text class="t-small" x="772" y="158">descriptor → payload crudo</text>
+            <text class="t-small" x="772" y="173">+ IngestionRun</text>
+            <text class="t-small" x="772" y="188">entrega al adaptador →</text>
+          </g>
+          <g class="n-store">
+            <rect x="760" y="230" width="180" height="84" rx="3"></rect>
+            <text class="t-title" x="772" y="250">PostgreSQL + PostGIS</text>
+            <text class="t-mono" x="772" y="268">dataset</text>
+            <text class="t-mono" x="772" y="283">freshness_snapshot</text>
+            <text class="t-small" x="772" y="298">solo este módulo las toca</text>
+          </g>
+
+          <g class="edge" marker-end="url(#arr3)">
+            <line x1="230" y1="215" x2="258" y2="150"></line>
+            <line x1="390" y1="172" x2="390" y2="194"></line>
+            <line x1="760" y1="162" x2="702" y2="162"></line>
+            <line x1="700" y1="272" x2="758" y2="272"></line>
+          </g>
+          <text class="t-small" x="150" y="186">caso de uso</text>
+          <text class="t-small" x="398" y="188">usa</text>
+
+          <g class="edge-impl" marker-end="url(#arr3)">
+            <line x1="520" y1="180" x2="502" y2="222"></line>
+            <line x1="520" y1="272" x2="502" y2="272"></line>
+          </g>
+          <text class="t-small" x="512" y="318" text-anchor="end">implementan puertos del dominio</text>
+
+          <text class="t-small" x="36" y="400">ArchUnit: domain no importa Spring, JPA, application ni infrastructure · application no importa infrastructure</text>
+        </svg>
+      </div>
+      <figcaption>Figura 3. Las flechas continuas son llamadas; las discontinuas, implementación de un puerto. Las dependencias apuntan hacia el dominio, nunca desde él. <code>ingestion</code> y la base de datos quedan fuera del módulo: uno entrega payloads crudos, la otra recibe solo las tablas de <code>catalog</code>.</figcaption>
+    </figure>
+    <ul class="rules">
+      <li><strong>Trazabilidad:</strong> cada registro conserva <code>sourceDataset</code> e <code>ingestedAt</code>; la API los devuelve siempre.</li>
+      <li><strong>Sin conclusiones:</strong> ninguna etiqueta interpretativa ni indicador compuesto sin ADR; los umbrales de frescura son configurables y visibles.</li>
+      <li><strong>Sesgos explícitos:</strong> toda agregación territorial devuelve el denominador de población, el número de incidencias sin asignar y <code>caveats</code>.</li>
+      <li><strong>El backend decide qué datos y en qué orden; el frontend decide cómo se ven.</strong></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>4. Fuentes verificadas</h2>
+      <p class="prose">Lo que entra por la izquierda de la figura 1, con los números medidos en los spikes del 5 de septiembre de 2026. Ningún endpoint de esta tabla está escrito de memoria.</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Fuente</th><th>Endpoint</th><th>Volumen</th><th>Territorio</th><th>Estrategia incremental</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Catálogo de datasets</td><td><span class="mono">web/espacio-de-datos/servicio/catalogo.json</span></td><td class="num">436 datasets · rows ≤ 500</td><td>—</td><td>Recarga diaria; <code>Last-Modified</code> solo informativo</td></tr>
+          <tr><td>Quejas y sugerencias</td><td><span class="mono">sede/servicio/quejas-sugerencias/list.json</span></td><td class="num">50.000–100.000 desde 2013</td><td>punto 50 % · junta 40 %</td><td>FIQL <code>requested_datetime</code> por ventanas</td></tr>
+          <tr><td>Open311 (contraste)</td><td><span class="mono">api/recurso/open311/requests.json</span></td><td class="num">desde 2017</td><td>lat/long 44 %</td><td><code>ETag</code> / 304</td></tr>
+          <tr><td>Juntas y padrón</td><td><span class="mono">sede/servicio/distrito.json?srsname=wgs84</span></td><td class="num">29 polígonos · padrón anual</td><td>sí</td><td>Recarga completa</td></tr>
+          <tr><td>Contratación OCDS</td><td><span class="mono">sede/servicio/contratacion-publica/ocds/contracting-process.json</span></td><td class="num">5.720 ocids · 42 % sin release</td><td>no</td><td>Unión de listados; reintentos de 404</td></tr>
+          <tr><td>Presupuesto</td><td><span class="mono">sede/servicio/presupuesto/gasto-corriente.json</span></td><td class="num">1.251 partidas × 140 snapshots</td><td>no</td><td>Por fecha de snapshot (<code>yyyyMMdd</code>)</td></tr>
+          <tr><td>Subvenciones</td><td><span class="mono">sede/servicio/ayuda-subvencion.json</span></td><td class="num">paginación page/pageSize</td><td>no</td><td>Recarga</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Fase 0 cerrada el 2026-09-05. Siguiente: fase 1, módulos <code>ingestion</code> y <code>catalog</code>. Fuente de verdad: <code>SPEC.md</code> v0.4, <code>docs/decisions/</code>, <code>docs/spikes/</code>.</footer>
+</div>
+</body>
+</html>

@@ -79,7 +79,8 @@ SPEC.md                         especificación viva (v0.4, ADR-000)
 CLAUDE.md                       reglas de trabajo y contexto operativo
 README.md                       presentación breve y enlaces
 docs/ESTADO.md                  este documento
-docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal); versión visual publicada:
+docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal)
+docs/arquitectura.html          la misma arquitectura como página HTML autónoma (SVG); publicada en:
                                 https://claude.ai/code/artifact/b85ed54d-61c1-4133-b6e3-abb5e0743acd
 docs/decisions/                 ADR-000..003
 docs/spikes/                    informes S0.1..S0.6, matriz CSV, índice con conclusiones
