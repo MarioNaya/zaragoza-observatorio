@@ -9,7 +9,7 @@
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
 | Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.5; ADR-001..004 |
-| Fase 1: `ingestion` + `catalog` | **Hecho en lo esencial** (2026-09-06) | Rama `feat/fase1-ingestion-catalog` (7 commits sobre `main`, subida a GitHub); `.\mvnw.cmd verify` en verde (75 tests: unitarios, adaptadores sobre fixtures reales, integración con Testcontainers, calidad de datos); monitor probado contra la API municipal real (ver §5) |
+| Fase 1: `ingestion` + `catalog` | **Hecho en lo esencial** (2026-09-06) | Rama `feat/fase1-ingestion-catalog` integrada en `main` (fast-forward) y subida a GitHub; `.\mvnw.cmd verify` en verde (75 tests: unitarios, adaptadores sobre fixtures reales, integración con Testcontainers, calidad de datos); monitor probado contra la API municipal real (ver §5) |
 | Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures de quejas redactados, cabeceras sin cookies, historial reescrito con `git filter-repo` y ramas subidas con `--force`; regla 22 (S0.3 adenda) |
 | Fase 1: eje *observado* de la frescura, cruce con el Swagger, `federated` | **Pendiente** | Requiere el spike S1.1 (§4) |
 | Fases 2–5 | Pendientes | `geo`, `citizen`, `spending`, `territory`, frontend, `identity`, `workspace` |
@@ -39,7 +39,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~2 min); debe estar en verde antes de tocar nada.
 4. Leer `CLAUDE.md` (reglas 1–22) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
-5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. **La rama `feat/fase1-ingestion-catalog` está pendiente de integrar en `main`** (`git checkout main; git merge --ff-only feat/fase1-ingestion-catalog; git push`). La siguiente sesión empieza en `main` ya integrada y abre `feat/s11-frescura-observada` (o el nombre que toque).
+5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` contiene ya la fase 1 (integrada el 2026-09-06); la siguiente sesión parte de `main` y abre `feat/s11-frescura-observada` (o el nombre que toque). La rama `feat/fase1-ingestion-catalog` puede borrarse en local y en GitHub cuando se quiera.
 
 Al cerrar una sesión: `.\mvnw.cmd verify` en verde; actualizar este documento (§1, §4, §6), `SPEC.md` si cambió el modelo o el alcance, y los informes de spikes; pasar la comprobación de datos personales de la regla 22 (`git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures`) y de secretos antes de `git push`; commits descriptivos y push de la rama.
 
@@ -91,7 +91,7 @@ Con API 69, abiertos 276, explorables 110, con geo 317. Ficha más reciente por 
 
 - **Alta como reutilizador en el portal municipal** (SPEC.md §2.2): sigue pendiente. No bloquea nada (toda la API es GET público sin clave), pero conviene hacerlo antes de desplegar, registrar las URL consumidas (catálogo, y en fase 2 quejas y distritos) y aprovechar para pedir inversión por junta y presupuestos participativos como datos abiertos.
 - **Avisar al ayuntamiento** (Gobierno Abierto, `gobiernoabierto@zaragoza.es`, o su delegado de protección de datos) de que el texto libre de quejas y sugerencias sale por la API sin anonimizar (nombre y DNI de una ciudadana en una descripción, 2026-09-06; S0.3 adenda). El repositorio se limpió ese día con `git filter-repo` y se volvió a subir con historial reescrito.
-- Integrar `feat/fase1-ingestion-catalog` en `main` (fast-forward, o con un pull request en GitHub). El remoto existe desde el 2026-09-06: `origin` = <https://github.com/MarioNaya/zaragoza-observatorio> (`main` y la rama de fase 1 subidas).
+- Remoto: `origin` = <https://github.com/MarioNaya/zaragoza-observatorio> desde el 2026-09-06; `main` integra la fase 1. Pendiente solo decidir si se borra la rama `feat/fase1-ingestion-catalog`.
 - Si se quiere usar el 8080, parar el contenedor phpMyAdmin que lo ocupa.
 
 ## 7. Dudas abiertas
