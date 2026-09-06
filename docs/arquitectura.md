@@ -9,7 +9,7 @@ flowchart LR
   subgraph AYTO["Fuentes municipales · www.zaragoza.es"]
     direction TB
     CAT["Catálogo de datasets<br/>web/espacio-de-datos/…/catalogo.json<br/>436 datasets · rows ≤ 500"]
-    SWG["Swagger de la API<br/>sede/servicio/catalogo/api.json<br/>496 endpoints"]
+    SWG["Swagger de la API<br/>sede/servicio/catalogo/api.json<br/>497 operaciones · 84 tags · documento único (S1.2)"]
     QYS["Quejas y sugerencias<br/>sede/…/quejas-sugerencias/list.json (+ Open311)<br/>~40.000/año · 50 % con punto"]
     DIS["Juntas y padrón<br/>sede/servicio/distrito*.json<br/>29 polígonos · indicadores por año"]
     OCDS["Contratación OCDS<br/>…/ocds/contracting-process.json<br/>5.720 ocids · sin localización"]
@@ -27,7 +27,7 @@ flowchart LR
 
   subgraph ACL["Adaptadores anti-corrupción (por módulo)"]
     direction TB
-    A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado)<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
+    A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>api.json → ApiEndpoint (SwaggerJsonTranslator · ApiInventoryIngestionJob, S1.2)<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado)<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
     A_CIT["citizen<br/>list.json → ServiceRequest<br/>geometry → punto WGS84"]
     A_GEO["geo<br/>distrito → District<br/>indicadores → PopulationRecord"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
@@ -35,7 +35,7 @@ flowchart LR
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
     direction TB
-    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado)"]
+    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger)"]
     T_CIT["citizen: service_request (point 4326)"]
     T_GEO["geo: district, census_section,<br/>population_record"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
@@ -57,7 +57,7 @@ flowchart LR
   API -- "JSON" --> CONS
 ```
 
-Flujo de una ingesta (SPEC.md §4.5, implementado en fase 1): (1) el scheduler recorre los beans `IngestionJob` que declara cada módulo y ejecuta los vencidos según su `interval()`; (2) `RunIngestion` abre un `IngestionRun` y pide páginas a `ZaragozaHttpClient` con la estrategia del `SourceDescriptor` (`OFFSET` por `start` hasta agotar `totalCount` o recibir página corta; `NONE` una sola petición; `If-Modified-Since` no sirve, S0.5); (3) cada página se guarda en `raw_payload` y se entrega al `handle()` del job; (4) el job traduce con su adaptador anti-corrupción y persiste con upsert idempotente por identificador de origen; (5) el cierre del run y la publicación de `DatasetIngested` van en una sola transacción (`CompleteIngestionRun`), y Modulith registra el evento en `event_publication`; (6) `catalog` escucha `DatasetIngested` con `@ApplicationModuleListener` y, tras cada ingesta del catálogo, toma la instantánea diaria de frescura de todas las fichas.
+Flujo de una ingesta (SPEC.md §4.5, implementado en fase 1): (1) el scheduler recorre los beans `IngestionJob` que declara cada módulo y ejecuta los vencidos según su `interval()`; (2) `RunIngestion` abre un `IngestionRun` y pide páginas a `ZaragozaHttpClient` con la estrategia del `SourceDescriptor` (`OFFSET` por `start` hasta agotar `totalCount` o recibir página corta; `NONE` una sola petición; `DOCUMENT` un documento único sin parámetros de paginación, el Swagger de la API, S1.2; `If-Modified-Since` no sirve, S0.5); (3) cada página se guarda en `raw_payload` y se entrega al `handle()` del job; (4) el job traduce con su adaptador anti-corrupción y persiste con upsert idempotente por identificador de origen; (5) el cierre del run y la publicación de `DatasetIngested` van en una sola transacción (`CompleteIngestionRun`), y Modulith registra el evento en `event_publication`; (6) `catalog` escucha `DatasetIngested` con `@ApplicationModuleListener` y, tras cada ingesta del catálogo, toma la instantánea diaria de frescura de todas las fichas.
 
 ## 2. Módulos Modulith y dependencias permitidas
 
@@ -71,7 +71,7 @@ flowchart TB
     TER["territory<br/>ficha por junta · sin tablas<br/>compone citizen + geo"]
   end
   subgraph DOM["dominios"]
-    CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation"]
+    CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint"]
     CIT["citizen (fase 2)<br/>ServiceRequest, Category"]
     SPE["spending (fase 3)<br/>OCDS, presupuesto, subvenciones<br/>sin dependencia de geo (ADR-003)"]
   end
@@ -100,13 +100,13 @@ Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún m
 flowchart LR
   subgraph MOD["es.zaragoza.observatory.catalog"]
     direction TB
-    APIP["paquete raíz: CatalogSources (CATALOG)<br/>única superficie visible para otros módulos"]
+    APIP["paquete raíz: CatalogSources (CATALOG, API_INVENTORY)<br/>única superficie visible para otros módulos"]
     subgraph HEX[" "]
       direction LR
-      WEB["infrastructure/web<br/>CatalogController + CatalogDtos + Caveats<br/>GET /api/v1/catalog/datasets · /{id} · /{id}/freshness-history · /summary"]
+      WEB["infrastructure/web<br/>CatalogController + ApiInventoryController + CatalogDtos + Caveats + Sorting<br/>GET /api/v1/catalog/datasets · /{id} · /{id}/freshness-history · /summary · /api-tags · /api-endpoints"]
       APP["application<br/>RegisterDatasets · TakeFreshnessSnapshots<br/>ObserveDatasets · RecordObservation<br/>@Transactional"]
       DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>Observation, ObservationMethod<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel, DistributionObserver<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
-      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset<br/>CatalogIngestionJob implementa IngestionJob<br/>DistributionHttpObserver + ObservationUrls implementan DistributionObserver<br/>(RestClient común de la aplicación; scheduling/CatalogObservationScheduler)"]
+      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset · CatalogIngestionJob<br/>SwaggerJsonTranslator: Swagger 2.0 → ApiEndpoint · ApiInventoryIngestionJob (S1.2)<br/>DistributionHttpObserver + ObservationUrls implementan DistributionObserver<br/>(RestClient común de la aplicación; scheduling/CatalogObservationScheduler)"]
       EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)"]
       PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004, V005"]
       WEB -- "puerto de lectura" --> DOMN
