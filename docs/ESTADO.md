@@ -40,7 +40,7 @@ Conclusiones que condicionan todo lo demás (siguen vigentes):
 | [ADR-005](decisions/ADR-005-eje-observado.md) | Eje observado: cuatro métodos (`FILE_HEADERS`, `API_MAX_DATE`, `API_COUNT`, `WFS_HITS`) más `NOT_OBSERVABLE`, lista blanca de campos de fecha, orden API → ficheros → WFS, muestreo diario por lotes sin `IngestionJob`, sin categoría observada; `RestClient` único de la aplicación |
 | [ADR-006](decisions/ADR-006-inventario-api.md) | Inventario de endpoints: el Swagger se ingiere como documento único (`DOCUMENT`, sin `rows`/`start`) y se sincroniza entero en `catalog_api_endpoint`; cruce por `apiTag` al leer, sin tabla de enlace; la observación solo usa `<declarado>/list` |
 | [ADR-007](decisions/ADR-007-federacion.md) | Federación: datos.gob.es paginado por número (`_page`/`_pageSize` ≤ 200, `RESULT_ITEMS`), tabla propia `catalog_federated_dataset` con upsert por página y baja de lo no visto al completar la ingesta (evento); `federated` resuelto al leer por `sourceId`; los 108 federados sin ficha se conservan; las partes de series no se ingieren hasta spike y ADR |
-| [ADR-008](decisions/ADR-008-despliegue.md) | Despliegue: imagen propia (`Dockerfile` de la raíz, JRE 21 no root, capas de Boot; los tests no corren en el builder) sobre Railway con la plantilla PostGIS `postgis/postgis:17-3.5` y volumen persistente; conexión por variables `PG*` sin valor por defecto; una sola réplica (sin ShedLock); en `prod` actuator solo `health`/`info` (**sin `modulith`**) y springdoc visible; sin `railway.json` (Config as Code deprecado) |
+| [ADR-008](decisions/ADR-008-despliegue.md) | Despliegue: imagen propia (`Dockerfile` de la raíz, JRE 21 no root, capas de Boot; los tests no corren en el builder) sobre Railway con la imagen PostGIS `postgis/postgis:17-3.5`; conexión por variables `PG*` sin valor por defecto; una sola réplica (sin ShedLock); en `prod` actuator solo `health`/`info` (**sin `modulith`**) y springdoc visible; infraestructura declarada en `.railway/railway.ts` (IaC, sin secretos), no en el panel ni en el deprecado `railway.json` |
 
 Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local y el repositorio remoto se llaman `zaragoza-observatorio` (<https://github.com/MarioNaya/zaragoza-observatorio>); no importa para el build.
 
@@ -122,7 +122,9 @@ SPEC.md                         especificación viva (v0.9, ADR-000)
 CLAUDE.md                       reglas de trabajo (1–26) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
-docs/despliegue.md              runbook de despliegue en Railway (pasos, variables, comprobaciones)
+docs/despliegue.md              runbook de despliegue en Railway (IaC, variables, comprobaciones)
+.railway/railway.ts             infraestructura en código: base de datos PostGIS y servicio de la app (ADR-008)
+package.json, package-lock.json  única dependencia: el SDK `railway` que importa .railway/railway.ts
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)
 docs/arquitectura.html          página HTML autónoma de la fase 0 (nombres previos a la implementación)
 docs/decisions/                 ADR-000..008

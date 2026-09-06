@@ -22,17 +22,40 @@ docker compose -f compose.prod.yaml down -v
 
 `compose.prod.yaml` usa nombre de proyecto propio y base de datos efímera: no toca el Postgres de desarrollo ni su volumen. Conviene pararlo antes de dos minutos desde el arranque, cuando empieza el muestreo observado, para no cargar la API municipal sin necesidad.
 
-## 2. Base de datos
+## 2. La infraestructura, en código
 
-En el proyecto de Railway, añadir un servicio desde la **plantilla PostGIS** (`postgis/postgis:17-3.5`, la misma imagen que usan `compose.yaml` y los tests) — **no** el PostgreSQL por defecto, que no trae la extensión.
+Los dos servicios están declarados en [`.railway/railway.ts`](../.railway/railway.ts): la base de datos con la imagen PostGIS y la aplicación desde el repositorio, con sus cinco variables como referencias, el healthcheck y la réplica única. No hay secretos en ese fichero (ADR-008 §8).
 
-Darle un **volumen persistente**. La serie histórica de instantáneas de frescura no se puede rehacer: es el producto.
+Requisitos: CLI de Railway (`npm install -g @railway/cli`), sesión iniciada (`railway login`) y el SDK del repositorio (`npm ci` en la raíz).
 
-Anotar el nombre exacto que Railway le da al servicio (`Postgres`, `PostGIS`…): hace falta literalmente en el paso siguiente.
+```powershell
+# En Windows, el SDK comprueba la versión de la CLI de una forma que no funciona con el .cmd:
+# hay que apuntar esta variable al binario nativo o fallará con un engañoso "requires CLI 5.42.1".
+$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"
 
-## 3. Aplicación
+railway link                    # vincular el directorio al proyecto (solo la primera vez)
+railway config plan --verbose   # previsualiza; no toca nada
+railway config apply            # aplica tras confirmar
+```
 
-Servicio nuevo desde el repositorio de GitHub (`MarioNaya/zaragoza-observatorio`, rama `main`). Railway detecta solo el `Dockerfile` de la raíz; no hay que elegir builder.
+`plan` redacta los valores de las variables, así que se puede pegar en cualquier sitio. **Nunca usar `railway config pull --include-variables`**: descifra los secretos y los escribe en el fichero.
+
+Dos cosas que conviene tener presentes:
+
+- **En IaC, lo que no está en el fichero se borra.** Un servicio nuevo se añade ahí, no por el panel.
+- **El volumen de la base de datos lo aprovisiona Railway** con sus valores por defecto; que el plan muestre `volumeAttachments: null` es lo normal, no una base de datos efímera.
+
+Tras el primer `apply`, el dominio público:
+
+```powershell
+railway domain --service observatorio
+```
+
+## 3. Alternativa manual, por el panel
+
+Si no hay CLI. En el proyecto de Railway, añadir un servicio desde la **plantilla PostGIS** (`postgis/postgis:17-3.5`, la misma imagen que usan `compose.yaml` y los tests) — **no** el PostgreSQL por defecto, que no trae la extensión — con **volumen persistente**: la serie histórica de instantáneas no se puede rehacer.
+
+Después, un servicio desde el repositorio de GitHub (`MarioNaya/zaragoza-observatorio`, rama `main`). Railway detecta solo el `Dockerfile` de la raíz; no hay que elegir builder.
 
 **Variables** del servicio de la aplicación (sustituir `Postgres` por el nombre real del servicio de base de datos):
 
@@ -86,7 +109,7 @@ Todas salen con el `User-Agent` de `zaragoza.http.user-agent`, que identifica el
 
 ## 6. Notas
 
-- **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso no hay ningún fichero de configuración de Railway en el repositorio y estos ajustes se hacen en el panel. Si se instala la CLI, la vía soportada es Infrastructure as Code (`.railway/railway.ts`).
+- **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso el repositorio no lleva ninguno y la infraestructura se declara en `.railway/railway.ts`, que es su sustituto soportado (§2).
 - **Migraciones**: Flyway corre al arrancar y `ddl-auto=validate` comprueba que las entidades casan. Un despliegue con una entidad nueva sin su migración falla al arrancar, no en caliente (ADR-004).
 - **Redespliegues**: `server.shutdown=graceful`, así que una ingesta en curso termina antes de cerrar. Las publicaciones de eventos incompletas se reintentan al arrancar (`republish-outstanding-events-on-restart`, ADR-004).
 - **Zona horaria**: el contenedor va en `Europe/Madrid`. No afecta a los datos (el dominio usa `Clock.systemUTC()` y `ZaragozaTime` explícito), solo al cron de purga y a la lectura de los logs.
