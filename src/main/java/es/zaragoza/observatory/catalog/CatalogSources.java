@@ -9,6 +9,9 @@ public final class CatalogSources {
 	/** El catálogo de datasets del espacio de datos: {@code web/espacio-de-datos/servicio/catalogo.json}. */
 	public static final DatasetRef CATALOG = DatasetRef.of(Sources.DATA_SPACE, "catalogo");
 
+	/** El Swagger 2.0 de la API municipal, inventario de endpoints: {@code sede/servicio/catalogo/api.json} (S1.2). */
+	public static final DatasetRef API_INVENTORY = DatasetRef.of(Sources.SEDE, "catalogo/api");
+
 	private CatalogSources() {
 	}
 

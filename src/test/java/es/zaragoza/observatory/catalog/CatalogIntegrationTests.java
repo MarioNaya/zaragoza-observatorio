@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.time.Duration;
@@ -26,6 +27,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import es.zaragoza.observatory.TestcontainersConfiguration;
+import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
@@ -36,6 +38,8 @@ import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionJob;
 import es.zaragoza.observatory.ingestion.IngestionRunSummary;
 import es.zaragoza.observatory.ingestion.RunStatus;
+import es.zaragoza.observatory.ingestion.SourceDescriptor.ResponseShape;
+import es.zaragoza.observatory.shared.DatasetRef;
 import es.zaragoza.observatory.support.Fixtures;
 
 /**
@@ -52,6 +56,7 @@ import es.zaragoza.observatory.support.Fixtures;
 class CatalogIntegrationTests {
 
 	static final String CATALOG_URL = "https://www.zaragoza.es/web/espacio-de-datos/servicio/catalogo.json";
+	static final String SWAGGER_URL = "https://www.zaragoza.es/sede/servicio/catalogo/api.json";
 	static final MediaType JSON_UTF8 = MediaType.parseMediaType("application/json;charset=UTF-8");
 
 	@Autowired
@@ -62,6 +67,9 @@ class CatalogIntegrationTests {
 
 	@Autowired
 	DatasetRepository datasets;
+
+	@Autowired
+	ApiEndpointRepository endpoints;
 
 	@Autowired
 	FreshnessSnapshotRepository snapshots;
@@ -129,6 +137,26 @@ class CatalogIntegrationTests {
 		assertThat(arteAgain.distributions()).hasSize(1);
 		assertThat(ingestion.history(CatalogSources.CATALOG, 10)).hasSize(2);
 
+		// --- inventario de endpoints (S1.2): el Swagger como documento único, sincronizado entero -----------------
+		server.reset();
+		IngestionJob inventoryJob = job(CatalogSources.API_INVENTORY);
+		assertThat(inventoryJob.source().shape()).isEqualTo(ResponseShape.DOCUMENT);
+		assertThat(inventoryJob.interval()).isEqualTo(Duration.ofDays(1));
+		expectSwagger();
+		IngestionRunSummary inventoryRun = ingestion.run(inventoryJob);
+		server.verify();
+		assertThat(inventoryRun.status()).isEqualTo(RunStatus.SUCCEEDED);
+		assertThat(inventoryRun.records()).isEqualTo(1);
+		assertThat(endpoints.count()).isEqualTo(497);
+		assertThat(endpoints.findByTag("Cultura: Arte en la via publica")).hasSize(10);
+		server.reset();
+		expectSwagger();
+		assertThat(ingestion.run(inventoryJob).status()).isEqualTo(RunStatus.SUCCEEDED);
+		server.verify();
+		assertThat(endpoints.count()).isEqualTo(497);
+		assertThat(jdbc.sql("select count(*) from catalog_api_endpoint where first_seen_at < last_seen_at")
+				.query(Long.class).single()).isEqualTo(497L);
+
 		// --- eje observado (S1.1): tres fichas reales con las respuestas grabadas por el spike ---------------------
 		server.reset();
 		String incidencia = "https://www.zaragoza.es/sede/servicio/via-publica/incidencia.json?rows=1&srsname=wgs84";
@@ -145,10 +173,26 @@ class CatalogIntegrationTests {
 				.andRespond(withSuccess().headers(Fixtures.headers("catalog/observation/head-ods-216-856.headers")));
 		server.expect(requestTo("https://idezar-sig.zaragoza.es/servicios/geoserver/urbanismo/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=Vias&resultType=hits"))
 				.andRespond(withSuccess(Fixtures.bytes("catalog/observation/wfs-hits-Vias.xml"), MediaType.APPLICATION_XML));
+		// S1.2: «Censo de Asociaciones» (132) declara un índice que redirige; el Swagger documenta asociacion/list
+		String asociacionList = "https://www.zaragoza.es/sede/servicio/asociacion/list.json?rows=1";
+		server.expect(requestTo("https://www.zaragoza.es/sede/servicio/asociacion.json?rows=1"))
+				.andRespond(withStatus(HttpStatus.SEE_OTHER).header(HttpHeaders.LOCATION,
+						"https://www.zaragoza.es/sede/servicio/asociacion/;jsessionid=iU93lJeq7"));
+		server.expect(requestTo(asociacionList)).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-asociacion-list-rows1.json"), JSON_UTF8));
+		server.expect(requestTo(asociacionList + "&sort=creationDate+desc")).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-asociacion-list-rows1.json"), JSON_UTF8));
 		observeDatasets.observe(datasets.findBySourceId(67).orElseThrow());
 		observeDatasets.observe(datasets.findBySourceId(216).orElseThrow());
 		observeDatasets.observe(datasets.findBySourceId(22).orElseThrow());
+		observeDatasets.observe(datasets.findBySourceId(132).orElseThrow());
 		server.verify();
+		assertThat(snapshots.latest(132)).get().satisfies(s -> {
+			assertThat(s.observationMethod()).isEqualTo(ObservationMethod.API_MAX_DATE);
+			assertThat(s.observedUrl()).isEqualTo(asociacionList + "&sort=creationDate+desc");
+			assertThat(s.observedRecords()).isEqualTo(2823);
+			assertThat(s.observationDetail()).isEqualTo("creationDate");
+		});
 		assertThat(snapshots.latest(67)).get().satisfies(s -> {
 			assertThat(s.declared()).isEqualTo(DeclaredFreshness.NOT_EVALUABLE); // P0DT1S
 			assertThat(s.observationMethod()).isEqualTo(ObservationMethod.API_MAX_DATE);
@@ -164,9 +208,9 @@ class CatalogIntegrationTests {
 			assertThat(s.observedRecords()).isEqualTo(3359);
 		});
 		assertThat(jdbc.sql("select count(*) from catalog_dataset where observed_at is not null").query(Long.class)
-				.single()).isEqualTo(3L);
+				.single()).isEqualTo(4L);
 		assertThat(datasets.findDueForObservation(java.time.Instant.now().minusSeconds(60), 1000))
-				.extracting(Dataset::sourceId).doesNotContain(67, 216, 22).hasSize(433);
+				.extracting(Dataset::sourceId).doesNotContain(67, 216, 22, 132).hasSize(432);
 
 		// --- API REST: listado ordenado y paginado con origen, fecha de ingesta y caveats -----------------------
 		var listing = assertThat(
@@ -209,11 +253,57 @@ class CatalogIntegrationTests {
 		observedDetail.extractingPath("$.item.latestSnapshot.observedUrl").asString().contains("sort=lastUpdated");
 
 		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("observation", "API_MAX_DATE").param("size", "5"))
-				.hasStatusOk().bodyJson().extractingPath("$.items[*].id").asArray().containsExactly(67);
+				.hasStatusOk().bodyJson().extractingPath("$.items[*].id").asArray().containsExactlyInAnyOrder(67, 132);
 		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("sort", "observedLastChange,desc").param("size", "2"))
 				.hasStatusOk().bodyJson().extractingPath("$.items[0].id").isEqualTo(67);
 		detail.extractingPath("$.item.distributions[0].mediaType").isEqualTo("application/api");
 		detail.extractingPath("$.item.apiTag").isEqualTo("Cultura: Arte en la via publica");
+
+		// --- cruce con el Swagger (S1.2): endpoints documentados bajo el tag de la ficha, tags e inventario ------
+		detail.extractingPath("$.item.apiEndpoints.source.dataset").isEqualTo("sede:catalogo/api");
+		detail.extractingPath("$.item.apiEndpoints.source.url").isEqualTo(SWAGGER_URL);
+		detail.extractingPath("$.item.apiEndpoints.ingestedAt").asString().isNotEmpty();
+		detail.extractingPath("$.item.apiEndpoints.tagDocumented").isEqualTo(true);
+		detail.extractingPath("$.item.apiEndpoints.items").asArray().hasSize(10);
+		detail.extractingPath("$.item.apiEndpoints.items[*].path").asArray().contains("/servicio/arte-publico",
+				"/servicio/arte-publico/barrio");
+		detail.extractingPath("$.item.apiEndpoints.items[?(@.path=='/servicio/arte-publico')].url").asArray()
+				.containsExactly("https://www.zaragoza.es/sede/servicio/arte-publico");
+		var wifi = assertThat(mvc.get().uri("/api/v1/catalog/datasets/79")).hasStatusOk().bodyJson();
+		wifi.extractingPath("$.item.apiTag").isEqualTo("Equipamientos y movilidad: Puntos wifi");
+		wifi.extractingPath("$.item.apiEndpoints.tagDocumented").isEqualTo(false);
+		wifi.extractingPath("$.item.apiEndpoints.items").asArray().isEmpty();
+		var boletin = assertThat(mvc.get().uri("/api/v1/catalog/datasets/216")).hasStatusOk().bodyJson();
+		boletin.extractingPath("$.item.apiTag").isNull();
+		boletin.extractingPath("$.item.apiEndpoints.tagDocumented").isNull();
+
+		var tags = assertThat(mvc.get().uri("/api/v1/catalog/api-tags")).hasStatusOk().bodyJson();
+		tags.extractingPath("$.source.dataset").isEqualTo("sede:catalogo/api");
+		tags.extractingPath("$.sort").isEqualTo("tag,asc");
+		tags.extractingPath("$.caveats").asArray().isNotEmpty();
+		tags.extractingPath("$.items").asArray().hasSize(84 + 8); // tags del Swagger + tags declarados sin documentar
+		tags.extractingPath("$.items[?(@.tag=='Ayuntamiento: Contratación pública OCDS')].endpoints").asArray()
+				.containsExactly(23);
+		tags.extractingPath("$.items[?(@.tag=='Ayuntamiento: Contratación pública OCDS')].datasets[*]").asArray()
+				.isEmpty();
+		tags.extractingPath("$.items[?(@.tag=='Equipamientos y movilidad: Puntos wifi')].endpoints").asArray()
+				.containsExactly(0);
+		tags.extractingPath("$.items[?(@.tag=='Equipamientos y movilidad: Puntos wifi')].datasets[*].id").asArray()
+				.containsExactly(79);
+		tags.extractingPath("$.items[?(@.tag=='Ayuntamiento: Presupuestos')].datasets[*].id").asArray()
+				.containsExactly(336, 2200, 2201);
+
+		var inventory = assertThat(mvc.get().uri("/api/v1/catalog/api-endpoints").param("tag", "Urbanismo: Clavos Topograficos"))
+				.hasStatusOk().bodyJson();
+		inventory.extractingPath("$.page.totalElements").isEqualTo(2);
+		inventory.extractingPath("$.page.sort").isEqualTo("document,asc");
+		inventory.extractingPath("$.items[*].path").asArray()
+				.containsExactlyInAnyOrder("/servicio/clavo-topografico/list", "/servicio/clavo-topografico/{id}");
+		assertThat(mvc.get().uri("/api/v1/catalog/api-endpoints").param("templated", "false").param("size", "1"))
+				.hasStatusOk().bodyJson().extractingPath("$.page.totalElements").isEqualTo(497 - 208);
+		assertThat(mvc.get().uri("/api/v1/catalog/api-endpoints").param("q", "clavos").param("sort", "path,desc"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[0].summary").isEqualTo("Listado de clavos");
+		assertThat(mvc.get().uri("/api/v1/catalog/api-endpoints").param("sort", "foo")).hasStatus(HttpStatus.BAD_REQUEST);
 
 		var history = assertThat(mvc.get().uri("/api/v1/catalog/datasets/13/freshness-history")).hasStatusOk()
 				.bodyJson();
@@ -233,11 +323,17 @@ class CatalogIntegrationTests {
 				map.values().stream().mapToLong(v -> ((Number) v).longValue()).sum()).isEqualTo(436));
 		summary.extractingPath("$.byDeclaredFreshness.NOT_EVALUABLE").isEqualTo((int) notEvaluable);
 		summary.extractingPath("$.latestSnapshotOn").asString().isNotEmpty();
-		summary.extractingPath("$.byObservationMethod.API_MAX_DATE").isEqualTo(1);
+		summary.extractingPath("$.byObservationMethod.API_MAX_DATE").isEqualTo(2);
 		summary.extractingPath("$.byObservationMethod.FILE_HEADERS").isEqualTo(1);
 		summary.extractingPath("$.byObservationMethod.WFS_HITS").isEqualTo(1);
 		summary.extractingPath("$.byObservationMethod.NOT_OBSERVABLE").isEqualTo(0);
-		summary.extractingPath("$.withoutObservation").isEqualTo(433);
+		summary.extractingPath("$.withoutObservation").isEqualTo(432);
+		summary.extractingPath("$.apiInventory.endpoints").isEqualTo(497);
+		summary.extractingPath("$.apiInventory.tags").isEqualTo(84);
+		summary.extractingPath("$.apiInventory.datasetsWithTag").isEqualTo(68);
+		summary.extractingPath("$.apiInventory.datasetsWithDocumentedTag").isEqualTo(60);
+		summary.extractingPath("$.apiInventory.tagsWithoutDataset").isEqualTo(28);
+		summary.extractingPath("$.apiInventory.ingestedAt").asString().isNotEmpty();
 	}
 
 	@Test
@@ -246,7 +342,7 @@ class CatalogIntegrationTests {
 		api.extractingPath("$.info.title").isEqualTo("Observatorio de Datos Abiertos de Zaragoza");
 		api.extractingPath("$.paths").asMap().containsKeys("/api/v1/catalog/datasets",
 				"/api/v1/catalog/datasets/{id}", "/api/v1/catalog/datasets/{id}/freshness-history",
-				"/api/v1/catalog/summary");
+				"/api/v1/catalog/summary", "/api/v1/catalog/api-tags", "/api/v1/catalog/api-endpoints");
 	}
 
 	@Test
@@ -268,8 +364,17 @@ class CatalogIntegrationTests {
 	}
 
 	private IngestionJob catalogJob() {
-		return jobs.stream().filter(j -> j.source().dataset().equals(CatalogSources.CATALOG)).findFirst()
-				.orElseThrow();
+		return job(CatalogSources.CATALOG);
+	}
+
+	private IngestionJob job(DatasetRef dataset) {
+		return jobs.stream().filter(j -> j.source().dataset().equals(dataset)).findFirst().orElseThrow();
+	}
+
+	private void expectSwagger() {
+		// sin rows ni start (DOCUMENT); la fuente no publica Last-Modified ni ETag (S1.2)
+		server.expect(requestTo(SWAGGER_URL)).andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/swagger-api.json"), JSON_UTF8));
 	}
 
 	private void expectCatalogPage() {

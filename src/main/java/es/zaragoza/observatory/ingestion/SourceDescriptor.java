@@ -17,7 +17,9 @@ import es.zaragoza.observatory.shared.Sources;
  * <li>la URL lleva siempre extensión {@code .json} o {@code .geojson}; nunca se depende de {@code Accept};</li>
  * <li>en la sede y en el espacio de datos {@code rows} tiene tope 500;</li>
  * <li>la paginación por {@code start} solo se usa donde funciona ({@code OFFSET}); OCDS ignora {@code start} y se
- * trae en una petición ({@code NONE}).</li>
+ * trae en una petición ({@code NONE});</li>
+ * <li>un documento único ({@code DOCUMENT}, como el Swagger de la API) se trae en una petición sin parámetros de
+ * paginación (S1.2).</li>
  * </ul>
  *
  * @param dataset referencia estable del dataset
@@ -49,7 +51,15 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 			throw new IllegalArgumentException(
 					"rows must be <= " + SEDE_MAX_ROWS + " for source " + dataset.source() + " (S0.5)");
 		}
+		if (shape == ResponseShape.DOCUMENT && pagination.mode() != Pagination.Mode.NONE) {
+			throw new IllegalArgumentException("a DOCUMENT is fetched in a single request: pagination must be NONE");
+		}
 		query = query == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(query));
+	}
+
+	/** Un documento JSON único (Swagger de la API, S1.2): una sola petición sin {@code rows} ni {@code start}. */
+	public static SourceDescriptor document(DatasetRef dataset, URI url) {
+		return new SourceDescriptor(dataset, url, Map.of(), Pagination.none(1), ResponseShape.DOCUMENT);
 	}
 
 	private static boolean isSedeFamily(String source) {
@@ -61,7 +71,12 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 		/** {@code {"totalCount":N,"start":S,"rows":R,"result":[...]}}; {@code totalCount} puede faltar. */
 		ENVELOPE,
 		/** Array JSON en la raíz (quejas de sede, OCDS, Open311). */
-		ARRAY
+		ARRAY,
+		/**
+		 * Un único objeto JSON que no es una lista de registros (el Swagger de la API, S1.2). Cuenta como un
+		 * registro; no se envían parámetros de paginación (la fuente los ignora, y {@code HEAD} devuelve 400).
+		 */
+		DOCUMENT
 	}
 
 	/**

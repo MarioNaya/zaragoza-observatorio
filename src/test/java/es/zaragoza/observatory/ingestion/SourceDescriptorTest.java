@@ -73,4 +73,16 @@ class SourceDescriptorTest {
 		assertThat(Pagination.none(50).mode()).isEqualTo(Pagination.Mode.NONE);
 	}
 
+	@Test
+	void documentsAreFetchedInASingleRequest() {
+		var swagger = SourceDescriptor.document(DatasetRef.of(Sources.SEDE, "catalogo/api"),
+				URI.create("https://www.zaragoza.es/sede/servicio/catalogo/api.json"));
+
+		assertThat(swagger.shape()).isEqualTo(ResponseShape.DOCUMENT);
+		assertThat(swagger.pagination().mode()).isEqualTo(Pagination.Mode.NONE);
+		assertThat(swagger.query()).isEmpty();
+		assertThatIllegalArgumentException().isThrownBy(() -> new SourceDescriptor(swagger.dataset(), swagger.url(),
+				Map.of(), Pagination.offset(500), ResponseShape.DOCUMENT)).withMessageContaining("DOCUMENT");
+	}
+
 }

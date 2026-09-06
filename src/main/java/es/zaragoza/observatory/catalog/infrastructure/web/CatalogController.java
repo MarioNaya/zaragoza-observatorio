@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import es.zaragoza.observatory.catalog.CatalogSources;
+import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
+import es.zaragoza.observatory.catalog.domain.ApiInventoryReadModel;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetFilter;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetListing;
@@ -26,9 +28,12 @@ import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
 import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 import es.zaragoza.observatory.catalog.infrastructure.CatalogProperties;
+import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiEndpointDto;
+import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiInventorySummary;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiItem;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiList;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiPage;
+import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetApiEndpoints;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetDetail;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetSummary;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.FreshnessSnapshotDto;
@@ -59,17 +64,25 @@ class CatalogController {
 
 	private final DatasetReadModel datasets;
 	private final FreshnessSnapshotRepository snapshots;
+	private final ApiEndpointRepository endpoints;
+	private final ApiInventoryReadModel inventory;
 	private final Ingestion ingestion;
 	private final FreshnessPolicy policy;
 	private final Source source;
+	private final Source inventorySource;
 
-	CatalogController(DatasetReadModel datasets, FreshnessSnapshotRepository snapshots, Ingestion ingestion,
+	CatalogController(DatasetReadModel datasets, FreshnessSnapshotRepository snapshots,
+			ApiEndpointRepository endpoints, ApiInventoryReadModel inventory, Ingestion ingestion,
 			FreshnessPolicy policy, CatalogProperties properties) {
 		this.datasets = datasets;
 		this.snapshots = snapshots;
+		this.endpoints = endpoints;
+		this.inventory = inventory;
 		this.ingestion = ingestion;
 		this.policy = policy;
 		this.source = new Source(CatalogSources.CATALOG.key(), properties.catalogUrl().toString());
+		this.inventorySource = new Source(CatalogSources.API_INVENTORY.key(),
+				properties.apiInventory().url().toString());
 	}
 
 	@GetMapping("/datasets")
@@ -95,7 +108,16 @@ class CatalogController {
 		DatasetListing listing = datasets.find(id)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "dataset " + id + " no está en el catálogo ingerido"));
 		var latest = snapshots.latest(id).map(FreshnessSnapshotDto::from).orElse(null);
-		return new ApiItem<>(source, ingestedAt(), Caveats.CATALOG, DatasetDetail.from(listing, latest));
+		return new ApiItem<>(source, ingestedAt(), Caveats.CATALOG,
+				DatasetDetail.from(listing, latest, apiEndpoints(listing.dataset().apiTag())));
+	}
+
+	/** Operaciones del Swagger bajo el tag de la ficha (S1.2); vacío si no declara tag o el tag no está documentado. */
+	private DatasetApiEndpoints apiEndpoints(String apiTag) {
+		List<ApiEndpointDto> items = apiTag == null ? List.of()
+				: endpoints.findByTag(apiTag).stream().map(ApiEndpointDto::from).toList();
+		Boolean documented = apiTag == null ? null : !items.isEmpty();
+		return new DatasetApiEndpoints(inventorySource, inventoryIngestedAt(), documented, items);
 	}
 
 	@GetMapping("/datasets/{id}/freshness-history")
@@ -114,10 +136,13 @@ class CatalogController {
 	@GetMapping("/summary")
 	Summary summary() {
 		var summary = datasets.summary();
+		var api = inventory.summary();
 		return new Summary(source, ingestedAt(), Caveats.CATALOG, summary.datasets(), summary.byDeclaredFreshness(),
 				summary.byPeriodicity(), summary.withApi(), summary.open(), summary.explorable(), summary.withGeo(),
 				summary.latestSnapshotOn(), summary.withoutSnapshot(), summary.byObservationMethod(),
 				summary.withoutObservation(),
+				new ApiInventorySummary(inventoryIngestedAt(), api.endpoints(), api.tags(), api.datasetsWithTag(),
+						api.datasetsWithDocumentedTag(), api.tagsWithoutDataset()),
 				new Thresholds(policy.onTimeMax(), policy.slightDelayMax(), policy.delayedMax()));
 	}
 
@@ -125,33 +150,18 @@ class CatalogController {
 		return ingestion.lastSuccessful(CatalogSources.CATALOG).map(IngestionRunSummary::finishedAt).orElse(null);
 	}
 
+	private Instant inventoryIngestedAt() {
+		return ingestion.lastSuccessful(CatalogSources.API_INVENTORY).map(IngestionRunSummary::finishedAt)
+				.orElse(null);
+	}
+
 	static DatasetSort parseSort(String sort) {
-		String[] parts = sort.split(",", -1);
-		DatasetSort.Field field = SORT_FIELDS.get(parts[0].strip());
-		if (field == null || parts.length > 2) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"sort no admitido: '" + sort + "'. Campos: " + String.join(", ", SORT_FIELDS.keySet().stream().sorted().toList())
-							+ "; dirección: asc|desc");
-		}
-		DatasetSort.Direction direction = DatasetSort.Direction.ASC;
-		if (parts.length == 2) {
-			direction = switch (parts[1].strip().toLowerCase(Locale.ROOT)) {
-				case "asc" -> DatasetSort.Direction.ASC;
-				case "desc" -> DatasetSort.Direction.DESC;
-				default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						"dirección de sort no admitida: '" + parts[1] + "' (asc|desc)");
-			};
-		}
-		return new DatasetSort(field, direction);
+		var parsed = Sorting.parse(sort, SORT_FIELDS);
+		return new DatasetSort(parsed.field(), parsed.direction());
 	}
 
 	static PageRequest pageRequest(int page, int size) {
-		try {
-			return new PageRequest(page, size);
-		}
-		catch (IllegalArgumentException ex) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
-		}
+		return Sorting.pageRequest(page, size);
 	}
 
 	static String describe(DatasetSort sort) {

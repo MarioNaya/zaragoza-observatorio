@@ -18,10 +18,20 @@ public record CatalogProperties(
 		@DefaultValue({ "id", "title", "description_basic", "issued", "modified", "lastUpdated", "accrualPeriodicity",
 				"status", "geo", "abierto", "explorable", "formato" }) List<String> fields,
 		@DefaultValue("PT6H") Duration interval, @DefaultValue Freshness freshness,
-		@DefaultValue Sampling observation) {
+		@DefaultValue Sampling observation, @DefaultValue ApiInventory apiInventory) {
 
 	public record Freshness(@DefaultValue("1.0") double onTimeMax, @DefaultValue("2.0") double slightDelayMax,
 			@DefaultValue("5.0") double delayedMax) {
+	}
+
+	/**
+	 * Inventario de endpoints: el Swagger 2.0 de la API (S0.1, S1.2), documento único sin paginación.
+	 *
+	 * @param url {@code sede/servicio/catalogo/api.json}
+	 * @param interval intervalo mínimo entre ingestas (el documento cambia rara vez)
+	 */
+	public record ApiInventory(@DefaultValue("https://www.zaragoza.es/sede/servicio/catalogo/api.json") URI url,
+			@DefaultValue("P1D") Duration interval) {
 	}
 
 	/**

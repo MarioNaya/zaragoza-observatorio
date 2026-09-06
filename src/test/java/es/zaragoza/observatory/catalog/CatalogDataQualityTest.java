@@ -11,14 +11,17 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import es.zaragoza.observatory.catalog.domain.ApiEndpoint;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.infrastructure.zaragoza.CatalogJsonTranslator;
+import es.zaragoza.observatory.catalog.infrastructure.zaragoza.SwaggerJsonTranslator;
 import es.zaragoza.observatory.support.Fixtures;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -114,6 +117,23 @@ class CatalogDataQualityTest {
 						assertThat(dist.accessUrl()).doesNotContain("#/");
 					}
 				}));
+	}
+
+	@Test
+	void apiTagsCrossTheSwaggerInventoryAsMeasuredInS12() {
+		List<ApiEndpoint> inventory = new SwaggerJsonTranslator(JsonMapper.shared())
+				.translate(Fixtures.text("catalog/swagger-api.json"), Instant.now());
+		Set<String> documented = inventory.stream().map(ApiEndpoint::tag).collect(Collectors.toSet());
+		assertThat(documented).hasSize(84);
+		List<Dataset> tagged = ingested.values().stream().filter(d -> d.apiTag() != null).toList();
+		assertThat(tagged).hasSize(68);
+		assertThat(tagged.stream().filter(d -> documented.contains(d.apiTag()))).hasSize(60);
+		// tags que el catálogo declara y el Swagger no documenta (S0.1, S1.2)
+		assertThat(tagged.stream().filter(d -> !documented.contains(d.apiTag())).map(Dataset::sourceId))
+				.containsExactlyInAnyOrder(2220, 79, 1080, 1520, 1840, 1740, 1440, 2123);
+		Set<String> used = tagged.stream().map(Dataset::apiTag).collect(Collectors.toSet());
+		assertThat(documented.stream().filter(t -> !used.contains(t))).hasSize(28)
+				.contains("Ayuntamiento: Contratación pública OCDS", "Ayuntamiento: Juntas administrativas");
 	}
 
 	static String dashToEmpty(String value) {

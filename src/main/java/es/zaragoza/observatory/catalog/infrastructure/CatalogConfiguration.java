@@ -10,8 +10,10 @@ import org.springframework.web.client.RestClient;
 
 import es.zaragoza.observatory.catalog.application.ObserveDatasets;
 import es.zaragoza.observatory.catalog.application.RecordObservation;
+import es.zaragoza.observatory.catalog.application.RegisterApiEndpoints;
 import es.zaragoza.observatory.catalog.application.RegisterDatasets;
 import es.zaragoza.observatory.catalog.application.TakeFreshnessSnapshots;
+import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DistributionObserver;
 import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
@@ -37,6 +39,11 @@ class CatalogConfiguration {
 	}
 
 	@Bean
+	RegisterApiEndpoints registerApiEndpoints(ApiEndpointRepository endpoints) {
+		return new RegisterApiEndpoints(endpoints);
+	}
+
+	@Bean
 	TakeFreshnessSnapshots takeFreshnessSnapshots(DatasetRepository datasets, FreshnessSnapshotRepository snapshots,
 			FreshnessPolicy policy, Clock clock) {
 		return new TakeFreshnessSnapshots(datasets, snapshots, policy, clock);
@@ -48,11 +55,11 @@ class CatalogConfiguration {
 	 * {@code ingestion}: una observación fallida se repite al día siguiente (S1.1).
 	 */
 	@Bean
-	DistributionObserver distributionObserver(RestClient zaragozaRestClient, JsonMapper jsonMapper, Clock clock,
-			CatalogProperties properties) {
+	DistributionObserver distributionObserver(RestClient zaragozaRestClient, JsonMapper jsonMapper,
+			ApiEndpointRepository endpoints, Clock clock, CatalogProperties properties) {
 		var sampling = properties.observation();
-		return new DistributionHttpObserver(zaragozaRestClient, jsonMapper, clock, sampling.requestDelay(),
-				sampling.maxFileDistributions());
+		return new DistributionHttpObserver(zaragozaRestClient, jsonMapper, endpoints, clock,
+				sampling.requestDelay(), sampling.maxFileDistributions());
 	}
 
 	@Bean

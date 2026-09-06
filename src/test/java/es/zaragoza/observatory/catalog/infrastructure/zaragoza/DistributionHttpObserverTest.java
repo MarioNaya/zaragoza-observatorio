@@ -27,10 +27,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import es.zaragoza.observatory.catalog.domain.ApiEndpoint;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.Dataset.Distribution;
 import es.zaragoza.observatory.catalog.domain.Observation;
 import es.zaragoza.observatory.catalog.domain.ObservationMethod;
+import es.zaragoza.observatory.catalog.support.InMemoryApiEndpoints;
 import es.zaragoza.observatory.shared.HttpDates;
 import es.zaragoza.observatory.support.Fixtures;
 import tools.jackson.databind.json.JsonMapper;
@@ -51,13 +53,97 @@ class DistributionHttpObserverTest {
 
 	MockRestServiceServer server;
 	DistributionHttpObserver observer;
+	final InMemoryApiEndpoints endpoints = new InMemoryApiEndpoints();
 
 	@BeforeEach
 	void setUp() {
 		RestClient.Builder builder = RestClient.builder();
 		server = MockRestServiceServer.bindTo(builder).build();
-		observer = new DistributionHttpObserver(builder.build(), JsonMapper.shared(),
+		observer = new DistributionHttpObserver(builder.build(), JsonMapper.shared(), endpoints,
 				Clock.fixed(NOW, ZoneOffset.UTC), Duration.ZERO, 10);
+	}
+
+	// --- S1.2: «<declarado>/list» documentado en el Swagger ------------------------------------------------------
+
+	@Test
+	void triesTheDocumentedListPathWhenTheDeclaredEndpointRedirectsToAnIndex() {
+		// «Censo de Asociaciones» (132): /sede/servicio/asociacion responde 303 a un índice con jsessionid (S1.1)
+		String tag = "Gobierno abierto: Censo de Asociaciones";
+		endpoints.replaceAll(List.of(endpoint(tag, "/servicio/asociacion", 0), endpoint(tag, "/servicio/asociacion/list", 1),
+				endpoint(tag, "/servicio/asociacion/{id}", 2)), NOW);
+		Dataset asociaciones = tagged(132, false, tag, api("/sede/servicio/asociacion"));
+		String list = "https://www.zaragoza.es/sede/servicio/asociacion/list.json?rows=1";
+		server.expect(requestTo("https://www.zaragoza.es/sede/servicio/asociacion.json?rows=1"))
+				.andRespond(withStatus(HttpStatus.SEE_OTHER).header(HttpHeaders.LOCATION,
+						"https://www.zaragoza.es/sede/servicio/asociacion/;jsessionid=iU93lJeq7"));
+		server.expect(requestTo(list)).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-asociacion-list-rows1.json"), JSON_UTF8));
+		server.expect(requestTo(list + "&sort=creationDate+desc")).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-asociacion-list-rows1.json"), JSON_UTF8));
+
+		Observation o = observer.observe(asociaciones);
+
+		server.verify();
+		assertThat(o.measured()).isTrue();
+		assertThat(o.method()).isEqualTo(ObservationMethod.API_MAX_DATE);
+		assertThat(o.url()).isEqualTo(list + "&sort=creationDate+desc");
+		assertThat(o.records()).isEqualTo(2823);
+		assertThat(o.detail()).isEqualTo("creationDate");
+		assertThat(o.lastChange()).isEqualTo(Instant.parse("1987-05-26T22:00:00Z")); // 1987-05-27T00:00 en Zaragoza
+	}
+
+	@Test
+	void matchesTheDocumentedListPathIgnoringAccentsWhenTheDeclaredEndpointDoesNotExist() {
+		// «Clavos Topográficos» (247): el catálogo declara clavo-topográfico (404 HTML); el Swagger documenta
+		// clavo-topografico/list en su tag
+		String tag = "Urbanismo: Clavos Topograficos";
+		endpoints.replaceAll(List.of(endpoint(tag, "/servicio/clavo-topografico/list", 0),
+				endpoint(tag, "/servicio/clavo-topografico/{id}", 1)), NOW);
+		Dataset clavos = tagged(247, true, tag, api("/sede/servicio/clavo-topográfico"), wfs("Clavos_Topograficos"));
+		String list = "https://www.zaragoza.es/sede/servicio/clavo-topografico/list.json?rows=1&srsname=wgs84";
+		server.expect(requestTo(startsWith("https://www.zaragoza.es/sede/servicio/clavo-topogr")))
+				.andRespond(withStatus(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_HTML)
+						.body("<HTML><HEAD><TITLE>Error 404--Not Found</TITLE>"));
+		server.expect(requestTo(list)).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-clavo-topografico-list-rows1.json"), JSON_UTF8));
+		server.expect(requestTo(list + "&sort=lastUpdated+desc")).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-clavo-topografico-list-rows1.json"), JSON_UTF8));
+
+		Observation o = observer.observe(clavos);
+
+		server.verify(); // el WFS no llega a consultarse
+		assertThat(o.method()).isEqualTo(ObservationMethod.API_MAX_DATE);
+		assertThat(o.records()).isEqualTo(4357);
+		assertThat(o.detail()).isEqualTo("lastUpdated");
+		assertThat(o.lastChange()).isEqualTo(Instant.parse("2017-12-29T11:26:20Z"));
+	}
+
+	@Test
+	void doesNotUseOtherDocumentedPathsOfTheTag() {
+		// «Tranvía de Zaragoza» (327): el tag documenta linea-autobus, poste-autobus y parada-tranvia, ninguno es
+		// <declarado>/list; la elección no sería unívoca y se registra el fallo del endpoint declarado
+		String tag = "Equipamientos y movilidad: Transporte urbano";
+		String base = "/servicio/urbanismo-infraestructuras/transporte-urbano";
+		endpoints.replaceAll(List.of(endpoint(tag, base + "/linea-autobus", 0), endpoint(tag, base + "/poste-autobus", 1),
+				endpoint(tag, base + "/parada-tranvia", 2)), NOW);
+		Dataset tranvia = tagged(327, true, tag, api("/sede" + base));
+		server.expect(times(1), requestTo("https://www.zaragoza.es/sede" + base + ".json?rows=1&srsname=wgs84"))
+				.andRespond(withStatus(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_HTML).body("<html>404</html>"));
+
+		Observation o = observer.observe(tranvia);
+
+		server.verify();
+		assertThat(o.failed()).isTrue();
+		assertThat(o.error()).startsWith("HTTP 404");
+	}
+
+	static ApiEndpoint endpoint(String tag, String path, int ordinal) {
+		return new ApiEndpoint(tag, "get", path, "https://www.zaragoza.es/sede" + path, null, ordinal, NOW, NOW);
+	}
+
+	static Dataset tagged(int id, boolean geo, String tag, Distribution... distributions) {
+		return new Dataset(id, "dataset " + id, null, null, null, null, "P0DT1S", null, "Finalizado", geo, true,
+				false, tag, List.of(distributions), NOW, NOW);
 	}
 
 	@Test

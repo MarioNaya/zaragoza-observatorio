@@ -86,6 +86,11 @@ zaragoza:
       batch-size: 60
       request-delay: PT0.5S
       max-file-distributions: 10
+    # Inventario de endpoints (docs/spikes/S1.2-inventario-api.md): el Swagger 2.0 de la API como documento único,
+    # sin parámetros de paginación (la fuente los ignora y no publica Last-Modified ni ETag); una vez al día.
+    api-inventory:
+      url: https://www.zaragoza.es/sede/servicio/catalogo/api.json
+      interval: P1D
 
 ---
 # Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).

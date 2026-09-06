@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import es.zaragoza.observatory.catalog.domain.ApiEndpoint;
+import es.zaragoza.observatory.catalog.domain.ApiInventoryReadModel;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetListing;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
@@ -64,19 +66,51 @@ final class CatalogDtos {
 	record DatasetDetail(int id, String title, String description, LocalDateTime issued,
 			LocalDateTime declaredModified, LocalDateTime metadataUpdated, String declaredPeriodicity,
 			Integer periodicityDays, String publicationStatus, Boolean hasGeo, Boolean open, boolean explorable,
-			boolean hasApi, String apiTag, List<Distribution> distributions, FreshnessSnapshotDto latestSnapshot,
-			Instant observedAt, ObservationMethod latestObservationMethod, Instant latestObservedChange,
-			Instant firstSeenAt, Instant lastSeenAt) {
+			boolean hasApi, String apiTag, DatasetApiEndpoints apiEndpoints, List<Distribution> distributions,
+			FreshnessSnapshotDto latestSnapshot, Instant observedAt, ObservationMethod latestObservationMethod,
+			Instant latestObservedChange, Instant firstSeenAt, Instant lastSeenAt) {
 
-		static DatasetDetail from(DatasetListing listing, FreshnessSnapshotDto latest) {
+		static DatasetDetail from(DatasetListing listing, FreshnessSnapshotDto latest, DatasetApiEndpoints api) {
 			Dataset d = listing.dataset();
 			return new DatasetDetail(d.sourceId(), d.title(), d.description(), d.issued(), d.declaredModified(),
 					d.metadataUpdated(), d.declaredPeriodicity(), d.periodicityDays(), d.publicationStatus(),
-					d.hasGeo(), d.open(), d.explorable(), d.hasApiDistribution(), d.apiTag(),
+					d.hasGeo(), d.open(), d.explorable(), d.hasApiDistribution(), d.apiTag(), api,
 					d.distributions().stream().map(Distribution::from).toList(), latest, listing.observedAt(),
 					listing.latestObservationMethod(), listing.latestObservedChange(), d.firstSeenAt(),
 					d.lastSeenAt());
 		}
+	}
+
+	/** Una operación del Swagger de la API (S1.2). */
+	record ApiEndpointDto(String tag, String method, String path, String url, String summary, boolean templated,
+			Instant firstSeenAt, Instant lastSeenAt) {
+
+		static ApiEndpointDto from(ApiEndpoint e) {
+			return new ApiEndpointDto(e.tag(), e.method(), e.path(), e.url(), e.summary(), e.templated(),
+					e.firstSeenAt(), e.lastSeenAt());
+		}
+	}
+
+	/**
+	 * Operaciones documentadas bajo el {@code apiTag} de una ficha, con el origen y la fecha de ingesta del
+	 * inventario (distintos de los de la ficha). {@code tagDocumented} es {@code null} si la ficha no declara tag.
+	 */
+	record DatasetApiEndpoints(Source source, Instant ingestedAt, Boolean tagDocumented, List<ApiEndpointDto> items) {
+	}
+
+	record DatasetRefDto(int id, String title) {
+	}
+
+	record TagSummaryDto(String tag, long endpoints, List<DatasetRefDto> datasets) {
+
+		static TagSummaryDto from(ApiInventoryReadModel.TagSummary t) {
+			return new TagSummaryDto(t.tag(), t.endpoints(),
+					t.datasets().stream().map(d -> new DatasetRefDto(d.sourceId(), d.title())).toList());
+		}
+	}
+
+	record ApiInventorySummary(Instant ingestedAt, long endpoints, long tags, long datasetsWithTag,
+			long datasetsWithDocumentedTag, long tagsWithoutDataset) {
 	}
 
 	record FreshnessSnapshotDto(LocalDate observedOn, Instant takenAt, Integer declaredAgeDays,
@@ -97,7 +131,8 @@ final class CatalogDtos {
 	record Summary(Source source, Instant ingestedAt, List<String> caveats, long datasets,
 			Map<DeclaredFreshness, Long> byDeclaredFreshness, Map<String, Long> byPeriodicity, long withApi,
 			long open, long explorable, long withGeo, LocalDate latestSnapshotOn, long withoutSnapshot,
-			Map<ObservationMethod, Long> byObservationMethod, long withoutObservation, Thresholds thresholds) {
+			Map<ObservationMethod, Long> byObservationMethod, long withoutObservation,
+			ApiInventorySummary apiInventory, Thresholds thresholds) {
 	}
 
 }

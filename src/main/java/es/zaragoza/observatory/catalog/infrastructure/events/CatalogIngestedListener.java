@@ -33,6 +33,11 @@ class CatalogIngestedListener {
 
 	@ApplicationModuleListener
 	void on(DatasetIngested event) {
+		if (CatalogSources.API_INVENTORY.equals(event.dataset())) {
+			// El inventario se sincroniza entero en handle(); el cruce con las fichas se resuelve al leer (S1.2).
+			log.info("api inventory run {} ingested the Swagger document", event.run());
+			return;
+		}
 		if (!CatalogSources.CATALOG.equals(event.dataset())) {
 			log.debug("ignoring DatasetIngested for {}", event.dataset());
 			return;

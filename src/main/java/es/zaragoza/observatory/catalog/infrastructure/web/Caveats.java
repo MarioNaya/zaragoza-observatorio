@@ -23,7 +23,22 @@ final class Caveats {
 					+ "Los intentos fallidos quedan en observationError con la URL probada (servicios inexistentes, "
 					+ "redirecciones a páginas web, servicios de intranet). NOT_OBSERVABLE marca las fichas sin "
 					+ "distribución observable (WMS, SPARQL, buscadores, HTML o sin distribuciones).",
-			"Las fechas del catálogo se sirven como hora local de Zaragoza sin zona, tal como las publica la fuente.");
+			"Las fechas del catálogo se sirven como hora local de Zaragoza sin zona, tal como las publica la fuente.",
+			"apiEndpoints son las operaciones que el Swagger de la API municipal documenta bajo el apiTag de la ficha "
+					+ "(inventario ingerido por separado, con su propio ingestedAt); tagDocumented indica si ese tag "
+					+ "existe en el Swagger. Que un endpoint esté documentado no significa que responda (S1.2).");
+
+	static final List<String> API_INVENTORY = List.of(
+			"El inventario es el Swagger 2.0 de la API municipal (sede/servicio/catalogo/api.json), ingerido a diario "
+					+ "y sincronizado entero: tag, method, path y summary tal como los documenta; url = scheme://host + "
+					+ "basePath + path del propio documento. El documento no publica Last-Modified ni ETag; "
+					+ "firstSeenAt y lastSeenAt son marcas de este observatorio.",
+			"El cruce con el catálogo se hace por el tag que declara la distribución application/api de cada ficha "
+					+ "(accessURL con #/<tag>). Un tag con endpoints = 0 es un tag que el catálogo declara y el Swagger "
+					+ "no documenta; un tag sin datasets está documentado pero no tiene ficha en el catálogo (S0.1, S1.2).",
+			"Que un endpoint esté documentado no significa que responda ni que sea el dato de la ficha: el eje "
+					+ "observado mide el endpoint que la ficha declara en downloadURL y, si falla, solo el path "
+					+ "documentado <declarado>/list de su tag (S1.2).");
 
 	private Caveats() {
 	}

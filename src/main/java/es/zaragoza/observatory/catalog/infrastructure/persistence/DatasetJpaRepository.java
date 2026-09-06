@@ -34,6 +34,17 @@ interface DatasetJpaRepository extends JpaRepository<DatasetEntity, Integer>, Jp
 	@Query("select max(d.latestSnapshotOn) from DatasetEntity d")
 	LocalDate latestSnapshotOn();
 
+	/** Fichas que declaran un tag del Swagger: {@code sourceId}, {@code title}, {@code apiTag} (S1.2). */
+	@Query("select d.sourceId, d.title, d.apiTag from DatasetEntity d where d.apiTag is not null "
+			+ "order by d.apiTag asc, d.sourceId asc")
+	List<Object[]> findApiTagged();
+
+	long countByApiTagIsNotNull();
+
+	/** Fichas cuyo tag existe en el inventario de endpoints. */
+	@Query("select count(d) from DatasetEntity d where d.apiTag in (select distinct e.tag from ApiEndpointEntity e)")
+	long countWithDocumentedApiTag();
+
 	/** Nunca observadas primero, después las más antiguas; desempate por {@code sourceId}. */
 	@Query("select d from DatasetEntity d where d.observedAt is null or d.observedAt < :before "
 			+ "order by d.observedAt asc nulls first, d.sourceId asc")

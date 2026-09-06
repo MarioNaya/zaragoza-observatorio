@@ -127,6 +127,37 @@ class ZaragozaHttpClientTest {
 	}
 
 	@Test
+	void fetchesADocumentWithoutPagingParametersAndCountsItAsOneRecord() {
+		// S1.2: el Swagger ignora rows/start y no publica Last-Modified ni ETag
+		String url = "https://www.zaragoza.es/sede/servicio/catalogo/api.json";
+		var swagger = SourceDescriptor.document(DatasetRef.of(Sources.SEDE, "catalogo/api"), URI.create(url));
+		server.expect(requestTo(url)).andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/swagger-api.json"), JSON_UTF8));
+
+		RawPage page = client.fetch(swagger, 0, 0);
+
+		server.verify();
+		assertThat(ZaragozaHttpClient.buildUri(swagger, 0)).hasToString(url);
+		assertThat(page.recordCount()).isEqualTo(1);
+		assertThat(page.totalCount()).isNull();
+		assertThat(page.sourceLastModified()).isNull();
+		assertThat(page.etag()).isNull();
+		assertThat(page.body()).contains("\"swagger\": \"2.0\"").contains("\"basePath\": \"/sede\"");
+	}
+
+	@Test
+	void aDocumentThatIsNotAnObjectIsMalformed() {
+		var swagger = SourceDescriptor.document(DatasetRef.of(Sources.SEDE, "catalogo/api"),
+				URI.create("https://www.zaragoza.es/sede/servicio/catalogo/api.json"));
+		server.expect(times(3), requestTo(startsWith("https://www.zaragoza.es/sede/servicio/catalogo/api.json")))
+				.andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+		assertThatThrownBy(() -> client.fetch(swagger, 0, 0)).isInstanceOfSatisfying(SourceAccessException.class,
+				ex -> assertThat(ex.kind()).isEqualTo(Kind.MALFORMED));
+		server.verify();
+	}
+
+	@Test
 	void retriesServerErrorsAndSucceeds() {
 		server.expect(requestTo(startsWith(CATALOG_URL))).andRespond(withServerError());
 		server.expect(requestTo(startsWith(CATALOG_URL))).andRespond(withStatus(HttpStatus.BAD_GATEWAY));

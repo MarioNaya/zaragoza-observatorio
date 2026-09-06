@@ -3,11 +3,14 @@ package es.zaragoza.observatory.catalog.infrastructure.zaragoza;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+import es.zaragoza.observatory.catalog.domain.ApiEndpoint;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.Dataset.Distribution;
 
@@ -21,7 +24,9 @@ import es.zaragoza.observatory.catalog.domain.Dataset.Distribution;
  * mismo tipo de endpoint; se prefiere {@code .json} (con {@code totalCount}) a {@code .geojson};</li>
  * <li>los ficheros son URL fuera de la sede con extensión de fichero; responden a {@code HEAD};</li>
  * <li>WFS: {@code GetFeature&typeNames=<wfsFeatureName>&resultType=hits} sobre la URL sin query string;</li>
- * <li>{@code srsname=wgs84} solo en fichas con {@code geo=S}; {@code &amp;} aparece sin decodificar en el catálogo.</li>
+ * <li>{@code srsname=wgs84} solo en fichas con {@code geo=S}; {@code &amp;} aparece sin decodificar en el catálogo;</li>
+ * <li>(S1.2) si el Swagger documenta {@code <downloadURL>/list} en el tag de la ficha, se prueba tras el endpoint
+ * declarado ({@link #documentedListUrl}).</li>
  * </ul>
  */
 final class ObservationUrls {
@@ -94,7 +99,47 @@ final class ObservationUrls {
 
 	/** {@code GET <endpoint>.json?…&rows=1[&srsname=wgs84]}, conservando la query string original salvo paginación y orden. */
 	static URI apiUrl(Distribution distribution, boolean geo) {
-		String raw = distribution.isApi() ? normalize(distribution.downloadUrl()) : url(distribution);
+		return apiUrl(apiRawUrl(distribution), geo);
+	}
+
+	/** URL del endpoint que declara la distribución: {@code downloadURL} en {@code application/api}, si no la URL de la distribución. */
+	static String apiRawUrl(Distribution distribution) {
+		return distribution.isApi() ? normalize(distribution.downloadUrl()) : url(distribution);
+	}
+
+	/**
+	 * Endpoint documentado «declarado/list» (S1.2): si la ficha declara un tag y el Swagger documenta en ese tag
+	 * una operación {@code GET} sin plantilla cuyo path es el del {@code downloadURL} de la distribución
+	 * {@code application/api} más {@code /list} (comparados sin tildes: el catálogo escribe
+	 * {@code clavo-topográfico} y el Swagger {@code clavo-topografico}), esa URL se prueba justo después del
+	 * endpoint declarado. Ninguna otra operación del tag se usa: cuando el tag agrupa varios recursos (transporte
+	 * urbano, presupuestos, movilidad) la elección no sería unívoca y la medida no sería la de la ficha.
+	 */
+	static Optional<String> documentedListUrl(Dataset dataset, List<ApiEndpoint> documented) {
+		if (dataset.apiTag() == null || documented.isEmpty()) {
+			return Optional.empty();
+		}
+		for (Distribution d : dataset.distributions()) {
+			if (d.isApi() && !normalize(d.downloadUrl()).isEmpty()) {
+				String declared = path(normalize(d.downloadUrl()));
+				if (declared.endsWith("/")) {
+					declared = declared.substring(0, declared.length() - 1);
+				}
+				String wanted = unaccent(declared) + "/list";
+				return documented.stream()
+						.filter(e -> "get".equals(e.method()) && !e.templated() && unaccent(e.url()).equals(wanted))
+						.map(ApiEndpoint::url)
+						.findFirst();
+			}
+		}
+		return Optional.empty();
+	}
+
+	static String unaccent(String s) {
+		return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+	}
+
+	static URI apiUrl(String raw, boolean geo) {
 		String path = path(raw);
 		String lower = path.toLowerCase(Locale.ROOT);
 		if (!lower.endsWith(".json") && !lower.endsWith(".geojson")) {

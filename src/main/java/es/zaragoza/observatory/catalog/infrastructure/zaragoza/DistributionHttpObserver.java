@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -18,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.Dataset.Distribution;
 import es.zaragoza.observatory.catalog.domain.DistributionObserver;
@@ -31,9 +33,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Adaptador de observación sobre la API municipal (S1.1, recomendaciones 1–4). Prueba en orden los endpoints de
- * la API ({@code rows=1} y {@code sort=<campo> desc}), los ficheros ({@code HEAD}) y el WFS
- * ({@code resultType=hits}) y devuelve la primera observación con medida; si ninguna la tiene, el primer intento
- * fallido con su causa. Sin reintentos ni circuit breaker (la ficha se vuelve a observar al día siguiente);
+ * la API ({@code rows=1} y {@code sort=<campo> desc}; tras el declarado, el {@code <declarado>/list} que documente
+ * el Swagger en el tag de la ficha, S1.2), los ficheros ({@code HEAD}) y el WFS ({@code resultType=hits}) y
+ * devuelve la primera observación con medida; si ninguna la tiene, el primer intento fallido con su causa. Sin reintentos ni circuit breaker (la ficha se vuelve a observar al día siguiente);
  * nunca sigue redirecciones (lo decide {@code spring.http.clients.redirects}); una pausa entre peticiones por
  * cortesía (S0.5). Nunca lanza por un fallo de la fuente.
  */
@@ -47,16 +49,18 @@ public class DistributionHttpObserver implements DistributionObserver {
 
 	private final RestClient rest;
 	private final JsonMapper json;
+	private final ApiEndpointRepository endpoints;
 	private final Clock clock;
 	private final Duration requestDelay;
 	private final int maxFileDistributions;
 	private long lastRequestNanos;
 	private boolean requested;
 
-	public DistributionHttpObserver(RestClient rest, JsonMapper json, Clock clock, Duration requestDelay,
-			int maxFileDistributions) {
+	public DistributionHttpObserver(RestClient rest, JsonMapper json, ApiEndpointRepository endpoints, Clock clock,
+			Duration requestDelay, int maxFileDistributions) {
 		this.rest = Objects.requireNonNull(rest);
 		this.json = Objects.requireNonNull(json);
+		this.endpoints = Objects.requireNonNull(endpoints);
 		this.clock = Objects.requireNonNull(clock);
 		this.requestDelay = Objects.requireNonNull(requestDelay);
 		if (maxFileDistributions < 1) {
@@ -74,9 +78,18 @@ public class DistributionHttpObserver implements DistributionObserver {
 		if (apis.isEmpty() && files.isEmpty() && layers.isEmpty()) {
 			return Observation.notObservable(at);
 		}
-		Observation firstFailure = null;
+		List<String> apiUrls = new ArrayList<>();
 		for (Distribution d : head(apis, MAX_API_CANDIDATES)) {
-			Observation o = observeApi(dataset, d, at);
+			apiUrls.add(ObservationUrls.apiRawUrl(d));
+		}
+		// S1.2: el «<declarado>/list» documentado en el Swagger se prueba justo después del endpoint declarado
+		if (dataset.apiTag() != null && !apiUrls.isEmpty()) {
+			ObservationUrls.documentedListUrl(dataset, endpoints.findByTag(dataset.apiTag()))
+					.ifPresent(url -> apiUrls.add(1, url));
+		}
+		Observation firstFailure = null;
+		for (String raw : apiUrls) {
+			Observation o = observeApi(dataset, raw, at);
 			if (o.measured()) {
 				return o;
 			}
@@ -102,13 +115,16 @@ public class DistributionHttpObserver implements DistributionObserver {
 	// --- API de la sede ---------------------------------------------------------------------------------------
 
 	Observation observeApi(Dataset dataset, Distribution distribution, Instant at) {
+		return observeApi(dataset, ObservationUrls.apiRawUrl(distribution), at);
+	}
+
+	Observation observeApi(Dataset dataset, String rawUrl, Instant at) {
 		URI url;
 		try {
-			url = ObservationUrls.apiUrl(distribution, Boolean.TRUE.equals(dataset.hasGeo()));
+			url = ObservationUrls.apiUrl(rawUrl, Boolean.TRUE.equals(dataset.hasGeo()));
 		}
 		catch (IllegalArgumentException ex) {
-			return Observation.failed(ObservationMethod.API_COUNT, ObservationUrls.url(distribution), at,
-					"URL no válida: " + ex.getMessage());
+			return Observation.failed(ObservationMethod.API_COUNT, rawUrl, at, "URL no válida: " + ex.getMessage());
 		}
 		Http r = exchange(HttpMethod.GET, url);
 		if (r.error() != null) {

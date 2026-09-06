@@ -38,7 +38,7 @@ import tools.jackson.databind.json.JsonMapper;
  * Adaptador hacia la API municipal (SPEC.md §4.4 «anti-corruption layer»; reglas de S0.5 y ADR-004):
  * <ul>
  * <li>construye la URL con la extensión y los parámetros del {@link SourceDescriptor} más {@code rows} y, si
- * procede, {@code start};</li>
+ * procede, {@code start} (un {@code DOCUMENT} va sin parámetros de paginación);</li>
  * <li>clasifica la respuesta ({@link SourceAccessException.Kind}): 5xx, timeouts, E/S y cuerpos no JSON son
  * reintentables; 4xx no (404 JSON «Registro no encontrado» es ausencia definitiva);</li>
  * <li>reintenta con backoff, mantiene un circuit breaker por dataset y limita la concurrencia por semáforo;</li>
@@ -89,7 +89,9 @@ public class ZaragozaHttpClient implements SourceGateway {
 	static URI buildUri(SourceDescriptor source, int start) {
 		var builder = UriComponentsBuilder.fromUri(source.url());
 		source.query().forEach(builder::queryParam);
-		builder.queryParam("rows", source.pagination().rows());
+		if (source.shape() != ResponseShape.DOCUMENT) {
+			builder.queryParam("rows", source.pagination().rows());
+		}
 		if (source.pagination().mode() == Mode.OFFSET) {
 			builder.queryParam("start", start);
 		}
@@ -171,7 +173,14 @@ public class ZaragozaHttpClient implements SourceGateway {
 		}
 		int recordCount;
 		Integer totalCount = null;
-		if (source.shape() == ResponseShape.ENVELOPE) {
+		if (source.shape() == ResponseShape.DOCUMENT) {
+			if (!root.isObject()) {
+				throw new SourceAccessException(Kind.MALFORMED, status,
+						describe(uri, status, "expected a JSON document object but got " + root.getNodeType()));
+			}
+			recordCount = 1;
+		}
+		else if (source.shape() == ResponseShape.ENVELOPE) {
 			if (!root.isObject()) {
 				throw new SourceAccessException(Kind.MALFORMED, status,
 						describe(uri, status, "expected an envelope object but got " + root.getNodeType()));
