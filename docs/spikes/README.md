@@ -29,6 +29,13 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **(c) Modelos** revisados en cada informe: `catalog` (S0.1), `spending` (S0.2, S0.6), `citizen` (S0.3), `geo` (S0.4: la unidad es la **junta**, no el barrio).
 - Reglas del cliente HTTP de `ingestion` en S0.5.
 
+## Conclusiones de fase 1 (S1.1, 2026-09-06)
+
+- **`modified` del catálogo no describe el dato en ningún sentido**: en el lote real, de 149 fichas con fecha observada y `modified`, 107 cambiaron después de lo declarado y 15 antes. El monitor publica el eje declarado y el observado por separado, sin categoría observada (ADR-005).
+- **Tres tipos de distribución observables** y sus medidas: ficheros por `HEAD` (`Last-Modified` en RFC 1123), API de la sede por `rows=1&sort=<campo> desc` (`lastUpdated` en 72 de 88) más `totalCount`, WFS por `resultType=hits` (`numberMatched`). SPARQL, buscadores, RSS/Atom, HTML y WMS no lo son: 151 fichas quedan `NOT_OBSERVABLE`.
+- **El catálogo publica servicios inexistentes o de intranet** (8 endpoints API con 404, 23 distribuciones `-lan` con 403, 2 índices con 303, una URL `https:/`): el monitor los muestra como `observationError`; pendiente comunicarlo al ayuntamiento (`docs/ESTADO.md` §6).
+- Coste: 436 fichas en 3 min 17 s con 0,3 s entre peticiones; ~900 peticiones al día.
+
 ## Hechos ya verificados el 2026-09-05 (previos a los spikes)
 
 Comprobados con `curl` durante la planificación; los spikes deben confirmarlos y ampliarlos.

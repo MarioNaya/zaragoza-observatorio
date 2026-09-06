@@ -1,6 +1,6 @@
 # Observatorio de Datos Abiertos de Zaragoza — Especificación inicial
 
-Versión 0.5 · 6 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 (`docs/spikes/`), con las ADR-001 a ADR-004 (`docs/decisions/`) y con la implementación de la fase 1 (`ingestion` y `catalog`). Estado del proyecto y arranque de sesión: `docs/ESTADO.md`. Diagramas: `docs/arquitectura.md`.
+Versión 0.6 · 6 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 y S1.1 (`docs/spikes/`), con las ADR-001 a ADR-005 (`docs/decisions/`) y con la implementación de la fase 1 (`ingestion` y `catalog` con los dos ejes de frescura). Estado del proyecto y arranque de sesión: `docs/ESTADO.md`. Diagramas: `docs/arquitectura.md`.
 
 Este documento fija el propósito, el alcance, la arquitectura y las reglas de trabajo del proyecto. Es una especificación viva: las decisiones marcadas como "a verificar" deben resolverse con spikes antes de construir sobre ellas, y el documento debe actualizarse cuando se resuelvan.
 
@@ -259,7 +259,7 @@ Regla: **el backend decide qué datos y en qué orden; el frontend decide cómo 
 - **Unitarias** en dominio y aplicación, sin Spring context.
 - **Arquitectura**: `ApplicationModules.verify()` de Modulith en CI; ArchUnit para hexagonal dentro de cada módulo (dominio no importa infraestructura).
 - **Integración** con Testcontainers (PostGIS real). Sin H2.
-- **Adaptadores upstream**: tests contra fixtures grabados de respuestas reales (cuerpo y cabeceras) servidos con `MockRestServiceServer` (WireMock solo si hiciera falta simular latencias, ADR-004), guardados en `src/test/resources/fixtures/zaragoza/`. Los fixtures se refrescan con los spikes, no a mano. Cada cambio de esquema detectado se convierte en un test (el traductor falla ante una ficha sin `id` o sin `title`).
+- **Adaptadores upstream**: tests contra fixtures grabados de respuestas reales (cuerpo y cabeceras) servidos con `MockRestServiceServer` (WireMock solo si hiciera falta simular latencias, ADR-004), guardados en `src/test/resources/fixtures/zaragoza/`. Los fixtures se refrescan con los spikes, no a mano. Cada cambio de esquema detectado se convierte en un test (el traductor falla ante una ficha sin `id` o sin `title`). El observador de distribuciones (S1.1) se prueba igual: cabeceras `HEAD`, respuestas `rows=1`/`sort desc` y `hits` de WFS grabadas, más los fallos reales (404 HTML, 303, 400, 200 vacío, timeout).
 - **Calidad de datos**: tests de propiedades sobre lo ingerido (no hay duplicados por id de origen, todos los puntos caen dentro del término municipal o se marcan como no resueltos, fechas coherentes, `stage` siempre informado en inversión). En `catalog`, `CatalogDataQualityTest` cruza campo a campo con la matriz de S0.6.
 - **Contrato de la API propia**: OpenAPI generado con springdoc-openapi (ADR-004) y test de integración sobre `/v3/api-docs`; los endpoints se prueban de punta a punta con `MockMvcTester` sobre datos ingeridos de fixtures reales.
 - **Seguridad (fase 5)**: tests de que ningún endpoint de lectura exige autenticación y de que ningún endpoint de escritura funciona sin ella; tests de aislamiento entre usuarios en `workspace`.
@@ -338,4 +338,4 @@ Las reglas 16 a 22 (spikes como tests JUnit, stack real, comportamiento verifica
 3. ~~Ejecutar spikes S0.1–S0.6 y documentarlos.~~ Hecho el 2026-09-05 (`docs/spikes/`, ADR-002).
 4. ~~Revisar este documento con los resultados de los spikes~~ Hecho: v0.4 con ADR-003. El modelo de fase 1 (§4.6 `catalog`) se confirma al implementarlo.
 5. ~~Implementar módulo `ingestion` y módulo `catalog` (fase 1), con las reglas de cliente HTTP de S0.5.~~ Hecho el 2026-09-06 (ADR-004; estado y siguiente paso en `docs/ESTADO.md`).
-6. Cerrar la fase 1: spike S1.1 (frescura observada) y su implementación, cruce con el Swagger, `federated`; después, despliegue de una instancia.
+6. Cerrar la fase 1: ~~spike S1.1 (frescura observada) y su implementación~~ hecho el 2026-09-06 (ADR-005; comprobación real en `docs/ESTADO.md` §5); quedan el cruce con el Swagger y `federated`; después, despliegue de una instancia.

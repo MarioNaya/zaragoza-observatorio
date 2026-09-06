@@ -8,7 +8,7 @@
 |---|---|---|
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
-| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.5; ADR-001..004 |
+| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.6 (revisada al cerrar cada sesión); ADR-001..005 |
 | Fase 1: `ingestion` + `catalog` (eje declarado) | **Hecho** (2026-09-06, segunda sesión) | Integrado en `main`; API REST, contrato OpenAPI, instantáneas diarias |
 | Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures redactados, historial limpiado con `git filter-repo`; regla 22 |
 | Fase 1: **eje observado de la frescura** (S1.1) | **Hecho** (2026-09-06, tercera sesión) | Rama `feat/s11-frescura-observada`: spike `S11ObservedFreshnessSpike` + informe; `DistributionHttpObserver`, `ObserveDatasets`, Flyway V005, API con filtro/orden/resumen por método; `.\mvnw.cmd verify` en verde (103 tests); lote real de 436 fichas en 3 min 17 s (§5); ADR-005. Integrada en `main` (fast-forward) y subida a GitHub el 2026-09-06 |
@@ -106,7 +106,7 @@ Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría obse
 ## 8. Mapa del repositorio
 
 ```
-SPEC.md                         especificación viva (v0.5, ADR-000)
+SPEC.md                         especificación viva (v0.6, ADR-000)
 CLAUDE.md                       reglas de trabajo (1–23) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
