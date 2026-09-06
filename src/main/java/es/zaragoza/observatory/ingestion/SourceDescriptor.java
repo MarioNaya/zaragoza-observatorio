@@ -35,6 +35,9 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 	/** Tope de {@code rows} en la sede y el espacio de datos (S0.1, S0.5). */
 	public static final int SEDE_MAX_ROWS = 500;
 
+	/** Tope efectivo de {@code _pageSize} en datos.gob.es: pedir más devuelve 200 (S1.3). */
+	public static final int DATOS_GOB_ES_MAX_ROWS = 200;
+
 	public SourceDescriptor {
 		Objects.requireNonNull(dataset, "dataset must not be null");
 		Objects.requireNonNull(url, "url must not be null");
@@ -50,6 +53,10 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 		if (isSedeFamily(dataset.source()) && pagination.rows() > SEDE_MAX_ROWS) {
 			throw new IllegalArgumentException(
 					"rows must be <= " + SEDE_MAX_ROWS + " for source " + dataset.source() + " (S0.5)");
+		}
+		if (Sources.DATOS_GOB_ES.equals(dataset.source()) && pagination.rows() > DATOS_GOB_ES_MAX_ROWS) {
+			throw new IllegalArgumentException(
+					"rows must be <= " + DATOS_GOB_ES_MAX_ROWS + " for source " + dataset.source() + " (S1.3)");
 		}
 		if (shape == ResponseShape.DOCUMENT && pagination.mode() != Pagination.Mode.NONE) {
 			throw new IllegalArgumentException("a DOCUMENT is fetched in a single request: pagination must be NONE");
@@ -76,23 +83,42 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 		 * Un único objeto JSON que no es una lista de registros (el Swagger de la API, S1.2). Cuenta como un
 		 * registro; no se envían parámetros de paginación (la fuente los ignora, y {@code HEAD} devuelve 400).
 		 */
-		DOCUMENT
+		DOCUMENT,
+		/**
+		 * Linked Data API de datos.gob.es (S1.3): {@code {"format":…,"result":{"items":[...],"next":…}}}; sin
+		 * recuento total, así que se avanza mientras la página venga llena.
+		 */
+		RESULT_ITEMS
 	}
 
 	/**
 	 * Estrategia de paginación.
 	 *
 	 * @param mode {@code NONE}: una sola petición con {@code rows}; {@code OFFSET}: {@code start} creciente de
-	 * {@code rows} en {@code rows} hasta agotar {@code totalCount} o recibir una página corta
+	 * {@code rows} en {@code rows} hasta agotar {@code totalCount} o recibir una página corta; {@code PAGE}:
+	 * número de página desde 0 (datos.gob.es, S1.3) hasta recibir una página corta
 	 * @param rows registros por petición (siempre se envía; el valor por defecto de la sede es 50)
+	 * @param pageParam nombre del parámetro de posición ({@code start} en la sede, {@code _page} en
+	 * datos.gob.es); {@code null} en {@code NONE}
+	 * @param rowsParam nombre del parámetro de tamaño ({@code rows} en la sede, {@code _pageSize} en datos.gob.es)
 	 */
-	public record Pagination(Mode mode, int rows) {
+	public record Pagination(Mode mode, int rows, String pageParam, String rowsParam) {
 
 		public Pagination {
 			Objects.requireNonNull(mode, "mode must not be null");
 			if (rows <= 0) {
 				throw new IllegalArgumentException("rows must be positive");
 			}
+			if (mode != Mode.NONE && (pageParam == null || pageParam.isBlank())) {
+				throw new IllegalArgumentException("pageParam is required for " + mode);
+			}
+			if (rowsParam == null || rowsParam.isBlank()) {
+				throw new IllegalArgumentException("rowsParam must not be blank");
+			}
+		}
+
+		public Pagination(Mode mode, int rows) {
+			this(mode, rows, mode == Mode.NONE ? null : "start", "rows");
 		}
 
 		public static Pagination none(int rows) {
@@ -103,8 +129,13 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 			return new Pagination(Mode.OFFSET, rows);
 		}
 
+		/** Páginas numeradas desde 0 con nombres de parámetro propios ({@code _page}/{@code _pageSize} en datos.gob.es). */
+		public static Pagination pages(int rows, String pageParam, String rowsParam) {
+			return new Pagination(Mode.PAGE, rows, pageParam, rowsParam);
+		}
+
 		public enum Mode {
-			NONE, OFFSET
+			NONE, OFFSET, PAGE
 		}
 	}
 

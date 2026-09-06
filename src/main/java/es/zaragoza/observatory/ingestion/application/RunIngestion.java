@@ -92,7 +92,8 @@ public class RunIngestion {
 
 	/**
 	 * Reglas de S0.5: con {@code totalCount} se avanza mientras {@code start + registros < totalCount}; sin él, se
-	 * avanza mientras la página venga llena. Una página vacía siempre termina.
+	 * avanza mientras la página venga llena (también en {@code PAGE}, datos.gob.es, S1.3). Una página vacía
+	 * siempre termina.
 	 */
 	static boolean hasMorePages(SourceDescriptor source, RawPage page, int start) {
 		if (source.pagination().mode() == Mode.NONE || page.recordCount() == 0) {

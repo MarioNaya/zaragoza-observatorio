@@ -18,7 +18,20 @@ public record CatalogProperties(
 		@DefaultValue({ "id", "title", "description_basic", "issued", "modified", "lastUpdated", "accrualPeriodicity",
 				"status", "geo", "abierto", "explorable", "formato" }) List<String> fields,
 		@DefaultValue("PT6H") Duration interval, @DefaultValue Freshness freshness,
-		@DefaultValue Sampling observation, @DefaultValue ApiInventory apiInventory) {
+		@DefaultValue Sampling observation, @DefaultValue ApiInventory apiInventory,
+		@DefaultValue Federation federation) {
+
+	/**
+	 * Federación en datos.gob.es (S1.3): listado del publicador municipal, páginas de hasta 200.
+	 *
+	 * @param url {@code apidata/catalog/dataset/publisher/L01502973.json}
+	 * @param pageSize {@code _pageSize} (tope efectivo 200)
+	 * @param interval intervalo mínimo entre ingestas
+	 */
+	public record Federation(
+			@DefaultValue("https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json") URI url,
+			@DefaultValue("200") int pageSize, @DefaultValue("P1D") Duration interval) {
+	}
 
 	public record Freshness(@DefaultValue("1.0") double onTimeMax, @DefaultValue("2.0") double slightDelayMax,
 			@DefaultValue("5.0") double delayedMax) {

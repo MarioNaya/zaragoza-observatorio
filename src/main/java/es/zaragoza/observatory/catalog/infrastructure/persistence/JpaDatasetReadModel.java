@@ -2,6 +2,7 @@ package es.zaragoza.observatory.catalog.infrastructure.persistence;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -25,9 +27,11 @@ import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 class JpaDatasetReadModel implements DatasetReadModel {
 
 	private final DatasetJpaRepository jpa;
+	private final FederatedDatasetJpaRepository federated;
 
-	JpaDatasetReadModel(DatasetJpaRepository jpa) {
+	JpaDatasetReadModel(DatasetJpaRepository jpa, FederatedDatasetJpaRepository federated) {
 		this.jpa = jpa;
+		this.federated = federated;
 	}
 
 	@Override
@@ -35,14 +39,27 @@ class JpaDatasetReadModel implements DatasetReadModel {
 	public PageOf<DatasetListing> search(DatasetFilter filter, DatasetSort sort, PageRequest page) {
 		Page<DatasetEntity> result = jpa.findAll(specification(filter),
 				org.springframework.data.domain.PageRequest.of(page.page(), page.size(), sort(sort)));
-		return new PageOf<>(result.getContent().stream().map(DatasetEntity::toListing).toList(), page.page(),
-				page.size(), result.getTotalElements());
+		Map<Integer, String> federatedUrls = federatedUrls(result.getContent());
+		return new PageOf<>(result.getContent().stream().map(e -> e.toListing(federatedUrls.get(e.getSourceId())))
+				.toList(), page.page(), page.size(), result.getTotalElements());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<DatasetListing> find(int sourceId) {
-		return jpa.findById(sourceId).map(DatasetEntity::toListing);
+		return jpa.findById(sourceId).map(e -> e.toListing(
+				federated.findById(sourceId).map(FederatedDatasetEntity::getUrl).orElse(null)));
+	}
+
+	/** URL en datos.gob.es de las fichas de la página que estén federadas (S1.3), en una sola consulta. */
+	private Map<Integer, String> federatedUrls(List<DatasetEntity> entities) {
+		List<Integer> ids = entities.stream().map(DatasetEntity::getSourceId).toList();
+		if (ids.isEmpty()) {
+			return Map.of();
+		}
+		Map<Integer, String> urls = new HashMap<>();
+		federated.findAllById(ids).forEach(f -> urls.put(f.getSourceId(), f.getUrl()));
+		return urls;
 	}
 
 	@Override
@@ -81,7 +98,7 @@ class JpaDatasetReadModel implements DatasetReadModel {
 		}
 		return new CatalogSummary(jpa.count(), byFreshness, byPeriodicity, jpa.countByHasApiTrue(),
 				jpa.countByOpenTrue(), jpa.countByExplorableTrue(), jpa.countByHasGeoTrue(), jpa.latestSnapshotOn(),
-				withoutSnapshot, byObservation, withoutObservation);
+				withoutSnapshot, byObservation, withoutObservation, jpa.countFederated());
 	}
 
 	static Specification<DatasetEntity> specification(DatasetFilter filter) {
@@ -109,6 +126,12 @@ class JpaDatasetReadModel implements DatasetReadModel {
 			}
 			if (filter.observation() != null) {
 				predicates.add(cb.equal(root.get("latestObservationMethod"), filter.observation()));
+			}
+			if (filter.federated() != null) {
+				Subquery<Integer> federatedIds = query.subquery(Integer.class);
+				federatedIds.select(federatedIds.from(FederatedDatasetEntity.class).get("sourceId"));
+				Predicate in = root.get("sourceId").in(federatedIds);
+				predicates.add(filter.federated() ? in : cb.not(in));
 			}
 			if (filter.text() != null && !filter.text().isBlank()) {
 				String pattern = "%" + filter.text().strip().toLowerCase(Locale.ROOT) + "%";

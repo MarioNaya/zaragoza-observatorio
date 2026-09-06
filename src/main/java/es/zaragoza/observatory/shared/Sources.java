@@ -19,6 +19,12 @@ public final class Sources {
 	/** Open311: {@code /api/recurso/open311} (S0.3). */
 	public static final String OPEN311 = "open311";
 
+	/**
+	 * Federación estatal: {@code https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json} (S0.1,
+	 * S1.3). Otro host, otra paginación ({@code _page}/{@code _pageSize}, tope 200) y otra forma de respuesta.
+	 */
+	public static final String DATOS_GOB_ES = "datos-gob-es";
+
 	private Sources() {
 	}
 

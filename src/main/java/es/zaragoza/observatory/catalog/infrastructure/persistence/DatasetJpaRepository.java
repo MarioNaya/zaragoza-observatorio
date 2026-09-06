@@ -45,6 +45,10 @@ interface DatasetJpaRepository extends JpaRepository<DatasetEntity, Integer>, Jp
 	@Query("select count(d) from DatasetEntity d where d.apiTag in (select distinct e.tag from ApiEndpointEntity e)")
 	long countWithDocumentedApiTag();
 
+	/** Fichas presentes en datos.gob.es (S1.3). */
+	@Query("select count(d) from DatasetEntity d where d.sourceId in (select f.sourceId from FederatedDatasetEntity f)")
+	long countFederated();
+
 	/** Nunca observadas primero, después las más antiguas; desempate por {@code sourceId}. */
 	@Query("select d from DatasetEntity d where d.observedAt is null or d.observedAt < :before "
 			+ "order by d.observedAt asc nulls first, d.sourceId asc")

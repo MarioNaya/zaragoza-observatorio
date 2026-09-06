@@ -74,6 +74,24 @@ class SourceDescriptorTest {
 	}
 
 	@Test
+	void datosGobEsPagesByNumberWithItsOwnParameterNamesAndA200Cap() {
+		var ref = DatasetRef.of(Sources.DATOS_GOB_ES, "publisher/L01502973");
+		URI url = URI.create("https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json");
+		var federation = new SourceDescriptor(ref, url, Map.of(), Pagination.pages(200, "_page", "_pageSize"),
+				ResponseShape.RESULT_ITEMS);
+
+		assertThat(federation.pagination().mode()).isEqualTo(Pagination.Mode.PAGE);
+		assertThat(federation.pagination().pageParam()).isEqualTo("_page");
+		assertThat(federation.pagination().rowsParam()).isEqualTo("_pageSize");
+		assertThatIllegalArgumentException().isThrownBy(() -> new SourceDescriptor(ref, url, Map.of(),
+				Pagination.pages(500, "_page", "_pageSize"), ResponseShape.RESULT_ITEMS)).withMessageContaining("200");
+		assertThatIllegalArgumentException().isThrownBy(() -> Pagination.pages(50, " ", "_pageSize"));
+		assertThat(Pagination.offset(500).pageParam()).isEqualTo("start");
+		assertThat(Pagination.offset(500).rowsParam()).isEqualTo("rows");
+		assertThat(Pagination.none(500).pageParam()).isNull();
+	}
+
+	@Test
 	void documentsAreFetchedInASingleRequest() {
 		var swagger = SourceDescriptor.document(DatasetRef.of(Sources.SEDE, "catalogo/api"),
 				URI.create("https://www.zaragoza.es/sede/servicio/catalogo/api.json"));

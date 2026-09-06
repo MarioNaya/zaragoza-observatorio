@@ -75,7 +75,7 @@ public class ZaragozaHttpClient implements SourceGateway {
 
 	@Override
 	public RawPage fetch(SourceDescriptor source, int pageNumber, int start) {
-		URI uri = buildUri(source, start);
+		URI uri = buildUri(source, pageNumber, start);
 		CircuitBreaker breaker = breakers.circuitBreaker(source.dataset().key());
 		try {
 			return retry.executeSupplier(() -> breaker.executeSupplier(() -> exchange(source, uri, pageNumber, start)));
@@ -86,14 +86,18 @@ public class ZaragozaHttpClient implements SourceGateway {
 		}
 	}
 
-	static URI buildUri(SourceDescriptor source, int start) {
+	static URI buildUri(SourceDescriptor source, int pageNumber, int start) {
 		var builder = UriComponentsBuilder.fromUri(source.url());
 		source.query().forEach(builder::queryParam);
+		var pagination = source.pagination();
 		if (source.shape() != ResponseShape.DOCUMENT) {
-			builder.queryParam("rows", source.pagination().rows());
+			builder.queryParam(pagination.rowsParam(), pagination.rows());
 		}
-		if (source.pagination().mode() == Mode.OFFSET) {
-			builder.queryParam("start", start);
+		if (pagination.mode() == Mode.OFFSET) {
+			builder.queryParam(pagination.pageParam(), start);
+		}
+		else if (pagination.mode() == Mode.PAGE) {
+			builder.queryParam(pagination.pageParam(), pageNumber);
 		}
 		return builder.build().toUri();
 	}
@@ -179,6 +183,14 @@ public class ZaragozaHttpClient implements SourceGateway {
 						describe(uri, status, "expected a JSON document object but got " + root.getNodeType()));
 			}
 			recordCount = 1;
+		}
+		else if (source.shape() == ResponseShape.RESULT_ITEMS) {
+			JsonNode items = root.path("result").path("items");
+			if (!items.isArray()) {
+				throw new SourceAccessException(Kind.MALFORMED, status,
+						describe(uri, status, "expected result.items[] but got " + root.getNodeType()));
+			}
+			recordCount = items.size();
 		}
 		else if (source.shape() == ResponseShape.ENVELOPE) {
 			if (!root.isObject()) {

@@ -9,14 +9,17 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
 import es.zaragoza.observatory.catalog.CatalogSources;
+import es.zaragoza.observatory.catalog.application.RegisterFederatedDatasets;
 import es.zaragoza.observatory.catalog.application.TakeFreshnessSnapshots;
+import es.zaragoza.observatory.ingestion.Ingestion;
+import es.zaragoza.observatory.ingestion.IngestionRunSummary;
 import es.zaragoza.observatory.shared.DatasetIngested;
 import es.zaragoza.observatory.shared.ZaragozaTime;
 
 /**
  * SPEC.md §4.5 paso 6: {@code catalog} escucha {@code DatasetIngested}. Tras cada ingesta del propio catálogo
- * recalcula las instantáneas de frescura del día (idempotente). Los eventos de otros datasets se ignoran por
- * ahora; alimentarán la frescura observada cuando exista.
+ * recalcula las instantáneas de frescura del día (idempotente); tras cada ingesta de la federación da de baja
+ * los datasets que datos.gob.es ya no lista (S1.3). Los eventos de otros datasets se ignoran.
  */
 @Component
 class CatalogIngestedListener {
@@ -24,10 +27,15 @@ class CatalogIngestedListener {
 	private static final Logger log = LoggerFactory.getLogger(CatalogIngestedListener.class);
 
 	private final TakeFreshnessSnapshots takeFreshnessSnapshots;
+	private final RegisterFederatedDatasets registerFederatedDatasets;
+	private final Ingestion ingestion;
 	private final Clock clock;
 
-	CatalogIngestedListener(TakeFreshnessSnapshots takeFreshnessSnapshots, Clock clock) {
+	CatalogIngestedListener(TakeFreshnessSnapshots takeFreshnessSnapshots,
+			RegisterFederatedDatasets registerFederatedDatasets, Ingestion ingestion, Clock clock) {
 		this.takeFreshnessSnapshots = takeFreshnessSnapshots;
+		this.registerFederatedDatasets = registerFederatedDatasets;
+		this.ingestion = ingestion;
 		this.clock = clock;
 	}
 
@@ -36,6 +44,17 @@ class CatalogIngestedListener {
 		if (CatalogSources.API_INVENTORY.equals(event.dataset())) {
 			// El inventario se sincroniza entero en handle(); el cruce con las fichas se resuelve al leer (S1.2).
 			log.info("api inventory run {} ingested the Swagger document", event.run());
+			return;
+		}
+		if (CatalogSources.FEDERATION.equals(event.dataset())) {
+			// Las páginas ya hicieron upsert; lo que no se ha visto desde el inicio de la ejecución ha desaparecido
+			// de datos.gob.es (S1.3).
+			ingestion.lastSuccessful(CatalogSources.FEDERATION).map(IngestionRunSummary::startedAt)
+					.ifPresent(startedAt -> {
+						int purged = registerFederatedDatasets.purgeNotSeenSince(startedAt);
+						log.info("federation run {} listed {} datasets; {} no longer federated", event.run(),
+								event.records(), purged);
+					});
 			return;
 		}
 		if (!CatalogSources.CATALOG.equals(event.dataset())) {

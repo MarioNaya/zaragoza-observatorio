@@ -24,6 +24,7 @@ import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetSort;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.PageOf;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.PageRequest;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.domain.FederationReadModel;
 import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
 import es.zaragoza.observatory.catalog.domain.ObservationMethod;
@@ -36,6 +37,7 @@ import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiPage;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetApiEndpoints;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetDetail;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.DatasetSummary;
+import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.FederationSummary;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.FreshnessSnapshotDto;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.PageMeta;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.Source;
@@ -43,6 +45,7 @@ import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.Summary;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.Thresholds;
 import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionRunSummary;
+import es.zaragoza.observatory.shared.DatasetRef;
 
 /**
  * Monitor de frescura del catálogo (SPEC.md §4.7). Lectura pública; el backend filtra, ordena y pagina (regla 8);
@@ -66,18 +69,20 @@ class CatalogController {
 	private final FreshnessSnapshotRepository snapshots;
 	private final ApiEndpointRepository endpoints;
 	private final ApiInventoryReadModel inventory;
+	private final FederationReadModel federation;
 	private final Ingestion ingestion;
 	private final FreshnessPolicy policy;
 	private final Source source;
 	private final Source inventorySource;
 
 	CatalogController(DatasetReadModel datasets, FreshnessSnapshotRepository snapshots,
-			ApiEndpointRepository endpoints, ApiInventoryReadModel inventory, Ingestion ingestion,
-			FreshnessPolicy policy, CatalogProperties properties) {
+			ApiEndpointRepository endpoints, ApiInventoryReadModel inventory, FederationReadModel federation,
+			Ingestion ingestion, FreshnessPolicy policy, CatalogProperties properties) {
 		this.datasets = datasets;
 		this.snapshots = snapshots;
 		this.endpoints = endpoints;
 		this.inventory = inventory;
+		this.federation = federation;
 		this.ingestion = ingestion;
 		this.policy = policy;
 		this.source = new Source(CatalogSources.CATALOG.key(), properties.catalogUrl().toString());
@@ -92,10 +97,12 @@ class CatalogController {
 			@RequestParam(required = false) String status, @RequestParam(required = false) Boolean hasGeo,
 			@RequestParam(required = false) Boolean open, @RequestParam(required = false) Boolean hasApi,
 			@RequestParam(required = false) DeclaredFreshness freshness, @RequestParam(required = false) String q,
-			@RequestParam(required = false) ObservationMethod observation) {
+			@RequestParam(required = false) ObservationMethod observation,
+			@RequestParam(required = false) Boolean federated) {
 		DatasetSort datasetSort = parseSort(sort);
 		PageRequest pageRequest = pageRequest(page, size);
-		var filter = new DatasetFilter(periodicity, status, hasGeo, open, hasApi, freshness, q, observation);
+		var filter = new DatasetFilter(periodicity, status, hasGeo, open, hasApi, freshness, q, observation,
+				federated);
 		PageOf<DatasetListing> result = datasets.search(filter, datasetSort, pageRequest);
 		return new ApiPage<>(source, ingestedAt(), Caveats.CATALOG,
 				new PageMeta(result.page(), result.size(), result.totalElements(), result.totalPages(),
@@ -137,22 +144,28 @@ class CatalogController {
 	Summary summary() {
 		var summary = datasets.summary();
 		var api = inventory.summary();
+		var fed = federation.summary();
 		return new Summary(source, ingestedAt(), Caveats.CATALOG, summary.datasets(), summary.byDeclaredFreshness(),
 				summary.byPeriodicity(), summary.withApi(), summary.open(), summary.explorable(), summary.withGeo(),
 				summary.latestSnapshotOn(), summary.withoutSnapshot(), summary.byObservationMethod(),
 				summary.withoutObservation(),
 				new ApiInventorySummary(inventoryIngestedAt(), api.endpoints(), api.tags(), api.datasetsWithTag(),
 						api.datasetsWithDocumentedTag(), api.tagsWithoutDataset()),
+				new FederationSummary(lastIngestedAt(CatalogSources.FEDERATION), fed.federated(), fed.inCatalog(),
+						fed.notInCatalog(), fed.catalogNotFederated()),
 				new Thresholds(policy.onTimeMax(), policy.slightDelayMax(), policy.delayedMax()));
 	}
 
 	private Instant ingestedAt() {
-		return ingestion.lastSuccessful(CatalogSources.CATALOG).map(IngestionRunSummary::finishedAt).orElse(null);
+		return lastIngestedAt(CatalogSources.CATALOG);
 	}
 
 	private Instant inventoryIngestedAt() {
-		return ingestion.lastSuccessful(CatalogSources.API_INVENTORY).map(IngestionRunSummary::finishedAt)
-				.orElse(null);
+		return lastIngestedAt(CatalogSources.API_INVENTORY);
+	}
+
+	private Instant lastIngestedAt(DatasetRef dataset) {
+		return ingestion.lastSuccessful(dataset).map(IngestionRunSummary::finishedAt).orElse(null);
 	}
 
 	static DatasetSort parseSort(String sort) {

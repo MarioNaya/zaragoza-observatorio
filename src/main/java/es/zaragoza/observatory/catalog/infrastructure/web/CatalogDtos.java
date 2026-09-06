@@ -11,6 +11,8 @@ import es.zaragoza.observatory.catalog.domain.ApiInventoryReadModel;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetListing;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.domain.FederatedDataset;
+import es.zaragoza.observatory.catalog.domain.FederationReadModel;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshot;
 import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 
@@ -39,18 +41,18 @@ final class CatalogDtos {
 	record DatasetSummary(int id, String title, LocalDateTime issued, LocalDateTime declaredModified,
 			LocalDateTime metadataUpdated, String declaredPeriodicity, Integer periodicityDays,
 			String publicationStatus, Boolean hasGeo, Boolean open, boolean explorable, boolean hasApi, String apiTag,
-			DeclaredFreshness latestFreshness, Double latestRatio, LocalDate latestSnapshotOn, Instant observedAt,
-			ObservationMethod latestObservationMethod, Instant latestObservedChange, Instant firstSeenAt,
-			Instant lastSeenAt) {
+			boolean federated, String federatedUrl, DeclaredFreshness latestFreshness, Double latestRatio,
+			LocalDate latestSnapshotOn, Instant observedAt, ObservationMethod latestObservationMethod,
+			Instant latestObservedChange, Instant firstSeenAt, Instant lastSeenAt) {
 
 		static DatasetSummary from(DatasetListing listing) {
 			Dataset d = listing.dataset();
 			return new DatasetSummary(d.sourceId(), d.title(), d.issued(), d.declaredModified(), d.metadataUpdated(),
 					d.declaredPeriodicity(), d.periodicityDays(), d.publicationStatus(), d.hasGeo(), d.open(),
-					d.explorable(), d.hasApiDistribution(), d.apiTag(), listing.latestFreshness(),
-					listing.latestRatio(), listing.latestSnapshotOn(), listing.observedAt(),
-					listing.latestObservationMethod(), listing.latestObservedChange(), d.firstSeenAt(),
-					d.lastSeenAt());
+					d.explorable(), d.hasApiDistribution(), d.apiTag(), listing.federated(), listing.federatedUrl(),
+					listing.latestFreshness(), listing.latestRatio(), listing.latestSnapshotOn(),
+					listing.observedAt(), listing.latestObservationMethod(), listing.latestObservedChange(),
+					d.firstSeenAt(), d.lastSeenAt());
 		}
 	}
 
@@ -66,19 +68,36 @@ final class CatalogDtos {
 	record DatasetDetail(int id, String title, String description, LocalDateTime issued,
 			LocalDateTime declaredModified, LocalDateTime metadataUpdated, String declaredPeriodicity,
 			Integer periodicityDays, String publicationStatus, Boolean hasGeo, Boolean open, boolean explorable,
-			boolean hasApi, String apiTag, DatasetApiEndpoints apiEndpoints, List<Distribution> distributions,
-			FreshnessSnapshotDto latestSnapshot, Instant observedAt, ObservationMethod latestObservationMethod,
-			Instant latestObservedChange, Instant firstSeenAt, Instant lastSeenAt) {
+			boolean hasApi, String apiTag, DatasetApiEndpoints apiEndpoints, boolean federated, String federatedUrl,
+			List<Distribution> distributions, FreshnessSnapshotDto latestSnapshot, Instant observedAt,
+			ObservationMethod latestObservationMethod, Instant latestObservedChange, Instant firstSeenAt,
+			Instant lastSeenAt) {
 
 		static DatasetDetail from(DatasetListing listing, FreshnessSnapshotDto latest, DatasetApiEndpoints api) {
 			Dataset d = listing.dataset();
 			return new DatasetDetail(d.sourceId(), d.title(), d.description(), d.issued(), d.declaredModified(),
 					d.metadataUpdated(), d.declaredPeriodicity(), d.periodicityDays(), d.publicationStatus(),
 					d.hasGeo(), d.open(), d.explorable(), d.hasApiDistribution(), d.apiTag(), api,
+					listing.federated(), listing.federatedUrl(),
 					d.distributions().stream().map(Distribution::from).toList(), latest, listing.observedAt(),
 					listing.latestObservationMethod(), listing.latestObservedChange(), d.firstSeenAt(),
 					d.lastSeenAt());
 		}
+	}
+
+	/** Un dataset del publicador municipal en datos.gob.es (S1.3) y si tiene ficha en el catálogo ingerido. */
+	record FederatedDatasetDto(int id, String title, String url, boolean inCatalog, Instant firstSeenAt,
+			Instant lastSeenAt) {
+
+		static FederatedDatasetDto from(FederationReadModel.FederatedListing listing) {
+			FederatedDataset f = listing.dataset();
+			return new FederatedDatasetDto(f.sourceId(), f.title(), f.url(), listing.inCatalog(), f.firstSeenAt(),
+					f.lastSeenAt());
+		}
+	}
+
+	record FederationSummary(Instant ingestedAt, long federated, long inCatalog, long notInCatalog,
+			long catalogNotFederated) {
 	}
 
 	/** Una operación del Swagger de la API (S1.2). */
@@ -132,7 +151,7 @@ final class CatalogDtos {
 			Map<DeclaredFreshness, Long> byDeclaredFreshness, Map<String, Long> byPeriodicity, long withApi,
 			long open, long explorable, long withGeo, LocalDate latestSnapshotOn, long withoutSnapshot,
 			Map<ObservationMethod, Long> byObservationMethod, long withoutObservation,
-			ApiInventorySummary apiInventory, Thresholds thresholds) {
+			ApiInventorySummary apiInventory, FederationSummary federation, Thresholds thresholds) {
 	}
 
 }

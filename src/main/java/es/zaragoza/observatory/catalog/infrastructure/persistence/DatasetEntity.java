@@ -152,9 +152,9 @@ class DatasetEntity {
 				distributions.stream().map(DistributionEmbeddable::toDomain).toList(), firstSeenAt, lastSeenAt);
 	}
 
-	DatasetListing toListing() {
+	DatasetListing toListing(String federatedUrl) {
 		return new DatasetListing(toDomain(), latestFreshness, latestRatio, latestSnapshotOn, observedAt,
-				latestObservationMethod, latestObservedChange);
+				latestObservationMethod, latestObservedChange, federatedUrl);
 	}
 
 	Integer getSourceId() {

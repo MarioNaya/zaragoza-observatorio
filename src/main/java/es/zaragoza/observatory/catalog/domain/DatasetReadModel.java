@@ -21,24 +21,29 @@ public interface DatasetReadModel {
 
 	/**
 	 * Ficha más las marcas desnormalizadas de su última instantánea declarada y de su última observación (puede
-	 * no haberlas aún).
+	 * no haberlas aún) y, si datos.gob.es la lista, la URL de su ficha allí ({@code federatedUrl}, S1.3).
 	 */
 	record DatasetListing(Dataset dataset, DeclaredFreshness latestFreshness, Double latestRatio,
 			LocalDate latestSnapshotOn, Instant observedAt, ObservationMethod latestObservationMethod,
-			Instant latestObservedChange) {
+			Instant latestObservedChange, String federatedUrl) {
+
+		public boolean federated() {
+			return federatedUrl != null;
+		}
 	}
 
 	/**
 	 * Filtros combinables (todos opcionales). {@code periodicity} admite el valor {@link #UNDECLARED} para las
-	 * fichas sin {@code accrualPeriodicity}; {@code observation} filtra por el método de la última observación.
+	 * fichas sin {@code accrualPeriodicity}; {@code observation} filtra por el método de la última observación;
+	 * {@code federated} por presencia en datos.gob.es.
 	 */
 	record DatasetFilter(String periodicity, String publicationStatus, Boolean hasGeo, Boolean open, Boolean hasApi,
-			DeclaredFreshness freshness, String text, ObservationMethod observation) {
+			DeclaredFreshness freshness, String text, ObservationMethod observation, Boolean federated) {
 
 		public static final String UNDECLARED = "UNDECLARED";
 
 		public static DatasetFilter none() {
-			return new DatasetFilter(null, null, null, null, null, null, null, null);
+			return new DatasetFilter(null, null, null, null, null, null, null, null, null);
 		}
 	}
 
@@ -96,7 +101,7 @@ public interface DatasetReadModel {
 	record CatalogSummary(long datasets, Map<DeclaredFreshness, Long> byDeclaredFreshness,
 			Map<String, Long> byPeriodicity, long withApi, long open, long explorable, long withGeo,
 			LocalDate latestSnapshotOn, long withoutSnapshot, Map<ObservationMethod, Long> byObservationMethod,
-			long withoutObservation) {
+			long withoutObservation, long federated) {
 	}
 
 }

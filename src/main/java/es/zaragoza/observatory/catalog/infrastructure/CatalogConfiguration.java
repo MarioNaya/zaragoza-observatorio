@@ -12,9 +12,11 @@ import es.zaragoza.observatory.catalog.application.ObserveDatasets;
 import es.zaragoza.observatory.catalog.application.RecordObservation;
 import es.zaragoza.observatory.catalog.application.RegisterApiEndpoints;
 import es.zaragoza.observatory.catalog.application.RegisterDatasets;
+import es.zaragoza.observatory.catalog.application.RegisterFederatedDatasets;
 import es.zaragoza.observatory.catalog.application.TakeFreshnessSnapshots;
 import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
+import es.zaragoza.observatory.catalog.domain.FederatedDatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DistributionObserver;
 import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
@@ -41,6 +43,11 @@ class CatalogConfiguration {
 	@Bean
 	RegisterApiEndpoints registerApiEndpoints(ApiEndpointRepository endpoints) {
 		return new RegisterApiEndpoints(endpoints);
+	}
+
+	@Bean
+	RegisterFederatedDatasets registerFederatedDatasets(FederatedDatasetRepository federated) {
+		return new RegisterFederatedDatasets(federated);
 	}
 
 	@Bean

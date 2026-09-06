@@ -91,6 +91,12 @@ zaragoza:
     api-inventory:
       url: https://www.zaragoza.es/sede/servicio/catalogo/api.json
       interval: P1D
+    # Federación en datos.gob.es (docs/spikes/S1.3-federacion.md): páginas explícitas _page/_pageSize (tope 200), sin
+    # recuento ni cabeceras condicionales; los datasets que desaparecen se dan de baja al completar la ingesta.
+    federation:
+      url: https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json
+      page-size: 200
+      interval: P1D
 
 ---
 # Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).

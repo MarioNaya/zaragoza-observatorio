@@ -26,7 +26,23 @@ final class Caveats {
 			"Las fechas del catálogo se sirven como hora local de Zaragoza sin zona, tal como las publica la fuente.",
 			"apiEndpoints son las operaciones que el Swagger de la API municipal documenta bajo el apiTag de la ficha "
 					+ "(inventario ingerido por separado, con su propio ingestedAt); tagDocumented indica si ese tag "
-					+ "existe en el Swagger. Que un endpoint esté documentado no significa que responda (S1.2).");
+					+ "existe en el Swagger. Que un endpoint esté documentado no significa que responda (S1.2).",
+			"federated y federatedUrl: la ficha aparece en el listado de datos.gob.es del publicador L01502973 en "
+					+ "la última ingesta de la federación (ver GET /catalog/federation). datos.gob.es lista además "
+					+ "datasets sin ficha en este catálogo: partes de series y colecciones que catalogo.json no "
+					+ "devuelve (S1.3).");
+
+	static final List<String> FEDERATION = List.of(
+			"El listado es el de datos.gob.es para el publicador L01502973 (Ayuntamiento de Zaragoza), ingerido a "
+					+ "diario por páginas de hasta 200 sin recuento total ni cabeceras condicionales; los datasets "
+					+ "que desaparecen se dan de baja al completar cada ingesta. id es el id municipal que lleva "
+					+ "identifier; url es la ficha en datos.gob.es; firstSeenAt y lastSeenAt son marcas de este "
+					+ "observatorio.",
+			"inCatalog = false: el dataset está federado pero no aparece en el listado municipal catalogo.json. "
+					+ "Existe en el detalle catalogo/{id}.json como parte de una serie o colección "
+					+ "(datasetRelacionado IS_PART_OF); el observatorio no ingiere todavía esas partes (S1.3).",
+			"El modified de datos.gob.es coincide con el modified del catálogo municipal en todos los casos "
+					+ "comparables (S1.3) y no se guarda.");
 
 	static final List<String> API_INVENTORY = List.of(
 			"El inventario es el Swagger 2.0 de la API municipal (sede/servicio/catalogo/api.json), ingerido a diario "

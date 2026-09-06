@@ -137,7 +137,7 @@ class ZaragozaHttpClientTest {
 		RawPage page = client.fetch(swagger, 0, 0);
 
 		server.verify();
-		assertThat(ZaragozaHttpClient.buildUri(swagger, 0)).hasToString(url);
+		assertThat(ZaragozaHttpClient.buildUri(swagger, 0, 0)).hasToString(url);
 		assertThat(page.recordCount()).isEqualTo(1);
 		assertThat(page.totalCount()).isNull();
 		assertThat(page.sourceLastModified()).isNull();
@@ -273,18 +273,40 @@ class ZaragozaHttpClientTest {
 
 	@Test
 	void buildsUrlsWithExtensionQueryRowsAndStart() {
-		assertThat(ZaragozaHttpClient.buildUri(catalog(Pagination.offset(500)), 1000))
+		assertThat(ZaragozaHttpClient.buildUri(catalog(Pagination.offset(500)), 2, 1000))
 				.hasToString(CATALOG_URL + "?fl=id,title,formato&rows=500&start=1000");
 		var ocds = new SourceDescriptor(DatasetRef.of(Sources.OCDS, "contracting-process"),
 				URI.create("https://www.zaragoza.es/sede/servicio/contratacion-publica/ocds/contracting-process.json"),
 				Map.of(), Pagination.none(20000), ResponseShape.ARRAY);
-		assertThat(ZaragozaHttpClient.buildUri(ocds, 0))
+		assertThat(ZaragozaHttpClient.buildUri(ocds, 0, 0))
 				.hasToString("https://www.zaragoza.es/sede/servicio/contratacion-publica/ocds/contracting-process.json?rows=20000");
 		var geo = new SourceDescriptor(DatasetRef.of(Sources.SEDE, "distrito"),
 				URI.create("https://www.zaragoza.es/sede/servicio/distrito.json"), Map.of("srsname", "wgs84"),
 				Pagination.none(500), ResponseShape.ENVELOPE);
-		assertThat(ZaragozaHttpClient.buildUri(geo, 0))
+		assertThat(ZaragozaHttpClient.buildUri(geo, 0, 0))
 				.hasToString("https://www.zaragoza.es/sede/servicio/distrito.json?srsname=wgs84&rows=500");
+	}
+
+	@Test
+	void fetchesDatosGobEsPagesWithTheirOwnPagingParameters() {
+		// S1.3: _pageSize (tope 200) y _page desde 0 explícitos; sin recuento; más allá del final, items vacío
+		String url = "https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json";
+		var federation = new SourceDescriptor(DatasetRef.of(Sources.DATOS_GOB_ES, "publisher/L01502973"),
+				URI.create(url), Map.of(), Pagination.pages(50, "_page", "_pageSize"), ResponseShape.RESULT_ITEMS);
+		assertThat(ZaragozaHttpClient.buildUri(federation, 3, 150)).hasToString(url + "?_pageSize=50&_page=3");
+		server.expect(requestTo(url + "?_pageSize=50&_page=0"))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/datos-gob-es-page0.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(url + "?_pageSize=50&_page=1"))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/datos-gob-es-page-beyond.json"), MediaType.APPLICATION_JSON));
+
+		RawPage first = client.fetch(federation, 0, 0);
+		RawPage beyond = client.fetch(federation, 1, 50);
+
+		server.verify();
+		assertThat(first.recordCount()).isEqualTo(50);
+		assertThat(first.totalCount()).isNull();
+		assertThat(first.sourceLastModified()).isNull();
+		assertThat(beyond.recordCount()).isZero();
 	}
 
 	@Test

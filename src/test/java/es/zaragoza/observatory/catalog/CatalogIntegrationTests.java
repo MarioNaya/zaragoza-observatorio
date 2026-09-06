@@ -10,6 +10,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,12 +33,15 @@ import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.application.ObserveDatasets;
+import es.zaragoza.observatory.catalog.domain.FederatedDataset;
+import es.zaragoza.observatory.catalog.domain.FederatedDatasetRepository;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
 import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionJob;
 import es.zaragoza.observatory.ingestion.IngestionRunSummary;
 import es.zaragoza.observatory.ingestion.RunStatus;
+import es.zaragoza.observatory.ingestion.SourceDescriptor.Pagination;
 import es.zaragoza.observatory.ingestion.SourceDescriptor.ResponseShape;
 import es.zaragoza.observatory.shared.DatasetRef;
 import es.zaragoza.observatory.support.Fixtures;
@@ -49,7 +53,7 @@ import es.zaragoza.observatory.support.Fixtures;
  */
 @SpringBootTest(properties = { "zaragoza.ingestion.scheduler.enabled=false", "zaragoza.ingestion.page-delay=PT0S",
 		"zaragoza.ingestion.retry.initial-backoff=PT0.01S", "zaragoza.catalog.observation.enabled=false",
-		"zaragoza.catalog.observation.request-delay=PT0S" })
+		"zaragoza.catalog.observation.request-delay=PT0S", "zaragoza.catalog.federation.page-size=50" })
 @Import(TestcontainersConfiguration.class)
 @AutoConfigureMockRestServiceServer
 @AutoConfigureMockMvc
@@ -57,6 +61,7 @@ class CatalogIntegrationTests {
 
 	static final String CATALOG_URL = "https://www.zaragoza.es/web/espacio-de-datos/servicio/catalogo.json";
 	static final String SWAGGER_URL = "https://www.zaragoza.es/sede/servicio/catalogo/api.json";
+	static final String FEDERATION_URL = "https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json";
 	static final MediaType JSON_UTF8 = MediaType.parseMediaType("application/json;charset=UTF-8");
 
 	@Autowired
@@ -70,6 +75,9 @@ class CatalogIntegrationTests {
 
 	@Autowired
 	ApiEndpointRepository endpoints;
+
+	@Autowired
+	FederatedDatasetRepository federatedDatasets;
 
 	@Autowired
 	FreshnessSnapshotRepository snapshots;
@@ -156,6 +164,33 @@ class CatalogIntegrationTests {
 		assertThat(endpoints.count()).isEqualTo(497);
 		assertThat(jdbc.sql("select count(*) from catalog_api_endpoint where first_seen_at < last_seen_at")
 				.query(Long.class).single()).isEqualTo(497L);
+
+		// --- federación (S1.3): páginas explícitas, upsert por página y baja de lo no visto al completar ----------
+		server.reset();
+		IngestionJob federationJob = job(CatalogSources.FEDERATION);
+		assertThat(federationJob.source().pagination().mode()).isEqualTo(Pagination.Mode.PAGE);
+		Instant stale = java.time.Instant.now().minus(Duration.ofDays(2));
+		federatedDatasets.upsert(new FederatedDataset(999999, "https://datos.gob.es/catalogo/l01502973-antiguo",
+				"Ya no federado", stale, stale), stale);
+		expectFederationPages();
+		IngestionRunSummary federationRun = ingestion.run(federationJob);
+		server.verify();
+		assertThat(federationRun.status()).isEqualTo(RunStatus.SUCCEEDED);
+		assertThat(federationRun.records()).isEqualTo(50);
+		assertThat(federationRun.pages()).isEqualTo(2);
+		await().atMost(Duration.ofSeconds(30))
+				.untilAsserted(() -> assertThat(federatedDatasets.findBySourceId(999999)).isEmpty());
+		assertThat(federatedDatasets.count()).isEqualTo(50);
+		assertThat(federatedDatasets.findBySourceId(218)).get().extracting(FederatedDataset::url).asString()
+				.startsWith("https://datos.gob.es/catalogo/l01502973-");
+		server.reset();
+		expectFederationPages();
+		assertThat(ingestion.run(federationJob).status()).isEqualTo(RunStatus.SUCCEEDED);
+		server.verify();
+		assertThat(federatedDatasets.count()).isEqualTo(50);
+		long federatedInCatalog = jdbc.sql("select count(*) from catalog_federated_dataset f "
+				+ "join catalog_dataset d on d.source_id = f.source_id").query(Long.class).single();
+		assertThat(federatedInCatalog).isBetween(1L, 50L);
 
 		// --- eje observado (S1.1): tres fichas reales con las respuestas grabadas por el spike ---------------------
 		server.reset();
@@ -305,6 +340,29 @@ class CatalogIntegrationTests {
 				.hasStatusOk().bodyJson().extractingPath("$.items[0].summary").isEqualTo("Listado de clavos");
 		assertThat(mvc.get().uri("/api/v1/catalog/api-endpoints").param("sort", "foo")).hasStatus(HttpStatus.BAD_REQUEST);
 
+		// --- federación (S1.3) en listado, detalle, filtro, resumen y recurso propio --------------------------------
+		var federated218 = assertThat(mvc.get().uri("/api/v1/catalog/datasets/218")).hasStatusOk().bodyJson();
+		federated218.extractingPath("$.item.federated").isEqualTo(true);
+		federated218.extractingPath("$.item.federatedUrl").asString().startsWith("https://datos.gob.es/catalogo/");
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("federated", "true").param("size", "1"))
+				.hasStatusOk().bodyJson().extractingPath("$.page.totalElements").isEqualTo((int) federatedInCatalog);
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("federated", "false").param("size", "1"))
+				.hasStatusOk().bodyJson().extractingPath("$.page.totalElements").isEqualTo((int) (436 - federatedInCatalog));
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("federated", "true").param("size", "5"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[*].federated").asArray().containsOnly(true);
+		var fed = assertThat(mvc.get().uri("/api/v1/catalog/federation").param("size", "5")).hasStatusOk().bodyJson();
+		fed.extractingPath("$.source.dataset").isEqualTo("datos-gob-es:publisher/L01502973");
+		fed.extractingPath("$.source.url").isEqualTo(FEDERATION_URL);
+		fed.extractingPath("$.ingestedAt").asString().isNotEmpty();
+		fed.extractingPath("$.page.totalElements").isEqualTo(50);
+		fed.extractingPath("$.page.sort").isEqualTo("id,asc");
+		fed.extractingPath("$.items[0].url").asString().startsWith("https://datos.gob.es/catalogo/");
+		fed.extractingPath("$.caveats").asArray().isNotEmpty();
+		assertThat(mvc.get().uri("/api/v1/catalog/federation").param("inCatalog", "false").param("size", "1"))
+				.hasStatusOk().bodyJson().extractingPath("$.page.totalElements").isEqualTo((int) (50 - federatedInCatalog));
+		assertThat(mvc.get().uri("/api/v1/catalog/federation").param("q", "boletín").param("sort", "title,desc"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[*].id").asArray().contains(218);
+
 		var history = assertThat(mvc.get().uri("/api/v1/catalog/datasets/13/freshness-history")).hasStatusOk()
 				.bodyJson();
 		history.extractingPath("$.sort").isEqualTo("observedOn,desc");
@@ -334,6 +392,11 @@ class CatalogIntegrationTests {
 		summary.extractingPath("$.apiInventory.datasetsWithDocumentedTag").isEqualTo(60);
 		summary.extractingPath("$.apiInventory.tagsWithoutDataset").isEqualTo(28);
 		summary.extractingPath("$.apiInventory.ingestedAt").asString().isNotEmpty();
+		summary.extractingPath("$.federation.federated").isEqualTo(50);
+		summary.extractingPath("$.federation.inCatalog").isEqualTo((int) federatedInCatalog);
+		summary.extractingPath("$.federation.notInCatalog").isEqualTo((int) (50 - federatedInCatalog));
+		summary.extractingPath("$.federation.catalogNotFederated").isEqualTo((int) (436 - federatedInCatalog));
+		summary.extractingPath("$.federation.ingestedAt").asString().isNotEmpty();
 	}
 
 	@Test
@@ -342,7 +405,8 @@ class CatalogIntegrationTests {
 		api.extractingPath("$.info.title").isEqualTo("Observatorio de Datos Abiertos de Zaragoza");
 		api.extractingPath("$.paths").asMap().containsKeys("/api/v1/catalog/datasets",
 				"/api/v1/catalog/datasets/{id}", "/api/v1/catalog/datasets/{id}/freshness-history",
-				"/api/v1/catalog/summary", "/api/v1/catalog/api-tags", "/api/v1/catalog/api-endpoints");
+				"/api/v1/catalog/summary", "/api/v1/catalog/api-tags", "/api/v1/catalog/api-endpoints",
+				"/api/v1/catalog/federation");
 	}
 
 	@Test
@@ -369,6 +433,14 @@ class CatalogIntegrationTests {
 
 	private IngestionJob job(DatasetRef dataset) {
 		return jobs.stream().filter(j -> j.source().dataset().equals(dataset)).findFirst().orElseThrow();
+	}
+
+	private void expectFederationPages() {
+		// página 0 llena (50 con _pageSize=50) y página 1 vacía (respuesta real más allá del final, S1.3)
+		server.expect(requestTo(FEDERATION_URL + "?_pageSize=50&_page=0")).andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/datos-gob-es-page0.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(FEDERATION_URL + "?_pageSize=50&_page=1"))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/datos-gob-es-page-beyond.json"), MediaType.APPLICATION_JSON));
 	}
 
 	private void expectSwagger() {
