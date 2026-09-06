@@ -27,12 +27,12 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 
 | Endpoint | Qué devuelve |
 |---|---|
-| `GET /api/v1/catalog/datasets` | Fichas del catálogo paginadas (`page`, `size` ≤ 200) y ordenadas (`sort=title,asc`; campos `title`, `id`, `issued`, `declaredModified`, `metadataUpdated`, `declaredRatio`), con filtros `periodicity`, `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `q` |
-| `GET /api/v1/catalog/datasets/{id}` | Ficha completa, distribuciones y última instantánea de frescura |
+| `GET /api/v1/catalog/datasets` | Fichas del catálogo paginadas (`page`, `size` ≤ 200) y ordenadas (`sort=title,asc`; campos `title`, `id`, `issued`, `declaredModified`, `metadataUpdated`, `declaredRatio`, `observedLastChange`), con filtros `periodicity`, `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `observation`, `q` |
+| `GET /api/v1/catalog/datasets/{id}` | Ficha completa, distribuciones y última instantánea de frescura (eje declarado y eje observado) |
 | `GET /api/v1/catalog/datasets/{id}/freshness-history` | Histórico de instantáneas, la más reciente primero (`limit`) |
-| `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada y por periodicidad, y umbrales vigentes |
+| `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada, por periodicidad y por método de observación, y umbrales vigentes |
 | `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
 
-La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* (muestreo de distribuciones) llegará al cerrar la fase 1.
+La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* pregunta a diario a una distribución de cada ficha y publica lo que devuelve con su método: `FILE_HEADERS` (`Last-Modified` del fichero, por `HEAD`), `API_MAX_DATE` (valor máximo de un campo de fecha de la API de la sede, pedido con `sort desc`, más `totalCount`), `API_COUNT` (solo `totalCount`), `WFS_HITS` (`numberMatched`) o `NOT_OBSERVABLE`; los intentos fallidos (servicios inexistentes, redirecciones, intranet) quedan registrados con su causa. Ninguno de los dos ejes es un juicio sobre el dato: cada respuesta lleva `caveats`.
 
 Datos: Ayuntamiento de Zaragoza, portal de datos abiertos (`https://www.zaragoza.es/sede/portal/datos-abiertos/`), bajo su licencia de reutilización. Cada respuesta de la API propia indica el dataset de origen y la fecha de ingesta.

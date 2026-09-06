@@ -27,7 +27,7 @@ flowchart LR
 
   subgraph ACL["Adaptadores anti-corrupción (por módulo)"]
     direction TB
-    A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>DatasetIngested → FreshnessSnapshot diaria"]
+    A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado)<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
     A_CIT["citizen<br/>list.json → ServiceRequest<br/>geometry → punto WGS84"]
     A_GEO["geo<br/>distrito → District<br/>indicadores → PopulationRecord"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
@@ -35,7 +35,7 @@ flowchart LR
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
     direction TB
-    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004)"]
+    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado)"]
     T_CIT["citizen: service_request (point 4326)"]
     T_GEO["geo: district, census_section,<br/>population_record"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
@@ -71,7 +71,7 @@ flowchart TB
     TER["territory<br/>ficha por junta · sin tablas<br/>compone citizen + geo"]
   end
   subgraph DOM["dominios"]
-    CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot"]
+    CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation"]
     CIT["citizen (fase 2)<br/>ServiceRequest, Category"]
     SPE["spending (fase 3)<br/>OCDS, presupuesto, subvenciones<br/>sin dependencia de geo (ADR-003)"]
   end
@@ -104,13 +104,14 @@ flowchart LR
     subgraph HEX[" "]
       direction LR
       WEB["infrastructure/web<br/>CatalogController + CatalogDtos + Caveats<br/>GET /api/v1/catalog/datasets · /{id} · /{id}/freshness-history · /summary"]
-      APP["application<br/>RegisterDatasets · TakeFreshnessSnapshots<br/>@Transactional"]
-      DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
-      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset<br/>CatalogIngestionJob implementa IngestionJob"]
+      APP["application<br/>RegisterDatasets · TakeFreshnessSnapshots<br/>ObserveDatasets · RecordObservation<br/>@Transactional"]
+      DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>Observation, ObservationMethod<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel, DistributionObserver<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
+      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset<br/>CatalogIngestionJob implementa IngestionJob<br/>DistributionHttpObserver + ObservationUrls implementan DistributionObserver<br/>(RestClient común de la aplicación; scheduling/CatalogObservationScheduler)"]
       EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)"]
-      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004"]
+      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004, V005"]
       WEB -- "puerto de lectura" --> DOMN
       ZGZ -- "caso de uso" --> APP
+      ZGZ -. "implementa DistributionObserver" .-> DOMN
       EVT -- "caso de uso" --> APP -- "usa" --> DOMN
       PER -. "implementa puertos" .-> DOMN
     end
