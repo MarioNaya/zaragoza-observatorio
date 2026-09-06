@@ -201,7 +201,7 @@ Idempotencia: cada ingesta debe poder repetirse sin duplicar datos. Los payloads
 
 **geo** (S0.4): `District` (junta municipal o vecinal: id de origen, `padronId`, geometría WGS84), `CensusSection` (`CUSEC`, geometría, junta), `PopulationRecord` (unidad territorial, año, total, españoles, extranjeros, menores, hogares y las desagregaciones que ofrezca la fuente). Servicios `locate(point) -> District` y `locate(point) -> CensusSection`. No existe `Neighbourhood`: los barrios no son dato abierto.
 
-**citizen** (S0.3): `ServiceRequest` (id origen, código y nombre de servicio, título, descripción, estado, `requestedAt`, `closedAt` = `updated_datetime` solo en cerradas, punto WGS84 nullable, dirección textual nullable, nombre de junta de origen nullable, junta resuelta nullable), `Category` (taxonomía `services.json` tal cual más la jerarquía `parent` de `statistics`). No hay canal de entrada en los datos.
+**citizen** (S0.3): `ServiceRequest` (id origen, código y nombre de servicio, título, descripción, estado, `requestedAt`, `closedAt` = `updated_datetime` solo en cerradas, punto WGS84 nullable, dirección textual nullable, nombre de junta de origen nullable, junta resuelta nullable), `Category` (taxonomía `services.json` tal cual más la jerarquía `parent` de `statistics`). No hay canal de entrada en los datos. **Datos personales**: el ayuntamiento publica `title` y `description` sin anonimizar y contienen nombres, firmas y DNI (comprobado el 2026-09-06). El observatorio no los republica tal cual: en fase 2 se decide si se almacenan redactados, truncados o solo como categoría y longitud (§9), y la API nunca expone el texto original.
 
 **spending** (S0.2, S0.6, ADR-003): `ContractingProcess` (ocid, fechas de publicación y release, tags, licitación con importe estimado, procedimiento, categoría, CPV, órgano; **sin localización ni junta**), `Award` (importe, fecha, estado, adjudicatarios), `Supplier`, `Contract` (importe, fecha de firma, periodo, estado), `BudgetSnapshot` (fecha `yyyyMMdd`) con `BudgetLine` (área, programa, órgano, capítulo, partida; crédito inicial, modificaciones, definitivo, comprometido, obligación neta, pago neto), `Grant` (adjudicatario, importe, aplicación presupuestaria, área, línea, instrumento, fecha). Todo registro de gasto lleva `stage` con valores `planned` / `committed` / `executed`: en OCDS solo `planned` (licitación activa) y `committed` (adjudicación/contrato); `executed` sale del presupuesto (obligaciones/pagos) y de subvenciones. Eliminados `ParticipatoryProposal` y `PublicWork` (fuentes inexistentes en datos abiertos).
 
@@ -279,6 +279,7 @@ Regla: **el backend decide qué datos y en qué orden; el frontend decide cómo 
 | Deriva de alcance por el inventario ("visión de conjunto") | Explosión de módulos y datasets | Regla: un bounded context, no un módulo por dataset; candidatos pasan las tres preguntas de S0.6 |
 | `workspace` como módulo-dios | Rompe las fronteras de Modulith | Regla de dependencia explícita: `workspace` no conoce ningún dominio |
 | Coste de gestionar usuarios (RGPD, cuentas) | Carga de mantenimiento desproporcionada | Solo OAuth2 externo, datos mínimos, borrado completo, fase 5 y no antes |
+| Datos personales de terceros en el texto libre de las fuentes municipales | Republicar nombres o DNI de ciudadanos; incumplimiento del RGPD por nuestra parte | **Materializado en los fixtures de S0.3 (2026-09-06)**: fixtures redactados, historial limpiado, regla 22; en fase 2 el texto libre no se expone (§4.6, §9); avisar al ayuntamiento |
 | Sobreingeniería temprana | Proyecto no llega a entregar | Fases estrictas; fase 1 publicable por sí sola |
 
 ---
@@ -321,6 +322,7 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
 - Eje observado de la frescura (muestreo de distribuciones): antes de implementarlo hace falta el spike S1.1 (qué devuelven las cabeceras de los ficheros descargables y las fechas máximas de las API por dataset; coste de red por dataset).
 - Cruce `apiTag` → paths del Swagger (`sede/servicio/catalogo/api.json`) y marca `federated` (RDF/datos.gob.es): pendientes de la fase 1.
 - ShedLock: solo si se despliega más de una instancia (ADR-004).
+- Texto libre de quejas y sugerencias (fase 2): el origen contiene datos personales de terceros. Opciones: no almacenarlo; almacenarlo redactado (detección de DNI, correos, teléfonos y firmas) sin exponerlo; o guardar solo longitud, idioma y categoría. Decidir con ADR antes de ingerir `quejas-sugerencias/list.json`; los fixtures ya se guardan redactados (regla 22).
 - Frontend en el mismo repositorio o separado.
 - ~~Si se ingestan más datasets del catálogo con fines de muestreo~~ → necesario para el 59 % no evaluable (S0.1); decidir alcance y coste por dataset en fase 1.
 - Instantáneas en `workspace`: formato de serialización y retención (tras uso real de la primera oleada).

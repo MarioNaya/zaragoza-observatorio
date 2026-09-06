@@ -9,6 +9,11 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Persistencia de los spikes (ADR-002):
@@ -23,8 +28,13 @@ public final class SpikeFixtures {
 	public static final Path FIXTURES_ROOT = Path.of("src", "test", "resources", "fixtures", "zaragoza");
 	public static final Path METRICS_ROOT = Path.of("target", "spikes");
 
+	private static final JsonMapper JSON = JsonMapper.shared();
+
 	private SpikeFixtures() {
 	}
+
+	/** Marcador con el que se sustituye el texto libre redactado en los fixtures. */
+	public static final String REDACTED = "[texto omitido en el fixture: puede contener datos personales]";
 
 	public static Path save(String source, String name, String body) {
 		try {
@@ -36,6 +46,37 @@ public final class SpikeFixtures {
 		}
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
+		}
+	}
+
+	/**
+	 * Guarda una respuesta JSON sustituyendo por {@link #REDACTED} el valor de los campos indicados, a cualquier
+	 * profundidad. Obligatorio para fuentes con texto escrito por ciudadanos (quejas y sugerencias): el ayuntamiento
+	 * publica ese texto sin anonimizar y contiene nombres y DNI (comprobado el 2026-09-06). Un fixture con datos
+	 * personales de terceros no entra en el repositorio (CLAUDE.md regla 22).
+	 */
+	public static Path saveRedacted(String source, String name, String body, Set<String> fields) {
+		JsonNode tree = JSON.readTree(body);
+		redact(tree, fields);
+		return save(source, name, JSON.writeValueAsString(tree));
+	}
+
+	private static void redact(JsonNode node, Set<String> fields) {
+		if (node instanceof ObjectNode object) {
+			for (String field : List.copyOf(object.propertyNames())) {
+				JsonNode value = object.get(field);
+				if (fields.contains(field) && value.isString() && !value.asString().isBlank()) {
+					object.put(field, REDACTED);
+				}
+				else {
+					redact(value, fields);
+				}
+			}
+		}
+		else if (node.isArray()) {
+			for (JsonNode child : node) {
+				redact(child, fields);
+			}
 		}
 	}
 

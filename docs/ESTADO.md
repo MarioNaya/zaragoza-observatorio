@@ -37,7 +37,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 1. Arrancar Docker Desktop y comprobar `docker info` (Testcontainers y Compose lo necesitan). Se puede lanzar desde PowerShell: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` y esperar a que `docker info` responda.
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~2 min); debe estar en verde antes de tocar nada.
-4. Leer `CLAUDE.md` (reglas 1–21) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
+4. Leer `CLAUDE.md` (reglas 1–22) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
 5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. **La rama `feat/fase1-ingestion-catalog` está pendiente de integrar en `main`** (`git checkout main; git merge --ff-only feat/fase1-ingestion-catalog`).
 
 Comandos útiles:
@@ -87,6 +87,7 @@ Con API 69, abiertos 276, explorables 110, con geo 317. Ficha más reciente por 
 ## 6. Pendientes del usuario
 
 - **Alta como reutilizador en el portal municipal** (SPEC.md §2.2): sigue pendiente. No bloquea nada (toda la API es GET público sin clave), pero conviene hacerlo antes de desplegar, registrar las URL consumidas (catálogo, y en fase 2 quejas y distritos) y aprovechar para pedir inversión por junta y presupuestos participativos como datos abiertos.
+- **Avisar al ayuntamiento** (Gobierno Abierto, `gobiernoabierto@zaragoza.es`, o su delegado de protección de datos) de que el texto libre de quejas y sugerencias sale por la API sin anonimizar (nombre y DNI de una ciudadana en una descripción, 2026-09-06; S0.3 adenda). El repositorio se limpió ese día con `git filter-repo` y se volvió a subir con historial reescrito.
 - Integrar `feat/fase1-ingestion-catalog` en `main` (fast-forward, o con un pull request en GitHub). El remoto existe desde el 2026-09-06: `origin` = <https://github.com/MarioNaya/zaragoza-observatorio> (`main` y la rama de fase 1 subidas).
 - Si se quiere usar el 8080, parar el contenedor phpMyAdmin que lo ocupa.
 
@@ -98,7 +99,7 @@ Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: método de obse
 
 ```
 SPEC.md                         especificación viva (v0.5, ADR-000)
-CLAUDE.md                       reglas de trabajo (1–21) y contexto operativo
+CLAUDE.md                       reglas de trabajo (1–22) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)

@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Date: Sun, 06 Sep 2026 08:24:48 GMT
+Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9
+Content-Length: 756592
+Last-Modified: Fri, 04 Sep 2026 13:23:36 CEST
+Access-Control-Allow-Methods: PATCH,OPTIONS,GET,HEAD,POST,PUT,DELETE
+Access-Control-Allow-Headers: Content-Type,Accept,X-password,clientId,HmacSHA1,Cache-Control,Pragma
+Allow: PATCH,OPTIONS,GET,HEAD,POST,PUT,DELETE
+X-Robots-Tag: noindex
+Access-Control-Allow-Origin: *
+X-UA-Compatible: IE=edge
+Content-Type: application/json;charset=UTF-8
+

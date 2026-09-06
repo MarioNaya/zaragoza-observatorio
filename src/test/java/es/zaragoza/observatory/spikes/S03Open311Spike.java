@@ -41,6 +41,9 @@ import tools.jackson.databind.JsonNode;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class S03Open311Spike {
 
+	/** Campos escritos por ciudadanos o dirigidos a ellos: se redactan al guardar el fixture (regla 22, S0.3 adenda). */
+	static final java.util.Set<String> CITIZEN_TEXT = java.util.Set.of("title", "description", "service_notice");
+
 	static final String ID = "S0.3-open311";
 	static final String QUEJAS = SEDE + "/quejas-sugerencias";
 
@@ -84,7 +87,7 @@ class S03Open311Spike {
 		heading(ID, "Open311 `requests.json`: página por defecto y paginación");
 		var r = api.get(OPEN311 + "/requests.json");
 		metric(ID, r.summary());
-		SpikeFixtures.save("open311", "requests-default.json", r.body());
+		SpikeFixtures.saveRedacted("open311", "requests-default.json", r.body(), CITIZEN_TEXT);
 		List<JsonNode> items = items(r);
 		metric(ID, "devueltos=" + items.size());
 		describe(items, "página por defecto");
@@ -103,7 +106,7 @@ class S03Open311Spike {
 			metric(ID, "detalle requests/" + firstId + ".json -> " + d.status() + " caminos="
 					+ (d.status() == 200 && d.isJson() ? SpikeJson.paths(d.json()) : List.of()));
 			if (d.status() == 200) {
-				SpikeFixtures.save("open311", "request-" + firstId + ".json", d.body());
+				SpikeFixtures.saveRedacted("open311", "request-" + firstId + ".json", d.body(), CITIZEN_TEXT);
 			}
 		}
 	}
@@ -147,7 +150,7 @@ class S03Open311Spike {
 		var r = api.get(OPEN311 + "/requests.json?status=closed&start_date=2026-07-01T00:00:00Z&end_date=2026-07-31T23:59:59Z");
 		metric(ID, r.summary());
 		List<JsonNode> items = items(r);
-		SpikeFixtures.save("open311", "requests-closed-2026-07.json", r.body());
+		SpikeFixtures.saveRedacted("open311", "requests-closed-2026-07.json", r.body(), CITIZEN_TEXT);
 		describe(items, "cerradas julio 2026");
 		List<Long> hours = new ArrayList<>();
 		for (JsonNode i : items) {
@@ -171,7 +174,7 @@ class S03Open311Spike {
 		heading(ID, "Sede `quejas-sugerencias/list.json`: paginación, orden, FIQL y formatos");
 		var r = api.get(QUEJAS + "/list.json?rows=50");
 		metric(ID, r.summary());
-		SpikeFixtures.save("open311", "sede-list-rows50.json", r.body());
+		SpikeFixtures.saveRedacted("open311", "sede-list-rows50.json", r.body(), CITIZEN_TEXT);
 		List<JsonNode> items = itemsOfSede(r);
 		metric(ID, "estructura raíz=" + (r.isJson() ? topLevel(r.json()) : "-") + " devueltos=" + items.size());
 		describe(items, "sede rows=50");
@@ -202,7 +205,7 @@ class S03Open311Spike {
 			metric(ID, "detalle quejas-sugerencias/" + id + ".json -> " + d.status() + " caminos="
 					+ (d.status() == 200 && d.isJson() ? SpikeJson.paths(d.json()) : List.of()));
 			if (d.status() == 200) {
-				SpikeFixtures.save("open311", "sede-detail-" + id + ".json", d.body());
+				SpikeFixtures.saveRedacted("open311", "sede-detail-" + id + ".json", d.body(), CITIZEN_TEXT);
 			}
 			var o = api.get(OPEN311 + "/requests/" + id + ".json");
 			metric(ID, "mismo id en Open311 -> " + o.status() + (o.status() == 200 ? " (ids compartidos)" : ""));
@@ -225,7 +228,7 @@ class S03Open311Spike {
 				+ "/list.json?rows=500&srsname=wgs84&sort=requested_datetime%20desc&fl=service_request_id,status,service_code,service_name,requested_datetime,updated_datetime,geometry,barrio_code,district,catSip,address_string");
 		metric(ID, r.summary());
 		List<JsonNode> items = itemsOfSede(r);
-		SpikeFixtures.save("open311", "sede-list-500-recent.json", r.body());
+		SpikeFixtures.saveRedacted("open311", "sede-list-500-recent.json", r.body(), CITIZEN_TEXT);
 		describe(items, "sede 500 recientes");
 		Map<String, Integer> districts = new TreeMap<>();
 		Map<String, Integer> barrios = new TreeMap<>();
