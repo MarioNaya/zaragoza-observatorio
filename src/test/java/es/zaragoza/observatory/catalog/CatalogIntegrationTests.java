@@ -175,6 +175,15 @@ class CatalogIntegrationTests {
 	}
 
 	@Test
+	void publishesAnOpenApiContractForTheMonitor() {
+		var api = assertThat(mvc.get().uri("/v3/api-docs")).hasStatusOk().bodyJson();
+		api.extractingPath("$.info.title").isEqualTo("Observatorio de Datos Abiertos de Zaragoza");
+		api.extractingPath("$.paths").asMap().containsKeys("/api/v1/catalog/datasets",
+				"/api/v1/catalog/datasets/{id}", "/api/v1/catalog/datasets/{id}/freshness-history",
+				"/api/v1/catalog/summary");
+	}
+
+	@Test
 	void unknownDatasetIsAProblemDetail() {
 		assertThat(mvc.get().uri("/api/v1/catalog/datasets/999999")).hasStatus(HttpStatus.NOT_FOUND)
 				.hasContentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON).bodyJson()
