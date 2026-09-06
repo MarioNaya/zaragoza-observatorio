@@ -1,6 +1,6 @@
 # Estado del proyecto y arranque de sesión
 
-Última actualización: 2026-09-06 (segunda sesión: fase 1 implementada). Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
+Última actualización: 2026-09-06, cierre de la segunda sesión (fase 1 implementada, repositorio publicado en GitHub y limpiado de datos personales). Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
 
 ## 1. Dónde estamos
 
@@ -9,7 +9,8 @@
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
 | Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.5; ADR-001..004 |
-| Fase 1: `ingestion` + `catalog` | **Hecho en lo esencial** (2026-09-06) | Rama `feat/fase1-ingestion-catalog`, 5 commits; `.\mvnw.cmd verify` en verde (75 tests: unitarios, adaptadores sobre fixtures reales, integración con Testcontainers, calidad de datos); monitor probado contra la API municipal real (ver §5) |
+| Fase 1: `ingestion` + `catalog` | **Hecho en lo esencial** (2026-09-06) | Rama `feat/fase1-ingestion-catalog` (7 commits sobre `main`, subida a GitHub); `.\mvnw.cmd verify` en verde (75 tests: unitarios, adaptadores sobre fixtures reales, integración con Testcontainers, calidad de datos); monitor probado contra la API municipal real (ver §5) |
+| Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures de quejas redactados, cabeceras sin cookies, historial reescrito con `git filter-repo` y ramas subidas con `--force`; regla 22 (S0.3 adenda) |
 | Fase 1: eje *observado* de la frescura, cruce con el Swagger, `federated` | **Pendiente** | Requiere el spike S1.1 (§4) |
 | Fases 2–5 | Pendientes | `geo`, `citizen`, `spending`, `territory`, frontend, `identity`, `workspace` |
 
@@ -38,7 +39,9 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~2 min); debe estar en verde antes de tocar nada.
 4. Leer `CLAUDE.md` (reglas 1–22) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
-5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. **La rama `feat/fase1-ingestion-catalog` está pendiente de integrar en `main`** (`git checkout main; git merge --ff-only feat/fase1-ingestion-catalog`).
+5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. **La rama `feat/fase1-ingestion-catalog` está pendiente de integrar en `main`** (`git checkout main; git merge --ff-only feat/fase1-ingestion-catalog; git push`). La siguiente sesión empieza en `main` ya integrada y abre `feat/s11-frescura-observada` (o el nombre que toque).
+
+Al cerrar una sesión: `.\mvnw.cmd verify` en verde; actualizar este documento (§1, §4, §6), `SPEC.md` si cambió el modelo o el alcance, y los informes de spikes; pasar la comprobación de datos personales de la regla 22 (`git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures`) y de secretos antes de `git push`; commits descriptivos y push de la rama.
 
 Comandos útiles:
 
@@ -116,6 +119,6 @@ src/main/java/es/zaragoza/observatory/
   catalog/                                     API (CatalogSources), domain, application, infrastructure (zaragoza, persistence, events, web)
 src/test/java/es/zaragoza/observatory/
   ModularityTests, HexagonalArchitectureTests, *IntegrationTests, CatalogDataQualityTest, support/Fixtures
-  spikes/                                      S01..S06 + support/
+  spikes/                                      S01..S06 + support/ (SpikeFixtures.saveRedacted para texto ciudadano)
 src/test/resources/fixtures/zaragoza/          catalog (incluye rows2-fl, rows500-fl y 404 con cabeceras), ocds, open311, geo, inventory
 ```

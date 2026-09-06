@@ -308,6 +308,8 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
     - **Verificación inmediata**: tras cualquier cambio de dependencias o de scaffolding, compilación y tests en el mismo paso (`./mvnw verify`, `npm ci && npm run build`). No se encadena un segundo cambio sobre uno que no compila.
     - Ficheros de configuración de herramientas (`pom.xml`, `package.json`, `angular.json`) se editan a mano solo para lo que la herramienta no cubre (plugins de build, perfiles, scripts), y siempre seguido de la verificación anterior.
 
+Las reglas 16 a 22 (spikes como tests JUnit, stack real, comportamiento verificado de la API municipal, unidad territorial, contexto `spending`, infraestructura de la fase 1 y datos personales en fixtures) derivan de las ADR y de los spikes y viven solo en `CLAUDE.md`.
+
 ---
 
 ## 9. Decisiones abiertas
