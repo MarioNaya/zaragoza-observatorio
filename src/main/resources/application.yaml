@@ -29,6 +29,11 @@ spring:
       read-timeout: 60s
       redirects: dont-follow
 
+  mvc:
+    problemdetails:
+      # Errores de la API propia como application/problem+json (RFC 9457).
+      enabled: true
+
 management:
   endpoints:
     web:
@@ -60,6 +65,15 @@ zaragoza:
       tick: PT10M
       initial-delay: PT30S
       raw-purge-cron: "0 30 4 * * *"
+  # Módulo catalog (S0.1; fl con formato verificado el 2026-09-06). Umbrales de frescura: SPEC.md §4.6/§9.
+  catalog:
+    catalog-url: https://www.zaragoza.es/web/espacio-de-datos/servicio/catalogo.json
+    fields: id,title,description_basic,issued,modified,lastUpdated,accrualPeriodicity,status,geo,abierto,explorable,formato
+    interval: PT6H
+    freshness:
+      on-time-max: 1.0
+      slight-delay-max: 2.0
+      delayed-max: 5.0
 
 ---
 # Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).
