@@ -3,8 +3,24 @@ spring:
     name: observatorio-zaragoza
   jpa:
     open-in-view: false
+    hibernate:
+      # Flyway es el único dueño del esquema; Hibernate solo comprueba que las entidades casan (ADR-004).
+      ddl-auto: validate
   flyway:
     locations: classpath:db/migration
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          # La tabla event_publication la crea V002__event_publication.sql (ADR-004).
+          enabled: false
+      # Una sola instancia: al reiniciar se reintentan las publicaciones incompletas (ADR-004).
+      republish-outstanding-events-on-restart: true
+  task:
+    scheduling:
+      pool:
+        # Los jobs de ingesta se ejecutan en serie; sustituye a ShedLock mientras haya una sola instancia (ADR-004).
+        size: 1
 
 management:
   endpoints:

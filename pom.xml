@@ -31,6 +31,8 @@
 		<spring-modulith.version>2.1.1</spring-modulith.version>
 		<!-- ArchUnit no está en ningún BOM: versión verificada en Maven Central el 2026-09-05 (regla 15) -->
 		<archunit.version>1.4.1</archunit.version>
+		<!-- Resilience4j no está en ningún BOM: versión verificada en repo1.maven.org el 2026-09-06 (regla 15, ADR-004) -->
+		<resilience4j.version>2.4.0</resilience4j.version>
 		<!-- Los spikes (@Tag("spike")) quedan fuera del build por defecto; el perfil "spikes" los activa (ADR-002) -->
 		<spikes.excludedGroups>spike</spikes.excludedGroups>
 	</properties>
@@ -72,8 +74,20 @@
 			<artifactId>spring-modulith-starter-core</artifactId>
 		</dependency>
 		<dependency>
+			<!-- Registro de publicación de eventos sobre JDBC; esquema gestionado por Flyway (ADR-004) -->
 			<groupId>org.springframework.modulith</groupId>
-			<artifactId>spring-modulith-starter-jpa</artifactId>
+			<artifactId>spring-modulith-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<!-- Resiliencia del cliente de la API municipal, uso programático sin starter (ADR-004) -->
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-retry</artifactId>
+			<version>${resilience4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-circuitbreaker</artifactId>
+			<version>${resilience4j.version}</version>
 		</dependency>
 
 		<dependency>
