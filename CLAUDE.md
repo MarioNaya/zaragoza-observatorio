@@ -24,20 +24,23 @@ La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de a
     - **Verificación inmediata**: tras cualquier cambio de dependencias o de scaffolding, compilación y tests en el mismo paso (`./mvnw verify`, `npm ci && npm run build`). No se encadena un segundo cambio sobre uno que no compila.
     - Ficheros de configuración de herramientas (`pom.xml`, `package.json`, `angular.json`) se editan a mano solo para lo que la herramienta no cubre (plugins de build, perfiles, scripts), y siempre seguido de la verificación anterior.
 
-## Reglas adicionales (ADR-001, ADR-002)
+## Reglas adicionales (ADR-001 a ADR-004)
 
 16. **Spikes = tests JUnit etiquetados.** Cada spike es una clase `S0xNombreSpike` con `@Tag("spike")` en `src/test/java/es/zaragoza/observatory/spikes/`, excluida del build por defecto y ejecutada con `.\mvnw.cmd test -Pspikes`. Guarda respuestas crudas en `src/test/resources/fixtures/zaragoza/` y su informe va en `docs/spikes/`.
 17. **Stack real**: Spring Boot 4.1.x (starters modulares: `spring-boot-starter-webmvc`, `-restclient`, `-flyway`…), Spring Modulith 2.1.x vía BOM, Java 21, Jackson 3 (`tools.jackson`). Cuando dudes de un paquete o artefacto, mira `pom.xml` y `.\mvnw.cmd dependency:tree`, no la memoria.
 18. **API municipal, reglas verificadas (S0.5)**: URL siempre con extensión `.json`/`.geojson` y `srsname=wgs84`; `rows` tope 500 en la sede (sin tope en OCDS y Open311); `start` ignorado en OCDS; `If-Modified-Since` nunca se honra y solo Open311 honra `ETag`; `Last-Modified` llega con zona `CET/CEST` (no RFC 1123); fechas sin zona son hora local, presupuesto usa `yyyyMMdd`; FIQL (`q`) tiene lista blanca de campos por endpoint. Los detalles y excepciones están en `docs/spikes/`.
 19. **Unidad territorial = junta municipal o vecinal (29)**, opcionalmente sección censal (491). No existen barrios como dato abierto (S0.4). El gasto público (OCDS, presupuesto, subvenciones) **no tiene dimensión territorial** (S0.2, S0.6): no se inventa geocodificación.
 20. **El contexto de gasto se llama `spending`** (ADR-003): OCDS + presupuesto + subvenciones, sin entidades territoriales; `spending` no depende de `geo` y `territory` no depende de `spending`. Licencias, locales y obras en vía pública quedan fuera (candidato posterior `urban-activity`, con ADR propia).
+21. **Infraestructura de fase 1 (ADR-004)**: el registro de eventos de Modulith va sobre JDBC y su tabla la crea Flyway (V002); `spring.jpa.hibernate.ddl-auto=validate`, así que **toda entidad JPA nueva necesita su migración** y declara `columnDefinition` (`text`, `timestamptz`, `timestamp`, `boolean`) para que la validación case con PostgreSQL. Resilience4j se usa de forma programática dentro de `ZaragozaHttpClient` (retry solo en 5xx/timeout/E-S/HTML, circuit breaker por dataset, semáforo de 4); timeouts y redirecciones por `spring.http.clients.*`. Cada fuente nueva se declara como bean `IngestionJob` en el módulo dueño (descriptor + `interval()` + `handle(RawPage)`) y su adaptador se prueba con `MockRestServiceServer` sobre fixtures reales grabados con cabeceras. El contrato de la API propia lo genera springdoc (`/v3/api-docs`). Al cerrar un run se publica `DatasetIngested`; los listeners de otros módulos son `@ApplicationModuleListener`.
 
 ## Contexto operativo (máquina de desarrollo)
 
 - Windows 10 con PowerShell 5.1. Usar `.\mvnw.cmd` (nunca `mvn` global). En PowerShell 5.1 no existen `&&` ni `||`: encadenar con `;` o `if ($?) { ... }`.
 - La herramienta Bash de Claude Code recibe el PATH de Windows con separadores `;` y no encuentra ningún binario. Si se usa, anteponer: `export PATH="/c/Program Files/Git/usr/bin:/c/Program Files/Git/cmd:/c/Program Files/Docker/Docker/resources/bin:/c/Program Files/Java/jdk-21.0.10/bin:/c/WINDOWS/system32:$PATH"`. Por defecto, usar PowerShell.
 - `JAVA_HOME` apunta al JDK 21 (lo usa el wrapper). El `java` del PATH es Java 8: `java -version` engaña; fiarse de `.\mvnw.cmd -v`.
-- Docker Desktop debe estar arrancado antes de `.\mvnw.cmd verify` (Testcontainers) y de `.\mvnw.cmd spring-boot:run` (Docker Compose). Comprobar con `docker info`.
+- Docker Desktop debe estar arrancado antes de `.\mvnw.cmd verify` (Testcontainers) y de `.\mvnw.cmd spring-boot:run` (Docker Compose). Comprobar con `docker info`; se puede arrancar con `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` y esperar.
+- El puerto 8080 suele estar ocupado por un contenedor phpMyAdmin de otro proyecto: arrancar la app con `"-Dspring-boot.run.arguments=--server.port=8085"`. Para pararla, matar el proceso Java que escucha en el puerto y `docker compose -f compose.yaml stop`.
+- Los commits con mensaje multilínea se hacen desde la herramienta Bash (`git commit -F - <<'MSG' … MSG` con el PATH de arriba); en PowerShell 5.1 los heredocs `<<` no existen y las here-strings fallan con `git commit -F -`.
 - Base de datos: PostgreSQL con PostGIS, imagen `postgis/postgis:17-3.5` tanto en `compose.yaml` como en Testcontainers.
 - No hay `spring` CLI ni `jq`. Hay `curl.exe`, `tar`, Python 3.12 y Node 22.
 - Ficheros de texto en UTF-8 sin BOM (`Out-File`/`Set-Content` de PowerShell añaden BOM o usan ANSI: evitar para escribir fuentes).
@@ -45,8 +48,11 @@ La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de a
 ## Comandos habituales
 
 ```powershell
-.\mvnw.cmd verify                 # build completo con Testcontainers (Docker arrancado)
+.\mvnw.cmd verify                 # build completo con Testcontainers (Docker arrancado), ~2 min
+.\mvnw.cmd test "-Dtest=CatalogIntegrationTests"   # una clase
 .\mvnw.cmd test -Pspikes          # solo spikes (red real, lentos)
 .\mvnw.cmd test -Pspikes "-Dtest=S01*"
-.\mvnw.cmd spring-boot:run        # arranca app + PostGIS vía Docker Compose
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--server.port=8085"   # app + PostGIS vía Docker Compose
 ```
+
+Con la app arrancada: `/actuator/health`, `/actuator/modulith`, `/api/v1/catalog/summary`, `/v3/api-docs`, `/swagger-ui.html`. El planificador ingiere el catálogo real 30 s después de arrancar.

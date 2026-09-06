@@ -1,6 +1,6 @@
 # Observatorio de Datos Abiertos de Zaragoza — Especificación inicial
 
-Versión 0.4 · 5 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 (`docs/spikes/`) y con las ADR-001 a ADR-003 (`docs/decisions/`). Estado del proyecto y arranque de sesión: `docs/ESTADO.md`. Diagramas: `docs/arquitectura.md`.
+Versión 0.5 · 6 de septiembre de 2026 · Documento de arranque para trabajar con Claude Code. Revisado con los resultados de los spikes S0.1–S0.6 (`docs/spikes/`), con las ADR-001 a ADR-004 (`docs/decisions/`) y con la implementación de la fase 1 (`ingestion` y `catalog`). Estado del proyecto y arranque de sesión: `docs/ESTADO.md`. Diagramas: `docs/arquitectura.md`.
 
 Este documento fija el propósito, el alcance, la arquitectura y las reglas de trabajo del proyecto. Es una especificación viva: las decisiones marcadas como "a verificar" deben resolverse con spikes antes de construir sobre ellas, y el documento debe actualizarse cuando se resuelvan.
 
@@ -86,6 +86,8 @@ Criterio de salida: decisión documentada sobre (a) si el cruce territorial inve
 - API REST de consulta del monitor.
 - Entregable: monitor de frescura funcional y publicable.
 
+**Estado (2026-09-06)**: implementados `ingestion` (cliente HTTP con las reglas de S0.5, runs, `raw_payload`, planificador, evento `DatasetIngested` sobre el registro JDBC de Modulith) y `catalog` (ingesta del catálogo con `fl`, instantáneas diarias de frescura *declarada*, API REST y contrato OpenAPI), con tests unitarios, de adaptadores sobre fixtures reales, de integración con Testcontainers y de calidad de datos (ADR-004, `docs/ESTADO.md`). Pendiente dentro de la fase 1: el eje *observado* de la frescura (muestreo de distribuciones; requiere el spike S1.1), el cruce con el Swagger por tag y la marca `federated`.
+
 ### Fase 2 — Ciudadanía (quejas y sugerencias)
 
 - Módulo `geo` (shared kernel): juntas municipales y vecinales (29) con geometría, secciones censales (491) opcionales, padrón por junta y año, resolución punto → junta (S0.4: no existen barrios como dato abierto).
@@ -125,11 +127,12 @@ Justificación: el conocimiento del dominio aún no existe; cortar en servicios 
 ### 4.2 Stack
 
 - Java 21 (LTS), Spring Boot 4.1.x, Spring Modulith 2.1.x vía BOM (ADR-001). Starters modulares de Boot 4 (`spring-boot-starter-webmvc`, `-restclient`, `-flyway`), Jackson 3, Testcontainers 2.x.
-- PostgreSQL con PostGIS (necesario para resolución punto → barrio y consultas espaciales). Flyway para migraciones.
+- PostgreSQL con PostGIS (necesario para resolución punto → barrio y consultas espaciales). Flyway para migraciones y único dueño del esquema (`spring.jpa.hibernate.ddl-auto=validate`, ADR-004).
 - Spring Data JPA para persistencia; consultas analíticas complejas en SQL nativo o jOOQ si JPA se vuelve un obstáculo (decidir en fase 2).
-- Scheduling: `@Scheduled` de Spring con ShedLock para evitar ejecuciones concurrentes; no Quartz salvo necesidad demostrada.
-- HTTP client: `RestClient` de Spring 6; resiliencia con Resilience4j (retry, circuit breaker, rate limiter).
-- Eventos internos: Spring Modulith `ApplicationModuleListener` con event publication registry (persistencia de eventos para garantizar entrega).
+- Scheduling: `@Scheduled` de Spring con un pool de un hilo (los jobs se ejecutan en serie); ShedLock aplazado hasta que haya más de una instancia (ADR-004); no Quartz salvo necesidad demostrada.
+- HTTP client: `RestClient` de Spring 7 (timeouts y «no seguir redirecciones» por `spring.http.clients.*`); resiliencia con Resilience4j 2.4 core en uso programático: retry con backoff solo ante 5xx, timeouts, E/S y cuerpos no JSON, circuit breaker por dataset, semáforo de 4 conexiones (ADR-004, S0.5).
+- Eventos internos: Spring Modulith `@ApplicationModuleListener` con event publication registry sobre JDBC (`spring-modulith-starter-jdbc`), tabla `event_publication` creada por Flyway (V002) y republicación de pendientes al reiniciar (ADR-004).
+- Contrato de la API propia: OpenAPI 3 generado con springdoc (`/v3/api-docs`, `/swagger-ui.html`; ADR-004). Errores como `application/problem+json`.
 - Seguridad (fase 5): Spring Security con OAuth2 Client / Resource Server; sin almacenamiento de contraseñas.
 - Observabilidad: Actuator, Micrometer, logs estructurados JSON.
 - Build: Maven. Contenedores: Docker Compose para desarrollo (app + PostGIS).
@@ -183,18 +186,18 @@ La configuración de Spring Security vive dentro de `identity` como su capa de i
 
 ### 4.5 Flujo de ingesta (genérico)
 
-1. El scheduler dispara un job para un `DatasetRef`.
-2. `ingestion` consulta la fuente con `If-Modified-Since`/`If-None-Match` del último run exitoso. Si `304`, registra run "sin cambios" y termina.
-3. Si hay datos, pagina con `start`/`rows`, aplica retry y circuit breaker, y entrega los payloads crudos al adaptador del módulo de dominio correspondiente.
-4. El adaptador traduce y persiste (upsert idempotente por identificador de origen).
-5. Se registra `IngestionRun` (dataset, inicio, fin, registros, estado, error) y se publica un evento `DatasetIngested`.
-6. `catalog` escucha todos los `DatasetIngested` para alimentar el monitor de frescura, además de su propia ingesta del catálogo.
+1. Cada módulo de dominio declara sus fuentes como beans `IngestionJob` (qué traer: `SourceDescriptor`; cada cuánto: `interval()`; qué hacer con cada página: `handle(RawPage)`). El planificador de `ingestion` los descubre y ejecuta, en serie, los que llevan más de su intervalo sin una ejecución con éxito.
+2. `ingestion` consulta la fuente según el `SourceDescriptor`: URL siempre con `.json`/`.geojson`, `rows` (tope 500 en la sede), paginación por `start` (`OFFSET`) o una sola petición (`NONE`). `If-Modified-Since` no se honra nunca y solo Open311 honra `If-None-Match` (S0.5): la incrementalidad va por filtros de fecha o por comparación con lo almacenado, decidida por cada fuente.
+3. Cada página pasa por retry y circuit breaker, se guarda cruda en `raw_payload` y se entrega al `handle()` del job (fuera de cualquier transacción de `ingestion`).
+4. El adaptador anti-corrupción del módulo traduce y persiste (upsert idempotente por identificador de origen) en su propia transacción.
+5. Se registra `IngestionRun` (dataset, inicio, fin, registros, páginas, estado, error, último `Last-Modified`) y, en la misma transacción de cierre, se publica `DatasetIngested`; Modulith lo conserva en `event_publication` hasta que cada listener lo completa.
+6. `catalog` escucha todos los `DatasetIngested` (`@ApplicationModuleListener`): tras cada ingesta del propio catálogo toma la instantánea diaria de frescura; los de otros datasets alimentarán la frescura observada.
 
-Idempotencia: cada ingesta debe poder repetirse sin duplicar datos. Los payloads crudos de cada run pueden conservarse un tiempo (tabla `raw_payload` con retención) para depuración y reprocesado.
+Idempotencia: cada ingesta debe poder repetirse sin duplicar datos. Los payloads crudos de cada run se conservan en `raw_payload` con retención configurable (14 días por defecto, purga diaria) para depuración y reprocesado. Un run fallido queda registrado con su error y no publica evento.
 
 ### 4.6 Modelo de dominio inicial (a refinar tras spikes)
 
-**catalog** (S0.1): `Dataset` (id municipal, título, descripción, `issued`, `declaredModified` = `modified`, `metadataUpdated` = `lastUpdated`, periodicidad declarada ISO 8601 y días derivados, estado de publicación, `hasGeo`, `open`, `explorable`, `federated`, tag del Swagger, distribuciones con `mediaType`/`accessURL`), `FreshnessSnapshot` (dataset, fecha de observación, frescura *declarada* = ratio antigüedad/periodicidad, frescura *observada* = último cambio detectado en la distribución, número de registros muestreado, estado). Umbrales configurables sobre el ratio (propuesta S0.1: ≤1 en plazo, ≤2 retraso leve, ≤5 retraso, >5 sin actualizar) y categoría explícita «no evaluable por periodicidad» para `NEVER`/`IRREG`/`P0DT1S`/vacío. No se hardcodean juicios.
+**catalog** (S0.1; implementado el 2026-09-06): `Dataset` (`sourceId` municipal, `title`, `description` = `description_basic`, `issued`, `declaredModified` = `modified`, `metadataUpdated` = `lastUpdated`, `declaredPeriodicity` ISO 8601 tal cual y `periodicityDays` derivados, `publicationStatus`, `hasGeo`, `open`, `explorable`, `apiTag` del Swagger extraído del `accessURL` de la distribución `application/api`, `distributions[]` con `mediaType`/`accessUrl`/`downloadUrl`/`title`, y las marcas de ingesta `firstSeenAt`/`lastSeenAt`). `FreshnessSnapshot` (dataset, día observado, instante de cálculo; eje *declarado*: días desde `modified`, días del periodo, ratio y categoría `DeclaredFreshness`; eje *observado*: último cambio detectado, registros muestreados y método, reservados hasta el spike S1.1). Una instantánea por dataset y día, tomada tras cada ingesta del catálogo. Categorías: `ON_TIME` (ratio ≤ 1), `SLIGHT_DELAY` (≤ 2), `DELAYED` (≤ 5), `NOT_UPDATED` (> 5) y `NOT_EVALUABLE` (`NEVER`/`IRREG`/`P0DT1S`/vacío o sin `modified`); umbrales configurables en `zaragoza.catalog.freshness.*` (`FreshnessPolicy`). La marca `federated` (RDF/datos.gob.es) queda pendiente: no se añade un campo que no se rellena. No se hardcodean juicios.
 
 **geo** (S0.4): `District` (junta municipal o vecinal: id de origen, `padronId`, geometría WGS84), `CensusSection` (`CUSEC`, geometría, junta), `PopulationRecord` (unidad territorial, año, total, españoles, extranjeros, menores, hogares y las desagregaciones que ofrezca la fuente). Servicios `locate(point) -> District` y `locate(point) -> CensusSection`. No existe `Neighbourhood`: los barrios no son dato abierto.
 
@@ -208,9 +211,9 @@ Idempotencia: cada ingesta debe poder repetirse sin duplicar datos. Los payloads
 
 ### 4.7 API REST (borrador de superficie)
 
-Prefijo `/api/v1`. Lectura pública; escritura solo en `workspace` e `identity` y siempre autenticada. Paginación uniforme (`page`, `size`), ordenación explícita (`sort=campo,asc|desc`), filtros por query params, respuestas JSON con metadatos de origen (`sourceDataset`, `ingestedAt`).
+Prefijo `/api/v1`. Lectura pública; escritura solo en `workspace` e `identity` y siempre autenticada. Paginación uniforme (`page` desde 0, `size` ≤ 200), ordenación explícita (`sort=campo,asc|desc`, con lista blanca por endpoint y desempate estable), filtros por query params, respuestas JSON con metadatos de origen (`source` = referencia y URL del dataset municipal, `ingestedAt` = fin de la última ingesta con éxito, `caveats`). Errores como `application/problem+json`.
 
-- `GET /catalog/datasets` · `GET /catalog/datasets/{id}` · `GET /catalog/datasets/{id}/freshness-history` · `GET /catalog/summary`
+- `GET /catalog/datasets` (filtros `periodicity` [o `UNDECLARED`], `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `q`; `sort` en `title|id|issued|declaredModified|metadataUpdated|declaredRatio`) · `GET /catalog/datasets/{id}` (ficha, distribuciones y última instantánea) · `GET /catalog/datasets/{id}/freshness-history?limit=` · `GET /catalog/summary` (recuentos por categoría de frescura y periodicidad, con API, abiertos, explorables, con geo, umbrales vigentes). **Implementados** (fase 1); contrato en `/v3/api-docs`.
 - `GET /geo/districts` · `GET /geo/districts/{id}` · `GET /geo/census-sections`
 - `GET /citizen/requests` (filtros: junta, categoría, rango de fechas, estado) · `GET /citizen/aggregations?by=district|census-section|category|month&normalize=population` (devuelve además `unassigned`: incidencias sin punto)
 - `GET /spending/contracts` · `GET /spending/suppliers` · `GET /spending/budget-lines` · `GET /spending/grants` · `GET /spending/aggregations?by=area|organ|supplier|year&stage=planned|committed|executed` (sin dimensión territorial)
@@ -256,9 +259,9 @@ Regla: **el backend decide qué datos y en qué orden; el frontend decide cómo 
 - **Unitarias** en dominio y aplicación, sin Spring context.
 - **Arquitectura**: `ApplicationModules.verify()` de Modulith en CI; ArchUnit para hexagonal dentro de cada módulo (dominio no importa infraestructura).
 - **Integración** con Testcontainers (PostGIS real). Sin H2.
-- **Adaptadores upstream**: tests contra fixtures grabados de respuestas reales (WireMock), guardados en `src/test/resources/fixtures/zaragoza/`. Los fixtures se refrescan con un script, no a mano. Cada cambio de esquema detectado se convierte en un test.
-- **Calidad de datos**: tests de propiedades sobre lo ingerido (no hay duplicados por id de origen, todos los puntos caen dentro del término municipal o se marcan como no resueltos, fechas coherentes, `stage` siempre informado en inversión).
-- **Contrato de la API propia**: tests de controladores con documentación generada (Spring REST Docs o springdoc-openapi).
+- **Adaptadores upstream**: tests contra fixtures grabados de respuestas reales (cuerpo y cabeceras) servidos con `MockRestServiceServer` (WireMock solo si hiciera falta simular latencias, ADR-004), guardados en `src/test/resources/fixtures/zaragoza/`. Los fixtures se refrescan con los spikes, no a mano. Cada cambio de esquema detectado se convierte en un test (el traductor falla ante una ficha sin `id` o sin `title`).
+- **Calidad de datos**: tests de propiedades sobre lo ingerido (no hay duplicados por id de origen, todos los puntos caen dentro del término municipal o se marcan como no resueltos, fechas coherentes, `stage` siempre informado en inversión). En `catalog`, `CatalogDataQualityTest` cruza campo a campo con la matriz de S0.6.
+- **Contrato de la API propia**: OpenAPI generado con springdoc-openapi (ADR-004) y test de integración sobre `/v3/api-docs`; los endpoints se prueban de punta a punta con `MockMvcTester` sobre datos ingeridos de fixtures reales.
 - **Seguridad (fase 5)**: tests de que ningún endpoint de lectura exige autenticación y de que ningún endpoint de escritura funciona sin ella; tests de aislamiento entre usuarios en `workspace`.
 
 ---
@@ -313,8 +316,11 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
 - Correspondencia exacta entre `distrito.id` e `idpadron`/`id_padron` de los datasets de población (S0.4): verificar en fase 2.
 - Tamaño real y criterio de publicación del listado de quejas de sede (50.000–100.000 registros frente a ~40.000 cerradas/año en `statistics`, S0.3): entender antes de publicar volúmenes.
 - jOOQ vs. SQL nativo con JPA para agregaciones (decidir en fase 2 con datos reales).
-- Retención de `raw_payload` (¿días?, ¿solo último run?).
-- Umbrales por defecto de frescura: propuesta en S0.1 (ratio ≤1 / ≤2 / ≤5 / >5 y «no evaluable»); confirmar tras el primer muestreo observado.
+- Retención de `raw_payload`: 14 días por defecto (`zaragoza.ingestion.raw-retention`), provisional hasta ver el volumen real.
+- Umbrales por defecto de frescura: propuesta de S0.1 en vigor (ratio ≤1 / ≤2 / ≤5 / >5 y «no evaluable»), configurables en `zaragoza.catalog.freshness.*`; confirmar tras el primer muestreo observado.
+- Eje observado de la frescura (muestreo de distribuciones): antes de implementarlo hace falta el spike S1.1 (qué devuelven las cabeceras de los ficheros descargables y las fechas máximas de las API por dataset; coste de red por dataset).
+- Cruce `apiTag` → paths del Swagger (`sede/servicio/catalogo/api.json`) y marca `federated` (RDF/datos.gob.es): pendientes de la fase 1.
+- ShedLock: solo si se despliega más de una instancia (ADR-004).
 - Frontend en el mismo repositorio o separado.
 - ~~Si se ingestan más datasets del catálogo con fines de muestreo~~ → necesario para el 59 % no evaluable (S0.1); decidir alcance y coste por dataset en fase 1.
 - Instantáneas en `workspace`: formato de serialización y retención (tras uso real de la primera oleada).
@@ -327,4 +333,5 @@ Estas reglas deben copiarse a `CLAUDE.md` en la raíz del repositorio.
 2. ~~Crear repositorio con esqueleto Spring Boot + Modulith + Maven + Docker Compose (PostGIS) + Flyway + Testcontainers. Copiar §8 a `CLAUDE.md`.~~ Hecho el 2026-09-05 (Boot 4.1.1, ADR-001).
 3. ~~Ejecutar spikes S0.1–S0.6 y documentarlos.~~ Hecho el 2026-09-05 (`docs/spikes/`, ADR-002).
 4. ~~Revisar este documento con los resultados de los spikes~~ Hecho: v0.4 con ADR-003. El modelo de fase 1 (§4.6 `catalog`) se confirma al implementarlo.
-5. Implementar módulo `ingestion` y módulo `catalog` (fase 1), con las reglas de cliente HTTP de S0.5.
+5. ~~Implementar módulo `ingestion` y módulo `catalog` (fase 1), con las reglas de cliente HTTP de S0.5.~~ Hecho el 2026-09-06 (ADR-004; estado y siguiente paso en `docs/ESTADO.md`).
+6. Cerrar la fase 1: spike S1.1 (frescura observada) y su implementación, cruce con el Swagger, `federated`; después, despliegue de una instancia.

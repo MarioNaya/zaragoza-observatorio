@@ -18,16 +18,16 @@ flowchart LR
 
   subgraph ING["ingestion (fase 1)"]
     direction TB
-    SCH["Scheduler<br/>@Scheduled + ShedLock"]
-    HTTP["Cliente HTTP<br/>RestClient · retry · circuit breaker<br/>.json · rows=500 · FIQL/after"]
-    RUN["IngestionRun<br/>inicio, fin, registros, estado, error"]
-    RAW["raw_payload (retención)<br/>evento DatasetIngested"]
+    SCH["Scheduler<br/>@Scheduled, pool de 1 hilo (ShedLock aplazado, ADR-004)<br/>descubre los IngestionJob de cada módulo"]
+    HTTP["ZaragozaHttpClient<br/>RestClient · Resilience4j retry + circuit breaker por dataset · 4 conexiones<br/>.json · rows=500 · start · Last-Modified con CET/CEST"]
+    RUN["IngestionRun<br/>inicio, fin, registros, páginas, estado, error"]
+    RAW["raw_payload (retención 14 d)<br/>evento DatasetIngested (registro JDBC, V002)"]
     SCH --> HTTP --> RUN --> RAW
   end
 
   subgraph ACL["Adaptadores anti-corrupción (por módulo)"]
     direction TB
-    A_CAT["catalog<br/>catalogo.json → Dataset<br/>tag Swagger → endpoint<br/>muestreo → FreshnessSnapshot"]
+    A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>DatasetIngested → FreshnessSnapshot diaria"]
     A_CIT["citizen<br/>list.json → ServiceRequest<br/>geometry → punto WGS84"]
     A_GEO["geo<br/>distrito → District<br/>indicadores → PopulationRecord"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
@@ -35,14 +35,14 @@ flowchart LR
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
     direction TB
-    T_CAT["catalog: dataset, distribution,<br/>freshness_snapshot"]
+    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004)"]
     T_CIT["citizen: service_request (point 4326)"]
     T_GEO["geo: district, census_section,<br/>population_record"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
-    T_ING["ingestion: ingestion_run, raw_payload<br/>modulith: event_publication"]
+    T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
   end
 
-  API["API REST /api/v1<br/>lectura pública · paginación · sort explícito<br/>sourceDataset · ingestedAt · caveats"]
+  API["API REST /api/v1 (+ OpenAPI en /v3/api-docs)<br/>lectura pública · paginación · sort explícito<br/>source · ingestedAt · caveats"]
   CONS["Consumidores<br/>frontend Angular (fase 4) · otros reutilizadores<br/>workspace / identity (fase 5)"]
 
   CAT & SWG & QYS & DIS & OCDS & PRE -- "GET .json" --> HTTP
@@ -57,7 +57,7 @@ flowchart LR
   API -- "JSON" --> CONS
 ```
 
-Flujo de una ingesta (SPEC.md §4.5): (1) el scheduler dispara un job para un `DatasetRef`; (2) `ingestion` consulta la fuente con la estrategia incremental de esa fuente (FIQL por fecha, `after`, o recarga completa; `If-Modified-Since` no sirve, S0.5); (3) pagina con `rows`/`start` o ventanas, aplica retry y circuit breaker y entrega los payloads crudos al adaptador del módulo; (4) el adaptador traduce y persiste con upsert idempotente por identificador de origen; (5) se registra el `IngestionRun` y se publica `DatasetIngested`; (6) `catalog` escucha todos los `DatasetIngested` para el monitor de frescura.
+Flujo de una ingesta (SPEC.md §4.5, implementado en fase 1): (1) el scheduler recorre los beans `IngestionJob` que declara cada módulo y ejecuta los vencidos según su `interval()`; (2) `RunIngestion` abre un `IngestionRun` y pide páginas a `ZaragozaHttpClient` con la estrategia del `SourceDescriptor` (`OFFSET` por `start` hasta agotar `totalCount` o recibir página corta; `NONE` una sola petición; `If-Modified-Since` no sirve, S0.5); (3) cada página se guarda en `raw_payload` y se entrega al `handle()` del job; (4) el job traduce con su adaptador anti-corrupción y persiste con upsert idempotente por identificador de origen; (5) el cierre del run y la publicación de `DatasetIngested` van en una sola transacción (`CompleteIngestionRun`), y Modulith registra el evento en `event_publication`; (6) `catalog` escucha `DatasetIngested` con `@ApplicationModuleListener` y, tras cada ingesta del catálogo, toma la instantánea diaria de frescura de todas las fichas.
 
 ## 2. Módulos Modulith y dependencias permitidas
 
@@ -100,21 +100,26 @@ Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún m
 flowchart LR
   subgraph MOD["es.zaragoza.observatory.catalog"]
     direction TB
-    APIP["CatalogApi + eventos publicados<br/>única superficie visible para otros módulos"]
+    APIP["paquete raíz: CatalogSources (CATALOG)<br/>única superficie visible para otros módulos"]
     subgraph HEX[" "]
       direction LR
-      WEB["infrastructure/web<br/>CatalogController<br/>GET /api/v1/catalog/…"]
-      APP["application<br/>IngestCatalog · ComputeFreshness<br/>transacciones"]
-      DOMN["domain<br/>Dataset, FreshnessSnapshot, Distribution<br/>puertos: CatalogSource, DatasetRepository<br/>FreshnessPolicy (umbrales configurables)<br/>sin Spring, sin JPA, sin infrastructure"]
-      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogApiAdapter implementa CatalogSource<br/>JSON municipal → Dataset"]
-      PER["infrastructure/persistence<br/>JpaDatasetRepository implementa DatasetRepository<br/>Flyway db/migration"]
-      WEB -- "caso de uso" --> APP -- "usa" --> DOMN
-      ZGZ -. "implementa puerto" .-> DOMN
-      PER -. "implementa puerto" .-> DOMN
+      WEB["infrastructure/web<br/>CatalogController + CatalogDtos + Caveats<br/>GET /api/v1/catalog/datasets · /{id} · /{id}/freshness-history · /summary"]
+      APP["application<br/>RegisterDatasets · TakeFreshnessSnapshots<br/>@Transactional"]
+      DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
+      ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset<br/>CatalogIngestionJob implementa IngestionJob"]
+      EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)"]
+      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004"]
+      WEB -- "puerto de lectura" --> DOMN
+      ZGZ -- "caso de uso" --> APP
+      EVT -- "caso de uso" --> APP -- "usa" --> DOMN
+      PER -. "implementa puertos" .-> DOMN
     end
   end
-  INGX["módulo ingestion"] -- "payload crudo" --> ZGZ
+  INGX["módulo ingestion"] -- "RawPage por página" --> ZGZ
+  INGX -. "DatasetIngested" .-> EVT
   PER -- "tablas del módulo" --> PG["PostgreSQL + PostGIS"]
 ```
 
-ArchUnit (`HexagonalArchitectureTests`): `domain` no importa `org.springframework`, `jakarta.persistence`, `application` ni `infrastructure`; `application` no importa `infrastructure`. El adaptador anti-corrupción es obligatorio: el dominio nunca refleja la forma del JSON municipal; si el esquema upstream cambia, cambia solo el adaptador.
+ArchUnit (`HexagonalArchitectureTests`): `domain` no importa `org.springframework`, `jakarta.persistence`, `org.hibernate`, `tools.jackson`, `io.github.resilience4j`, `application` ni `infrastructure`; `application` no importa `infrastructure`, JPA, Spring Web ni Spring Data; el paquete raíz de un módulo no depende de `application` ni `infrastructure`. El adaptador anti-corrupción es obligatorio: el dominio nunca refleja la forma del JSON municipal; si el esquema upstream cambia, cambia solo el adaptador (y su test contra el fixture lo delata).
+
+El módulo `ingestion` sigue la misma estructura: raíz (`SourceDescriptor`, `RawPage`, `IngestionJob`, `Ingestion`, `IngestionRunSummary`, `RunStatus`), `domain` (`IngestionRun`, `RawPayload`, `SourceAccessException`, puertos `SourceGateway`, `IngestionRunRepository`, `RawPayloadStore`, `IngestionEventPublisher`), `application` (`RunIngestion`, `CompleteIngestionRun`, `IngestionService`, `PurgeRawPayloads`) e `infrastructure` (`zaragoza/ZaragozaHttpClient` + `LastModifiedParser`, `persistence` JPA con V003, `events`, `scheduling/IngestionScheduler`, `IngestionConfiguration` + `IngestionProperties`).

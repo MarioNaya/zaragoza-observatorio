@@ -15,8 +15,22 @@ Monolito modular con Spring Boot 4.1 y Spring Modulith, arquitectura hexagonal p
 
 ```powershell
 .\mvnw.cmd verify              # requiere Docker en marcha (Testcontainers con PostGIS)
-.\mvnw.cmd spring-boot:run     # app + PostGIS vía Docker Compose
+.\mvnw.cmd spring-boot:run     # app + PostGIS vía Docker Compose (añadir "-Dspring-boot.run.arguments=--server.port=8085" si el 8080 está ocupado)
 .\mvnw.cmd test -Pspikes       # spikes exploratorios contra la API real
 ```
 
-Datos: Ayuntamiento de Zaragoza, portal de datos abiertos (`https://www.zaragoza.es/sede/portal/datos-abiertos/`). Cada respuesta de la API propia indica el dataset de origen y la fecha de ingesta.
+## API (fase 1: monitor de frescura del catálogo)
+
+Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y URL consultada), `ingestedAt` (fin de la última ingesta con éxito) y `caveats`.
+
+| Endpoint | Qué devuelve |
+|---|---|
+| `GET /api/v1/catalog/datasets` | Fichas del catálogo paginadas (`page`, `size` ≤ 200) y ordenadas (`sort=title,asc`; campos `title`, `id`, `issued`, `declaredModified`, `metadataUpdated`, `declaredRatio`), con filtros `periodicity`, `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `q` |
+| `GET /api/v1/catalog/datasets/{id}` | Ficha completa, distribuciones y última instantánea de frescura |
+| `GET /api/v1/catalog/datasets/{id}/freshness-history` | Histórico de instantáneas, la más reciente primero (`limit`) |
+| `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada y por periodicidad, y umbrales vigentes |
+| `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
+
+La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* (muestreo de distribuciones) llegará al cerrar la fase 1.
+
+Datos: Ayuntamiento de Zaragoza, portal de datos abiertos (`https://www.zaragoza.es/sede/portal/datos-abiertos/`), bajo su licencia de reutilización. Cada respuesta de la API propia indica el dataset de origen y la fecha de ingesta.
