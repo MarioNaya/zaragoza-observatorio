@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node (solo el SDK de Railway para .railway/railway.ts; ADR-008) ###
+node_modules/

@@ -1,0 +1,44 @@
+# Verificación local de la imagen de producción (ADR-008): la misma imagen y el mismo perfil `prod`
+# que se despliegan en Railway, con las mismas variables PG* que allí aporta el servicio PostGIS.
+#
+#   docker compose -f compose.prod.yaml up --build -d
+#   curl http://localhost:8085/actuator/health
+#   docker compose -f compose.prod.yaml down -v
+#
+# No sustituye a `compose.yaml`, que es el entorno de desarrollo que Boot levanta solo. Lleva nombre
+# de proyecto propio porque, si no, Compose lo derivaría del directorio y coincidiría con el de
+# desarrollo: mismo nombre de contenedor y mismo volumen, con riesgo de pisar los datos ya ingeridos.
+# Su base de datos es efímera a propósito (sin volumen): esto es una comprobación, no un entorno.
+name: zaragoza-observatorio-prod
+
+services:
+  postgres:
+    # La misma imagen que dev, Testcontainers y la plantilla PostGIS de Railway.
+    image: 'postgis/postgis:17-3.5'
+    environment:
+      POSTGRES_DB: observatorio
+      POSTGRES_USER: observatorio
+      POSTGRES_PASSWORD: observatorio
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U observatorio -d observatorio']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    environment:
+      # Las cinco variables que el perfil prod espera del entorno (application.yaml, perfil prod).
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGDATABASE: observatorio
+      PGUSER: observatorio
+      PGPASSWORD: observatorio
+      # Railway la inyecta en ejecución; aquí se reproduce.
+      PORT: '8080'
+    ports:
+      # 8085 en la máquina de desarrollo: el 8080 lo ocupa otro proyecto.
+      - '8085:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy

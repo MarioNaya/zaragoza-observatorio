@@ -1,0 +1,18 @@
+# Contexto de build mínimo: solo lo que la imagen necesita compilar.
+target/
+.git/
+.gitignore
+.gitattributes
+.mvn/wrapper/maven-wrapper.jar
+mvnw.cmd
+docs/
+.claude/
+.vscode/
+.idea/
+*.md
+compose.yaml
+compose.prod.yaml
+
+# Los tests y sus fixtures no entran: no se ejecutan en el builder (Testcontainers necesita Docker)
+# y así ningún fixture con datos de la API municipal viaja al contexto de build (regla 22).
+src/test/

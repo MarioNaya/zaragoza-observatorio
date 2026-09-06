@@ -1,6 +1,6 @@
 # Estado del proyecto y arranque de sesión
 
-Última actualización: 2026-09-06, cierre de la cuarta sesión (spikes S1.2 y S1.3; inventario de endpoints del Swagger y federación en datos.gob.es implementados, probados contra las fuentes reales y documentados en ADR-006 y ADR-007). **La fase 1 queda cerrada en código.** Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
+Última actualización: 2026-09-06, cierre de la quinta sesión (despliegue definido e imagen de producción construida y verificada en local; ADR-008 y `docs/despliegue.md`). **La fase 1 está cerrada en código y el despliegue está listo para ejecutarse**: solo falta crear los dos servicios en Railway, que requiere credenciales (§4). Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
 
 ## 1. Dónde estamos
 
@@ -8,13 +8,14 @@
 |---|---|---|
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
-| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.8 (revisada al cerrar cada sesión); ADR-001..007 |
+| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.9 (revisada al cerrar cada sesión); ADR-001..008 |
 | Fase 1: `ingestion` + `catalog` (eje declarado) | **Hecho** (2026-09-06, segunda sesión) | Integrado en `main`; API REST, contrato OpenAPI, instantáneas diarias |
 | Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures redactados, historial limpiado con `git filter-repo`; regla 22 |
 | Fase 1: eje observado de la frescura (S1.1) | **Hecho** (2026-09-06, tercera sesión) | `DistributionHttpObserver`, `ObserveDatasets`, Flyway V005, API con filtro/orden/resumen por método; ADR-005 |
 | Fase 1: **cruce con el Swagger** (S1.2) | **Hecho** (2026-09-06, cuarta sesión) | Rama `feat/swagger-federated`: spike `S12ApiInventorySpike` + informe; `ResponseShape.DOCUMENT` en `ingestion`; `ApiEndpoint`, `SwaggerJsonTranslator`, `ApiInventoryIngestionJob`, Flyway V006; `apiEndpoints` en el detalle, `GET /catalog/api-tags`, `GET /catalog/api-endpoints`, `apiInventory` en `summary`; la observación prueba `<declarado>/list` (ADR-006). Comprobado contra la API real (§5) |
 | Fase 1: **`federated`** (S1.3) | **Hecho** (2026-09-06, cuarta sesión) | Spike `S13FederationSpike` + informe; `Pagination.pages` y `ResponseShape.RESULT_ITEMS` en `ingestion`; `FederatedDataset`, `FederationJsonTranslator`, `FederationIngestionJob`, Flyway V007, baja de lo no visto por evento; `federated`/`federatedUrl`, filtro `federated`, `GET /catalog/federation`, `federation` en `summary` (ADR-007). `.\mvnw.cmd verify` en verde (122 tests); comprobado contra datos.gob.es real (§5) |
-| Fase 1: primera serie de instantáneas y despliegue | Pendiente | §4 |
+| Fase 1: **preparación del despliegue** | **Hecho** (2026-09-06, quinta sesión) | `Dockerfile` multietapa, `.dockerignore`, perfil `prod` completo, `compose.prod.yaml`; ADR-008 y `docs/despliegue.md`. Imagen construida y arrancada en local contra PostGIS: 436 fichas, 497 operaciones, 369 federados desde la imagen de producción (§5) |
+| Fase 1: instancia desplegada y primera serie de instantáneas | Pendiente (requiere credenciales) | §4 |
 | Fases 2–5 | Pendientes | `geo`, `citizen`, `spending`, `territory`, frontend, `identity`, `workspace` |
 
 Conclusiones que condicionan todo lo demás (siguen vigentes):
@@ -39,6 +40,7 @@ Conclusiones que condicionan todo lo demás (siguen vigentes):
 | [ADR-005](decisions/ADR-005-eje-observado.md) | Eje observado: cuatro métodos (`FILE_HEADERS`, `API_MAX_DATE`, `API_COUNT`, `WFS_HITS`) más `NOT_OBSERVABLE`, lista blanca de campos de fecha, orden API → ficheros → WFS, muestreo diario por lotes sin `IngestionJob`, sin categoría observada; `RestClient` único de la aplicación |
 | [ADR-006](decisions/ADR-006-inventario-api.md) | Inventario de endpoints: el Swagger se ingiere como documento único (`DOCUMENT`, sin `rows`/`start`) y se sincroniza entero en `catalog_api_endpoint`; cruce por `apiTag` al leer, sin tabla de enlace; la observación solo usa `<declarado>/list` |
 | [ADR-007](decisions/ADR-007-federacion.md) | Federación: datos.gob.es paginado por número (`_page`/`_pageSize` ≤ 200, `RESULT_ITEMS`), tabla propia `catalog_federated_dataset` con upsert por página y baja de lo no visto al completar la ingesta (evento); `federated` resuelto al leer por `sourceId`; los 108 federados sin ficha se conservan; las partes de series no se ingieren hasta spike y ADR |
+| [ADR-008](decisions/ADR-008-despliegue.md) | Despliegue: imagen propia (`Dockerfile` de la raíz, JRE 21 no root, capas de Boot; los tests no corren en el builder) sobre Railway con la imagen PostGIS `postgis/postgis:17-3.5`; conexión por variables `PG*` sin valor por defecto; una sola réplica (sin ShedLock); en `prod` actuator solo `health`/`info` (**sin `modulith`**) y springdoc visible; infraestructura declarada en `.railway/railway.ts` (IaC, sin secretos), no en el panel ni en el deprecado `railway.json` |
 
 Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local y el repositorio remoto se llaman `zaragoza-observatorio` (<https://github.com/MarioNaya/zaragoza-observatorio>); no importa para el build.
 
@@ -47,7 +49,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 1. Arrancar Docker Desktop y comprobar `docker info` (Testcontainers y Compose lo necesitan). Se puede lanzar desde PowerShell: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` y esperar a que `docker info` responda.
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~1,5 min); debe estar en verde antes de tocar nada.
-4. Leer `CLAUDE.md` (reglas 1–25) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
+4. Leer `CLAUDE.md` (reglas 1–26) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
 5. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` integra toda la fase 1 (eje observado, Swagger y federación; 2026-09-06). Las ramas `feat/fase1-ingestion-catalog`, `feat/s11-frescura-observada` y `feat/swagger-federated` pueden borrarse en local y en GitHub.
 
 Al cerrar una sesión: `.\mvnw.cmd verify` en verde; actualizar este documento (§1, §4, §5, §6), `SPEC.md` si cambió el modelo o el alcance, y los informes de spikes; pasar la comprobación de datos personales de la regla 22 (`git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures`) y de secretos antes de `git push`; commits descriptivos y push de la rama.
@@ -71,16 +73,18 @@ El puerto 8080 suele estar ocupado en esta máquina por un contenedor phpMyAdmin
 
 ## 4. Siguiente paso: lo que queda de la fase 1 y la fase 2
 
-La fase 1 está completa en código (eje declarado, eje observado, inventario del Swagger, federación). Quedan dos cosas que no dependen de escribir código sino de tiempo y de una máquina:
+La fase 1 está completa en código (eje declarado, eje observado, inventario del Swagger, federación) y el despliegue está definido y probado en local (ADR-008). Lo que queda no depende de escribir código:
 
-1. **Primera serie de instantáneas observadas** (necesita la app corriendo varios días o un despliegue): con ella, decidir en una ADR si existe una categoría observada y cómo se cruza con la declarada (ADR-005 §6), afinar los umbrales `zaragoza.catalog.freshness.*` y la retención de `raw_payload`. También dirá si el Swagger y la federación cambian (hoy no hay marca de cambio en ninguna de las dos fuentes; `firstSeenAt`/`lastSeenAt` son la única serie).
-2. **Despliegue de una instancia** (VPS pequeño o PaaS; SPEC.md §5): perfil `prod`, PostgreSQL gestionado, `springdoc` visible. Antes, decidir si `/actuator/modulith` se expone en producción.
+1. **Crear los dos servicios en Railway** siguiendo `docs/despliegue.md`: el servicio de base de datos desde la **plantilla PostGIS** (no el PostgreSQL por defecto, que no trae la extensión y no arrancaría) con volumen persistente, y el servicio de la aplicación desde el repositorio de GitHub, con las cinco variables `PG*` referenciadas al primero, healthcheck en `/actuator/health` y **una sola réplica**. Es lo único que falta y **requiere credenciales**: el MCP de Railway configurado no conectó en la sesión (`CONNECTION_CLOSED`) y no hay CLI instalada; el runbook está escrito para hacerlo desde el panel.
+2. **Primera serie de instantáneas observadas**, que empieza a acumularse sola en cuanto el servicio esté arriba (12 h para el primer barrido completo del catálogo, después una vez al día por ficha). Con ella: decidir en una ADR si existe una categoría observada y cómo se cruza con la declarada (ADR-005 §6), afinar los umbrales `zaragoza.catalog.freshness.*` y la retención de `raw_payload`. También dirá si el Swagger y la federación cambian (hoy no hay marca de cambio en ninguna de las dos fuentes; `firstSeenAt`/`lastSeenAt` son la única serie).
 
 Mejoras menores, solo si hacen falta: `apiDefinition`/`parameters` del Swagger para conocer los campos ordenables sin sondear; `fl=<campo>` en el `sort`; `ETag`/`Content-Length` como firma de cambio para ficheros sin `Last-Modified` (2 de 72); `produces` del Swagger para saber qué endpoints tienen `application/geo+json`.
 
 Después viene la **fase 2** (`geo` y `citizen`, SPEC.md §3), que empieza por el modelo de `District` con geometría PostGIS (S0.4) y la ingesta de `quejas-sugerencias/list.json` (S0.3), con la decisión previa sobre el texto libre (SPEC.md §9). Y, con spike propio, la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobación real del 2026-09-06 (19:01 y 22:27 CEST)
+## 5. Comprobaciones reales del 2026-09-06 (19:01, 22:27 y 23:12 CEST)
+
+**23:12 (quinta sesión, imagen de producción).** `docker compose -f compose.prod.yaml up --build` con PostGIS efímero y proyecto aislado: imagen construida desde cero con el wrapper del proyecto; Flyway aplicó las 7 migraciones incluida la extensión PostGIS; la aplicación arrancó en 14,6 s y respondió `health=UP` a los 8 s. Comprobado dentro del contenedor: proceso como `uid=10001(observatory)` (no root) y `TZ=Europe/Madrid`. `/actuator` expone solo `health` e `info`; **`/actuator/modulith` devuelve 404** (ADR-008 §6); `/v3/api-docs` sirve OpenAPI 3.1.0 con 7 rutas; los logs salen en ECS JSON. A los 30 s los tres jobs ingirieron contra las fuentes reales desde la imagen de producción: **436 fichas, 497 operaciones en 84 tags y 369 federados (261 con ficha, 108 sin ella)**, las mismas cifras que los dos arranques anteriores. Se paró antes de los 2 min para no lanzar el muestreo observado contra la API municipal sin necesidad.
 
 Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de datos de las sesiones anteriores). Dos arranques:
 
@@ -101,6 +105,7 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 
 ## 6. Pendientes del usuario
 
+- **Crear los dos servicios en Railway** siguiendo `docs/despliegue.md`. Requiere cuenta y credenciales: el MCP de Railway configurado en la sesión no conectó (`CONNECTION_CLOSED`) y no hay CLI instalada, así que el runbook está escrito para el panel. Los dos puntos donde es fácil equivocarse: la base de datos debe ser la **plantilla PostGIS** (el PostgreSQL por defecto no trae la extensión y la aplicación no arranca) y el servicio debe quedarse en **una sola réplica** (sin ShedLock, dos duplicarían el planificador de ingesta).
 - **Alta como reutilizador en el portal municipal** (SPEC.md §2.2): sigue pendiente. No bloquea nada (toda la API es GET público sin clave), pero conviene hacerlo antes de desplegar, registrar las URL consumidas (catálogo, Swagger, una distribución por ficha al día; en fase 2 quejas y distritos) y aprovechar para pedir inversión por junta y presupuestos participativos como datos abiertos. datos.gob.es no requiere alta.
 - **Avisar al ayuntamiento** (Gobierno Abierto, `gobiernoabierto@zaragoza.es`, o su delegado de protección de datos) de que el texto libre de quejas y sugerencias sale por la API sin anonimizar (S0.3 adenda). Y, en el mismo aviso o en `datosabiertos@zaragoza.es` (el contacto que publica el Swagger), de lo que el monitor detecta en el catálogo: 8 servicios API inexistentes (S1.1), 23 distribuciones WFS/WMS de intranet (`-lan`), `puntos-interes` que responde vacío a `sort`, una URL con `https:/`, 8 tags declarados que el Swagger no documenta, la tilde de `clavo-topográfico`, los 4 índices con `jsessionid` declarados como endpoint (S1.2), las 15 fichas abiertas sin federar en datos.gob.es y el hecho de que `catalogo.json` no devuelve las partes de series (S1.3).
 - Remoto: `origin` = <https://github.com/MarioNaya/zaragoza-observatorio>; `main` integra la fase 1 completa (2026-09-06). Pendiente solo decidir si se borran las ramas `feat/*` ya integradas.
@@ -108,20 +113,25 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 
 ## 7. Dudas abiertas
 
-Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría observada y cruce declarado/observado (ADR tras la primera serie), umbrales de frescura, retención de `raw_payload` (14 días provisional), exposición de `/actuator/modulith` en producción, qué hacer con las fichas sin distribución observable (151) más allá de declararlo en `caveats`, y la ingesta de las partes de series y colecciones que el listado omite (108 federadas; fase 2 con spike).
+Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría observada y cruce declarado/observado (ADR tras la primera serie), umbrales de frescura, retención de `raw_payload` (14 días provisional), qué hacer con las fichas sin distribución observable (151) más allá de declararlo en `caveats`, y la ingesta de las partes de series y colecciones que el listado omite (108 federadas; fase 2 con spike). La exposición de `/actuator/modulith` en producción queda **resuelta**: no se expone (ADR-008 §6).
 
 ## 8. Mapa del repositorio
 
 ```
-SPEC.md                         especificación viva (v0.8, ADR-000)
-CLAUDE.md                       reglas de trabajo (1–25) y contexto operativo
+SPEC.md                         especificación viva (v0.9, ADR-000)
+CLAUDE.md                       reglas de trabajo (1–26) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
+docs/despliegue.md              runbook de despliegue en Railway (IaC, variables, comprobaciones)
+.railway/railway.ts             infraestructura en código: base de datos PostGIS y servicio de la app (ADR-008)
+package.json, package-lock.json  única dependencia: el SDK `railway` que importa .railway/railway.ts
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)
 docs/arquitectura.html          página HTML autónoma de la fase 0 (nombres previos a la implementación)
-docs/decisions/                 ADR-000..007
+docs/decisions/                 ADR-000..008
 docs/spikes/                    informes S0.1..S0.6 y S1.1..S1.3, matriz CSV, índice
 pom.xml, compose.yaml           Boot 4.1.1, Modulith 2.1.1, Resilience4j 2.4.0, springdoc 3.1.0, perfil -Pspikes
+Dockerfile, .dockerignore       imagen de producción multietapa (JDK 21 -> JRE 21, no root, capas de Boot); ADR-008
+compose.prod.yaml               prueba local de esa imagen con el perfil prod (proyecto y base de datos propios)
 src/main/resources/application.yaml            spring.http.clients.*, zaragoza.http.user-agent, zaragoza.ingestion.*, zaragoza.catalog.* (freshness, observation, api-inventory, federation)
 src/main/resources/db/migration/               V001 postgis · V002 event_publication · V003 ingestion · V004 catalog · V005 eje observado · V006 inventario Swagger · V007 federación
 src/main/java/es/zaragoza/observatory/
