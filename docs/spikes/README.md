@@ -15,10 +15,13 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S0.5 | Comportamiento de la API: límites, paginación, cabeceras | `S05ApiBehaviourSpike` | [`S0.5-api.md`](S0.5-api.md) | hecho 2026-09-05 |
 | S0.6 | Inventario sistemático del catálogo | `S06InventorySpike` | [`S0.6-inventario.md`](S0.6-inventario.md) + [matriz CSV](S0.6-inventario-matriz.csv) | hecho 2026-09-05 |
 | S1.1 | Frescura observada: qué devuelven las distribuciones (cabeceras de ficheros, fechas máximas en API, recuentos WFS) y a qué coste | `S11ObservedFreshnessSpike` | [`S1.1-frescura-observada.md`](S1.1-frescura-observada.md) | hecho 2026-09-06 |
+| S1.2 | Inventario de endpoints: forma del Swagger de la API, cruce por tag con las fichas y si los paths documentados sirven para observar las fichas cuyo endpoint declarado falla | `S12ApiInventorySpike` | [`S1.2-inventario-api.md`](S1.2-inventario-api.md) | hecho 2026-09-06 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
 Fixtures de S1.1 (2026-09-06, `catalog/observation/`): cabeceras `HEAD` de ficheros (`head-*.headers`, grabadas por el propio spike con `SpikeFixtures.saveHeaders`), respuestas `rows=1` y `sort=<campo> desc` de endpoints de la sede, `resultType=hits` y `count=1` de WFS, y un `apiDefinition`. Los usa el adaptador de observación de `catalog` en sus tests.
+
+Fixtures de S1.2 (2026-09-06, `catalog/`): `swagger-api.json` regrabado (idéntico al del día 5) más `swagger-api.headers`; en `catalog/observation/`, `api-sede-servicio-asociacion-list-rows1.json` (redactado) y `api-sede-servicio-clavo-topografico-list-rows1.json`, las dos alternativas `<declarado>/list` que usa `ObservationUrls`. Los usan `SwaggerJsonTranslatorTest`, `ZaragozaHttpClientTest`, `ObservationUrlsTest`, `DistributionHttpObserverTest`, `CatalogDataQualityTest` y `CatalogIntegrationTests`.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
@@ -35,6 +38,9 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **Tres tipos de distribución observables** y sus medidas: ficheros por `HEAD` (`Last-Modified` en RFC 1123), API de la sede por `rows=1&sort=<campo> desc` (`lastUpdated` en 72 de 88) más `totalCount`, WFS por `resultType=hits` (`numberMatched`). SPARQL, buscadores, RSS/Atom, HTML y WMS no lo son: 151 fichas quedan `NOT_OBSERVABLE`.
 - **El catálogo publica servicios inexistentes o de intranet** (8 endpoints API con 404, 23 distribuciones `-lan` con 403, 2 índices con 303, una URL `https:/`): el monitor los muestra como `observationError`; pendiente comunicarlo al ayuntamiento (`docs/ESTADO.md` §6).
 - Coste: 436 fichas en 3 min 17 s con 0,3 s entre peticiones; ~900 peticiones al día.
+- **El Swagger de la API es un documento único sin marca de cambio** (S1.2): 497 operaciones, 84 tags (uno por operación), sin `Last-Modified` ni `ETag`, `HEAD` → 400, `rows`/`start` ignorados. Se ingiere entero a diario (`DOCUMENT`, ADR-006) y se sincroniza en `catalog_api_endpoint`.
+- **60 de las 68 fichas con tag casan con el Swagger; 28 tags documentados no tienen ficha** (OCDS, juntas, líneas de transporte, emisiones…). 8 fichas declaran tags que el Swagger no documenta; 4 de sus endpoints no existen (S1.1).
+- **Los paths documentados no sustituyen al endpoint declarado**: de las 18 fichas cuyo endpoint falla, 11 tienen alternativas pero solo 4 son unívocas (`<declarado>/list`). La observación solo usa esa regla (ADR-006 §4).
 
 ## Hechos ya verificados el 2026-09-05 (previos a los spikes)
 
