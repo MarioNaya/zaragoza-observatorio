@@ -1,0 +1,8 @@
+HTTP/1.1 200
+accept-ranges: bytes
+content-length: 4332032
+content-type: application/vnd.ms-excel
+date: Sun, 06 Sep 2026 12:50:29 GMT
+etag: "421a00-4d597caadac00"
+last-modified: Wed, 13 Feb 2013 09:30:24 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9

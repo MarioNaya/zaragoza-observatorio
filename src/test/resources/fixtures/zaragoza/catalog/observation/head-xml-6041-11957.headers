@@ -1,0 +1,7 @@
+HTTP/1.1 200
+access-control-allow-origin: *
+content-type: application/xml;charset=UTF-8
+date: Sun, 06 Sep 2026 12:50:30 GMT
+last-modified: Mon, 15 Jun 2026 07:41:52 GMT
+transfer-encoding: chunked
+x-frame-options: SAMEORIGIN

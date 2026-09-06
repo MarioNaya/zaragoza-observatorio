@@ -1,0 +1,8 @@
+HTTP/1.1 200
+accept-ranges: bytes
+content-length: 121
+content-type: application/json
+date: Sun, 06 Sep 2026 12:50:29 GMT
+etag: "79-5b44bf7a6bd80"
+last-modified: Tue, 17 Nov 2020 11:40:54 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9

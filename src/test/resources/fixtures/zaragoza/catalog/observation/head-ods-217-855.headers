@@ -1,0 +1,8 @@
+HTTP/1.1 200
+accept-ranges: bytes
+content-length: 20379
+content-type: application/vnd.oasis.opendocument.spreadsheet
+date: Sun, 06 Sep 2026 12:50:29 GMT
+etag: "4f9b-478b7bd5a4280"
+last-modified: Thu, 19 Nov 2009 11:34:18 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9

@@ -1,4 +1,4 @@
-# Spikes de fase 0
+# Spikes
 
 Cada spike responde una incógnita de `SPEC.md` §3 con datos reales de la API municipal. Su código es un test JUnit `@Tag("spike")` (ver ADR-002) y su resultado es un informe en esta carpeta. **Lo que aquí se documenta es la única fuente válida de endpoints, campos y formatos para el resto del proyecto.**
 
@@ -14,9 +14,11 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S0.4 | Geometrías de juntas/barrios y padrón | `S04GeoSpike` | [`S0.4-geo.md`](S0.4-geo.md) | hecho 2026-09-05 |
 | S0.5 | Comportamiento de la API: límites, paginación, cabeceras | `S05ApiBehaviourSpike` | [`S0.5-api.md`](S0.5-api.md) | hecho 2026-09-05 |
 | S0.6 | Inventario sistemático del catálogo | `S06InventorySpike` | [`S0.6-inventario.md`](S0.6-inventario.md) + [matriz CSV](S0.6-inventario-matriz.csv) | hecho 2026-09-05 |
-| S1.1 | Frescura observada: qué devuelven las distribuciones (cabeceras de ficheros, fechas máximas en API, WFS) y a qué coste | `S11ObservedFreshnessSpike` (por escribir) | `S1.1-frescura-observada.md` | **pendiente** (siguiente paso, `docs/ESTADO.md` §4) |
+| S1.1 | Frescura observada: qué devuelven las distribuciones (cabeceras de ficheros, fechas máximas en API, recuentos WFS) y a qué coste | `S11ObservedFreshnessSpike` | [`S1.1-frescura-observada.md`](S1.1-frescura-observada.md) | hecho 2026-09-06 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
+
+Fixtures de S1.1 (2026-09-06, `catalog/observation/`): cabeceras `HEAD` de ficheros (`head-*.headers`, grabadas por el propio spike con `SpikeFixtures.saveHeaders`), respuestas `rows=1` y `sort=<campo> desc` de endpoints de la sede, `resultType=hits` y `count=1` de WFS, y un `apiDefinition`. Los usa el adaptador de observación de `catalog` en sus tests.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 

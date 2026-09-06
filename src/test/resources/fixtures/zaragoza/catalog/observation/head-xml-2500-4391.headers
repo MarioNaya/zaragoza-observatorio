@@ -1,0 +1,8 @@
+HTTP/1.1 200
+accept-ranges: bytes
+content-length: 10645
+content-type: text/xml
+date: Sun, 06 Sep 2026 12:50:30 GMT
+etag: "2995-5d006d802da00"
+last-modified: Fri, 05 Nov 2021 08:58:16 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9

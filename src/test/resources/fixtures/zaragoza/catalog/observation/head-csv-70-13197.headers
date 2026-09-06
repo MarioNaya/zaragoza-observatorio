@@ -1,0 +1,8 @@
+HTTP/1.1 200
+accept-ranges: bytes
+content-length: 304564
+content-type: text/csv
+date: Sun, 06 Sep 2026 12:50:27 GMT
+etag: "4a5b4-54f2a40ec4500"
+last-modified: Wed, 10 May 2017 12:03:00 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9

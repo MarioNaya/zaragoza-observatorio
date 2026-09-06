@@ -80,6 +80,22 @@ public final class SpikeFixtures {
 		}
 	}
 
+	/**
+	 * Guarda las cabeceras de una respuesta con el mismo formato que los fixtures {@code .headers} grabados con
+	 * {@code curl -D} (línea de estado y una cabecera por línea). Nunca escribe {@code Set-Cookie} (regla 22).
+	 */
+	public static Path saveHeaders(String source, String name, int status, org.springframework.http.HttpHeaders headers) {
+		var out = new StringBuilder("HTTP/1.1 ").append(status).append('\n');
+		headers.forEach((key, values) -> {
+			if (!key.equalsIgnoreCase("Set-Cookie")) {
+				for (String value : values) {
+					out.append(key).append(": ").append(value).append('\n');
+				}
+			}
+		});
+		return save(source, name, out.toString());
+	}
+
 	/** Borra las métricas anteriores del spike y escribe la cabecera. Llamar una vez en {@code @BeforeAll}. */
 	public static void startMetrics(String spikeId) {
 		try {
