@@ -16,12 +16,15 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S0.6 | Inventario sistemático del catálogo | `S06InventorySpike` | [`S0.6-inventario.md`](S0.6-inventario.md) + [matriz CSV](S0.6-inventario-matriz.csv) | hecho 2026-09-05 |
 | S1.1 | Frescura observada: qué devuelven las distribuciones (cabeceras de ficheros, fechas máximas en API, recuentos WFS) y a qué coste | `S11ObservedFreshnessSpike` | [`S1.1-frescura-observada.md`](S1.1-frescura-observada.md) | hecho 2026-09-06 |
 | S1.2 | Inventario de endpoints: forma del Swagger de la API, cruce por tag con las fichas y si los paths documentados sirven para observar las fichas cuyo endpoint declarado falla | `S12ApiInventorySpike` | [`S1.2-inventario-api.md`](S1.2-inventario-api.md) | hecho 2026-09-06 |
+| S1.3 | Federación en datos.gob.es: paginación real, enlace por `identifier`, qué fichas no están federadas y qué datasets federados faltan en el listado municipal | `S13FederationSpike` | [`S1.3-federacion.md`](S1.3-federacion.md) | hecho 2026-09-06 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
 Fixtures de S1.1 (2026-09-06, `catalog/observation/`): cabeceras `HEAD` de ficheros (`head-*.headers`, grabadas por el propio spike con `SpikeFixtures.saveHeaders`), respuestas `rows=1` y `sort=<campo> desc` de endpoints de la sede, `resultType=hits` y `count=1` de WFS, y un `apiDefinition`. Los usa el adaptador de observación de `catalog` en sus tests.
 
 Fixtures de S1.2 (2026-09-06, `catalog/`): `swagger-api.json` regrabado (idéntico al del día 5) más `swagger-api.headers`; en `catalog/observation/`, `api-sede-servicio-asociacion-list-rows1.json` (redactado) y `api-sede-servicio-clavo-topografico-list-rows1.json`, las dos alternativas `<declarado>/list` que usa `ObservationUrls`. Los usan `SwaggerJsonTranslatorTest`, `ZaragozaHttpClientTest`, `ObservationUrlsTest`, `DistributionHttpObserverTest`, `CatalogDataQualityTest` y `CatalogIntegrationTests`.
+
+Fixtures de S1.3 (2026-09-06, `catalog/`): `datos-gob-es-page0.json` regrabado (`_pageSize=50&_page=0`, 50 datasets) con `datos-gob-es-page0.headers`, `datos-gob-es-page-last.json` (`_pageSize=200&_page=1`, 169) y `datos-gob-es-page-beyond.json` (`_page=99`, `items` vacío). Los usan `FederationJsonTranslatorTest`, `ZaragozaHttpClientTest` y `CatalogIntegrationTests`.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
@@ -41,6 +44,8 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **El Swagger de la API es un documento único sin marca de cambio** (S1.2): 497 operaciones, 84 tags (uno por operación), sin `Last-Modified` ni `ETag`, `HEAD` → 400, `rows`/`start` ignorados. Se ingiere entero a diario (`DOCUMENT`, ADR-006) y se sincroniza en `catalog_api_endpoint`.
 - **60 de las 68 fichas con tag casan con el Swagger; 28 tags documentados no tienen ficha** (OCDS, juntas, líneas de transporte, emisiones…). 8 fichas declaran tags que el Swagger no documenta; 4 de sus endpoints no existen (S1.1).
 - **Los paths documentados no sustituyen al endpoint declarado**: de las 18 fichas cuyo endpoint falla, 11 tienen alternativas pero solo 4 son unívocas (`<declarado>/list`). La observación solo usa esa regla (ADR-006 §4).
+- **datos.gob.es se pagina con `_page`/`_pageSize` (tope 200) y enlaza por `identifier`** (S1.3): 369 datasets del publicador municipal, 261 con ficha en el catálogo, **108 sin ficha en el listado** (partes de series y colecciones que `catalogo.json` no devuelve pero el detalle sí) y 175 fichas sin federar (149 `abierto=N`, 15 abiertas). El `modified` federado coincide siempre con el municipal. Ingerido a diario con baja de lo no visto al completar (ADR-007).
+- **El listado `catalogo.json` (436) no es todo el catálogo**: al menos 544 fichas publicadas; las partes de series solo se alcanzan por `catalogo/{id}.json` (`datasetRelacionado`, `series[]`). Pendiente para la fase 2 (SPEC.md §9).
 
 ## Hechos ya verificados el 2026-09-05 (previos a los spikes)
 

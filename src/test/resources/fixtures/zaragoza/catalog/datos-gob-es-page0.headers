@@ -1,0 +1,17 @@
+HTTP/1.1 200
+:status: 200
+accept-ranges: bytes
+access-control-allow-origin: *
+age: 0
+content-location: http://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json?_pageSize=50&_page=0
+content-security-policy: default-src 'self'; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; frame-src 'self' https: data:; frame-ancestors 'self'; connect-src 'self' https: data:
+content-type: application/json
+date: Sun, 06 Sep 2026 17:12:04 GMT
+referrer-policy: strict-origin-when-cross-origin
+server: nginx
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+x-iinfo: 53-110586684-110586694 NNYY CT(1 8 0) RT(1788714681089 53) q(0 0 0 -1) r(5 5) U24
+x-xss-protection: 1; mode=block
