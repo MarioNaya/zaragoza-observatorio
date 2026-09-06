@@ -1,5 +1,6 @@
 package es.zaragoza.observatory.catalog.infrastructure.persistence;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +26,13 @@ class JpaFreshnessSnapshotRepository implements FreshnessSnapshotRepository {
 		jpa.findByDatasetSourceIdAndObservedOn(snapshot.datasetSourceId(), snapshot.observedOn())
 				.ifPresentOrElse(existing -> existing.apply(snapshot),
 						() -> jpa.save(FreshnessSnapshotEntity.from(snapshot)));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<FreshnessSnapshot> find(int datasetSourceId, LocalDate observedOn) {
+		return jpa.findByDatasetSourceIdAndObservedOn(datasetSourceId, observedOn)
+				.map(FreshnessSnapshotEntity::toDomain);
 	}
 
 	@Override

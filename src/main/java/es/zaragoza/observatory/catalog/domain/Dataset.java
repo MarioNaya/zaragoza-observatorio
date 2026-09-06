@@ -63,9 +63,10 @@ public record Dataset(int sourceId, String title, String description, LocalDateT
 	 * @param accessUrl {@code accessURL}
 	 * @param downloadUrl {@code downloadURL} (relativo a www.zaragoza.es en las API)
 	 * @param title {@code title}
+	 * @param wfsFeatureName {@code wfsFeatureName}: capa del servicio WFS (S1.1); solo en distribuciones WFS
 	 */
 	public record Distribution(Integer sourceId, String mediaType, String accessUrl, String downloadUrl,
-			String title) {
+			String title, String wfsFeatureName) {
 
 		public static final String API_MEDIA_TYPE = "application/api";
 

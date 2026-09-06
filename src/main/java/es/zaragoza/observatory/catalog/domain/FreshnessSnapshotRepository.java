@@ -1,5 +1,6 @@
 package es.zaragoza.observatory.catalog.domain;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,6 +9,8 @@ public interface FreshnessSnapshotRepository {
 
 	/** Inserta o sustituye la instantánea de ese dataset y día. */
 	void upsert(FreshnessSnapshot snapshot);
+
+	Optional<FreshnessSnapshot> find(int datasetSourceId, LocalDate observedOn);
 
 	/** Histórico del dataset, la más reciente primero. */
 	List<FreshnessSnapshot> history(int datasetSourceId, int limit);

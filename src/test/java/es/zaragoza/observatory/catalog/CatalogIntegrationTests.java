@@ -3,6 +3,7 @@ package es.zaragoza.observatory.catalog;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -27,7 +29,9 @@ import es.zaragoza.observatory.TestcontainersConfiguration;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.application.ObserveDatasets;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionJob;
 import es.zaragoza.observatory.ingestion.IngestionRunSummary;
@@ -40,7 +44,8 @@ import es.zaragoza.observatory.support.Fixtures;
  * instantáneas de frescura y API REST del monitor.
  */
 @SpringBootTest(properties = { "zaragoza.ingestion.scheduler.enabled=false", "zaragoza.ingestion.page-delay=PT0S",
-		"zaragoza.ingestion.retry.initial-backoff=PT0.01S" })
+		"zaragoza.ingestion.retry.initial-backoff=PT0.01S", "zaragoza.catalog.observation.enabled=false",
+		"zaragoza.catalog.observation.request-delay=PT0S" })
 @Import(TestcontainersConfiguration.class)
 @AutoConfigureMockRestServiceServer
 @AutoConfigureMockMvc
@@ -60,6 +65,9 @@ class CatalogIntegrationTests {
 
 	@Autowired
 	FreshnessSnapshotRepository snapshots;
+
+	@Autowired
+	ObserveDatasets observeDatasets;
 
 	@Autowired
 	MockRestServiceServer server;
@@ -121,6 +129,45 @@ class CatalogIntegrationTests {
 		assertThat(arteAgain.distributions()).hasSize(1);
 		assertThat(ingestion.history(CatalogSources.CATALOG, 10)).hasSize(2);
 
+		// --- eje observado (S1.1): tres fichas reales con las respuestas grabadas por el spike ---------------------
+		server.reset();
+		String incidencia = "https://www.zaragoza.es/sede/servicio/via-publica/incidencia.json?rows=1&srsname=wgs84";
+		server.expect(requestTo(incidencia)).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-via-publica-incidencia-rows1.json"), JSON_UTF8));
+		server.expect(requestTo(incidencia + "&sort=lastUpdated+desc")).andRespond(withSuccess(
+				Fixtures.bytes("catalog/observation/api-sede-servicio-via-publica-incidencia-sort-lastUpdated.json"),
+				JSON_UTF8));
+		server.expect(requestTo("https://www.zaragoza.es/cont/paginas/estadistica/pdf/Apendice_Boletin1.xls"))
+				.andExpect(method(HttpMethod.HEAD))
+				.andRespond(withSuccess().headers(Fixtures.headers("catalog/observation/head-xls-216-425.headers")));
+		server.expect(requestTo("https://www.zaragoza.es/cont/paginas/estadistica/pdf/Apendice_Boletin1.ods"))
+				.andExpect(method(HttpMethod.HEAD))
+				.andRespond(withSuccess().headers(Fixtures.headers("catalog/observation/head-ods-216-856.headers")));
+		server.expect(requestTo("https://idezar-sig.zaragoza.es/servicios/geoserver/urbanismo/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=Vias&resultType=hits"))
+				.andRespond(withSuccess(Fixtures.bytes("catalog/observation/wfs-hits-Vias.xml"), MediaType.APPLICATION_XML));
+		observeDatasets.observe(datasets.findBySourceId(67).orElseThrow());
+		observeDatasets.observe(datasets.findBySourceId(216).orElseThrow());
+		observeDatasets.observe(datasets.findBySourceId(22).orElseThrow());
+		server.verify();
+		assertThat(snapshots.latest(67)).get().satisfies(s -> {
+			assertThat(s.declared()).isEqualTo(DeclaredFreshness.NOT_EVALUABLE); // P0DT1S
+			assertThat(s.observationMethod()).isEqualTo(ObservationMethod.API_MAX_DATE);
+			assertThat(s.observedLastChange()).isEqualTo(java.time.Instant.parse("2026-09-04T12:23:47Z"));
+			assertThat(s.observedRecords()).isEqualTo(67);
+			assertThat(s.observationDetail()).isEqualTo("lastUpdated");
+			assertThat(s.observationError()).isNull();
+		});
+		assertThat(snapshots.latest(216)).get().extracting(s -> s.observationMethod())
+				.isEqualTo(ObservationMethod.FILE_HEADERS);
+		assertThat(snapshots.latest(22)).get().satisfies(s -> {
+			assertThat(s.observationMethod()).isEqualTo(ObservationMethod.WFS_HITS);
+			assertThat(s.observedRecords()).isEqualTo(3359);
+		});
+		assertThat(jdbc.sql("select count(*) from catalog_dataset where observed_at is not null").query(Long.class)
+				.single()).isEqualTo(3L);
+		assertThat(datasets.findDueForObservation(java.time.Instant.now().minusSeconds(60), 1000))
+				.extracting(Dataset::sourceId).doesNotContain(67, 216, 22).hasSize(433);
+
 		// --- API REST: listado ordenado y paginado con origen, fecha de ingesta y caveats -----------------------
 		var listing = assertThat(
 				mvc.get().uri("/api/v1/catalog/datasets").param("size", "5").param("sort", "declaredModified,desc"))
@@ -151,6 +198,20 @@ class CatalogIntegrationTests {
 		detail.extractingPath("$.item.declaredPeriodicity").isEqualTo("P3M");
 		detail.extractingPath("$.item.latestSnapshot.declared").isEqualTo("NOT_UPDATED");
 		detail.extractingPath("$.item.latestSnapshot.observedLastChange").isNull();
+		detail.extractingPath("$.item.latestObservationMethod").isNull();
+
+		var observedDetail = assertThat(mvc.get().uri("/api/v1/catalog/datasets/67")).hasStatusOk().bodyJson();
+		observedDetail.extractingPath("$.item.latestObservationMethod").isEqualTo("API_MAX_DATE");
+		observedDetail.extractingPath("$.item.latestObservedChange").isEqualTo("2026-09-04T12:23:47Z");
+		observedDetail.extractingPath("$.item.latestSnapshot.observationMethod").isEqualTo("API_MAX_DATE");
+		observedDetail.extractingPath("$.item.latestSnapshot.observedRecords").isEqualTo(67);
+		observedDetail.extractingPath("$.item.latestSnapshot.observationDetail").isEqualTo("lastUpdated");
+		observedDetail.extractingPath("$.item.latestSnapshot.observedUrl").asString().contains("sort=lastUpdated");
+
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("observation", "API_MAX_DATE").param("size", "5"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[*].id").asArray().containsExactly(67);
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("sort", "observedLastChange,desc").param("size", "2"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[0].id").isEqualTo(67);
 		detail.extractingPath("$.item.distributions[0].mediaType").isEqualTo("application/api");
 		detail.extractingPath("$.item.apiTag").isEqualTo("Cultura: Arte en la via publica");
 
@@ -172,6 +233,11 @@ class CatalogIntegrationTests {
 				map.values().stream().mapToLong(v -> ((Number) v).longValue()).sum()).isEqualTo(436));
 		summary.extractingPath("$.byDeclaredFreshness.NOT_EVALUABLE").isEqualTo((int) notEvaluable);
 		summary.extractingPath("$.latestSnapshotOn").asString().isNotEmpty();
+		summary.extractingPath("$.byObservationMethod.API_MAX_DATE").isEqualTo(1);
+		summary.extractingPath("$.byObservationMethod.FILE_HEADERS").isEqualTo(1);
+		summary.extractingPath("$.byObservationMethod.WFS_HITS").isEqualTo(1);
+		summary.extractingPath("$.byObservationMethod.NOT_OBSERVABLE").isEqualTo(0);
+		summary.extractingPath("$.withoutObservation").isEqualTo(433);
 	}
 
 	@Test

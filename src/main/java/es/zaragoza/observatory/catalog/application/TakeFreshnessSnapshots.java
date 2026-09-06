@@ -1,6 +1,7 @@
 package es.zaragoza.observatory.catalog.application;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -16,7 +17,7 @@ import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
 
 /**
  * Calcula la instantánea de frescura declarada de todas las fichas para un día (SPEC.md §4.6). Idempotente: una
- * instantánea por dataset y día; repetirla el mismo día la sustituye.
+ * instantánea por dataset y día; repetirla el mismo día sustituye el eje declarado y conserva la observación.
  */
 public class TakeFreshnessSnapshots {
 
@@ -40,7 +41,10 @@ public class TakeFreshnessSnapshots {
 		int taken = 0;
 		for (Dataset dataset : datasets.findAll()) {
 			var evaluation = policy.evaluate(dataset, observedOn);
-			var snapshot = FreshnessSnapshot.declaredOnly(dataset, observedOn, clock.instant(), evaluation);
+			Instant now = clock.instant();
+			FreshnessSnapshot snapshot = snapshots.find(dataset.sourceId(), observedOn)
+					.map(existing -> existing.withDeclared(evaluation, now))
+					.orElseGet(() -> FreshnessSnapshot.declaredOnly(dataset, observedOn, now, evaluation));
 			snapshots.upsert(snapshot);
 			datasets.recordLatestFreshness(dataset.sourceId(), snapshot.declared(), snapshot.declaredRatio(),
 					observedOn);

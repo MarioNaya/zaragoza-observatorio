@@ -24,6 +24,7 @@ import es.zaragoza.observatory.catalog.domain.DatasetReadModel.PageRequest;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 import es.zaragoza.observatory.catalog.infrastructure.CatalogProperties;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiItem;
 import es.zaragoza.observatory.catalog.infrastructure.web.CatalogDtos.ApiList;
@@ -53,7 +54,8 @@ class CatalogController {
 			"issued", DatasetSort.Field.ISSUED,
 			"declaredModified", DatasetSort.Field.DECLARED_MODIFIED,
 			"metadataUpdated", DatasetSort.Field.METADATA_UPDATED,
-			"declaredRatio", DatasetSort.Field.DECLARED_RATIO);
+			"declaredRatio", DatasetSort.Field.DECLARED_RATIO,
+			"observedLastChange", DatasetSort.Field.OBSERVED_CHANGE);
 
 	private final DatasetReadModel datasets;
 	private final FreshnessSnapshotRepository snapshots;
@@ -76,10 +78,11 @@ class CatalogController {
 			@RequestParam(defaultValue = "title,asc") String sort, @RequestParam(required = false) String periodicity,
 			@RequestParam(required = false) String status, @RequestParam(required = false) Boolean hasGeo,
 			@RequestParam(required = false) Boolean open, @RequestParam(required = false) Boolean hasApi,
-			@RequestParam(required = false) DeclaredFreshness freshness, @RequestParam(required = false) String q) {
+			@RequestParam(required = false) DeclaredFreshness freshness, @RequestParam(required = false) String q,
+			@RequestParam(required = false) ObservationMethod observation) {
 		DatasetSort datasetSort = parseSort(sort);
 		PageRequest pageRequest = pageRequest(page, size);
-		var filter = new DatasetFilter(periodicity, status, hasGeo, open, hasApi, freshness, q);
+		var filter = new DatasetFilter(periodicity, status, hasGeo, open, hasApi, freshness, q, observation);
 		PageOf<DatasetListing> result = datasets.search(filter, datasetSort, pageRequest);
 		return new ApiPage<>(source, ingestedAt(), Caveats.CATALOG,
 				new PageMeta(result.page(), result.size(), result.totalElements(), result.totalPages(),
@@ -113,7 +116,8 @@ class CatalogController {
 		var summary = datasets.summary();
 		return new Summary(source, ingestedAt(), Caveats.CATALOG, summary.datasets(), summary.byDeclaredFreshness(),
 				summary.byPeriodicity(), summary.withApi(), summary.open(), summary.explorable(), summary.withGeo(),
-				summary.latestSnapshotOn(), summary.withoutSnapshot(),
+				summary.latestSnapshotOn(), summary.withoutSnapshot(), summary.byObservationMethod(),
+				summary.withoutObservation(),
 				new Thresholds(policy.onTimeMax(), policy.slightDelayMax(), policy.delayedMax()));
 	}
 

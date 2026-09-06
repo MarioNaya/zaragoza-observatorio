@@ -40,12 +40,14 @@ management:
       exposure:
         include: health,info,modulith
 
-# Módulo ingestion (SPEC.md §4.5, docs/spikes/S0.5-api.md, ADR-004). Valores por defecto explícitos.
 zaragoza:
+  # Identificación del reutilizador en toda petición saliente (SPEC.md §2.2); la aplica HttpClientConfiguration.
+  http:
+    user-agent: "observatorio-zaragoza/0.0.1 (+https://github.com/MarioNaya/zaragoza-observatorio)"
+  # Módulo ingestion (SPEC.md §4.5, docs/spikes/S0.5-api.md, ADR-004). Valores por defecto explícitos.
   ingestion:
     http:
       max-concurrent-requests: 4
-      user-agent: "observatorio-zaragoza/0.0.1 (+https://github.com/MarioNaya/zaragoza-observatorio)"
     retry:
       max-attempts: 3
       initial-backoff: PT1S
@@ -74,6 +76,16 @@ zaragoza:
       on-time-max: 1.0
       slight-delay-max: 2.0
       delayed-max: 5.0
+    # Eje observado (docs/spikes/S1.1-frescura-observada.md): cada ficha se observa una vez al día, por lotes,
+    # con la primera distribución que responde (API rows=1 + sort desc, HEAD a ficheros, WFS hits).
+    observation:
+      enabled: true
+      interval: P1D
+      tick: PT10M
+      initial-delay: PT2M
+      batch-size: 60
+      request-delay: PT0.5S
+      max-file-distributions: 10
 
 ---
 # Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).

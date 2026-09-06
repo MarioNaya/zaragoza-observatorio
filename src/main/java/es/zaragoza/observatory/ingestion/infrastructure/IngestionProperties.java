@@ -7,7 +7,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Parámetros del módulo {@code ingestion}. Los valores por defecto son las recomendaciones de S0.5 y ADR-004.
- * Los timeouts HTTP se configuran con las propiedades estándar {@code spring.http.clients.*} de Boot.
+ * Los timeouts HTTP se configuran con las propiedades estándar {@code spring.http.clients.*} de Boot y el
+ * {@code User-Agent} común con {@code zaragoza.http.user-agent}.
  */
 @ConfigurationProperties(prefix = "zaragoza.ingestion")
 public record IngestionProperties(@DefaultValue Http http, @DefaultValue Retry retry,
@@ -17,10 +18,8 @@ public record IngestionProperties(@DefaultValue Http http, @DefaultValue Retry r
 
 	/**
 	 * @param maxConcurrentRequests peticiones simultáneas al host municipal (S0.5: el servidor serializa; máximo 4)
-	 * @param userAgent identificación del reutilizador en cada petición
 	 */
-	public record Http(@DefaultValue("4") int maxConcurrentRequests,
-			@DefaultValue("observatorio-zaragoza/0.0.1 (+https://github.com/MarioNaya/zaragoza-observatorio)") String userAgent) {
+	public record Http(@DefaultValue("4") int maxConcurrentRequests) {
 	}
 
 	/** Reintento con backoff exponencial solo ante fallos reintentables (5xx, timeouts, E/S, HTML). */

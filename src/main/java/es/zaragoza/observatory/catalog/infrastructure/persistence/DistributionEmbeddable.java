@@ -23,6 +23,9 @@ class DistributionEmbeddable {
 	@Column(name = "title", columnDefinition = "text")
 	private String title;
 
+	@Column(name = "wfs_feature_name", columnDefinition = "text")
+	private String wfsFeatureName;
+
 	protected DistributionEmbeddable() {
 	}
 
@@ -33,11 +36,12 @@ class DistributionEmbeddable {
 		e.accessUrl = distribution.accessUrl();
 		e.downloadUrl = distribution.downloadUrl();
 		e.title = distribution.title();
+		e.wfsFeatureName = distribution.wfsFeatureName();
 		return e;
 	}
 
 	Distribution toDomain() {
-		return new Distribution(sourceId, mediaType, accessUrl, downloadUrl, title);
+		return new Distribution(sourceId, mediaType, accessUrl, downloadUrl, title, wfsFeatureName);
 	}
 
 }

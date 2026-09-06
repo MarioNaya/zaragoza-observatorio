@@ -7,21 +7,19 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import es.zaragoza.observatory.catalog.domain.Dataset;
-import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.domain.FreshnessPolicy;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshot;
-import es.zaragoza.observatory.catalog.domain.FreshnessSnapshotRepository;
+import es.zaragoza.observatory.catalog.domain.Observation;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 import es.zaragoza.observatory.catalog.domain.Periodicity;
+import es.zaragoza.observatory.catalog.support.InMemoryDatasets;
+import es.zaragoza.observatory.catalog.support.InMemorySnapshots;
 
 class TakeFreshnessSnapshotsTest {
 
@@ -30,8 +28,9 @@ class TakeFreshnessSnapshotsTest {
 
 	final InMemoryDatasets datasets = new InMemoryDatasets();
 	final InMemorySnapshots snapshots = new InMemorySnapshots();
+	final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 	final TakeFreshnessSnapshots useCase = new TakeFreshnessSnapshots(datasets, snapshots, FreshnessPolicy.DEFAULT,
-			Clock.fixed(NOW, ZoneOffset.UTC));
+			clock);
 
 	@Test
 	void takesOneDeclaredSnapshotPerDatasetAndRecordsLatestFreshness() {
@@ -46,13 +45,14 @@ class TakeFreshnessSnapshotsTest {
 			assertThat(s.declared()).isEqualTo(DeclaredFreshness.ON_TIME);
 			assertThat(s.observedOn()).isEqualTo(TODAY);
 			assertThat(s.takenAt()).isEqualTo(NOW);
+			assertThat(s.hasObservation()).isFalse();
 			assertThat(s.observedLastChange()).isNull();
 		});
 		assertThat(snapshots.latest(2)).get().extracting(FreshnessSnapshot::declared)
 				.isEqualTo(DeclaredFreshness.NOT_UPDATED);
 		assertThat(snapshots.latest(3)).get().extracting(FreshnessSnapshot::declared)
 				.isEqualTo(DeclaredFreshness.NOT_EVALUABLE);
-		assertThat(datasets.latest).containsEntry(1, DeclaredFreshness.ON_TIME)
+		assertThat(datasets.latestFreshness).containsEntry(1, DeclaredFreshness.ON_TIME)
 				.containsEntry(2, DeclaredFreshness.NOT_UPDATED).containsEntry(3, DeclaredFreshness.NOT_EVALUABLE);
 	}
 
@@ -68,63 +68,31 @@ class TakeFreshnessSnapshotsTest {
 				.containsExactly(TODAY.plusDays(1), TODAY);
 	}
 
+	@Test
+	void recalculatingTheDeclaredAxisKeepsTheObservationOfTheDay() {
+		Dataset dataset = dataset(1, "P1Y", TODAY.minusDays(100));
+		datasets.upsert(dataset, NOW);
+		var recorder = new RecordObservation(datasets, snapshots, FreshnessPolicy.DEFAULT, clock);
+		var observation = Observation.measured(ObservationMethod.API_MAX_DATE, "https://example/x.json", NOW,
+				NOW.minusSeconds(3600), 42, "lastUpdated");
+		recorder.record(dataset, observation);
+
+		useCase.take(TODAY);
+
+		assertThat(snapshots.find(1, TODAY)).get().satisfies(s -> {
+			assertThat(s.declared()).isEqualTo(DeclaredFreshness.ON_TIME);
+			assertThat(s.observationMethod()).isEqualTo(ObservationMethod.API_MAX_DATE);
+			assertThat(s.observedLastChange()).isEqualTo(NOW.minusSeconds(3600));
+			assertThat(s.observedRecords()).isEqualTo(42);
+			assertThat(s.observationDetail()).isEqualTo("lastUpdated");
+		});
+		assertThat(snapshots.history(1, 10)).hasSize(1);
+	}
+
 	static Dataset dataset(int id, String periodicity, LocalDate modified) {
 		return new Dataset(id, "dataset " + id, null, null, modified.atStartOfDay(),
 				LocalDateTime.of(2026, 1, 20, 13, 12, 38), periodicity, Periodicity.days(periodicity), "Finalizado",
 				true, true, false, null, List.of(), NOW, NOW);
-	}
-
-	static final class InMemoryDatasets implements DatasetRepository {
-		final Map<Integer, Dataset> byId = new LinkedHashMap<>();
-		final Map<Integer, DeclaredFreshness> latest = new LinkedHashMap<>();
-
-		@Override
-		public void upsert(Dataset dataset, Instant seenAt) {
-			byId.put(dataset.sourceId(), dataset);
-		}
-
-		@Override
-		public Optional<Dataset> findBySourceId(int sourceId) {
-			return Optional.ofNullable(byId.get(sourceId));
-		}
-
-		@Override
-		public List<Dataset> findAll() {
-			return new ArrayList<>(byId.values());
-		}
-
-		@Override
-		public long count() {
-			return byId.size();
-		}
-
-		@Override
-		public void recordLatestFreshness(int sourceId, DeclaredFreshness freshness, Double ratio,
-				LocalDate observedOn) {
-			latest.put(sourceId, freshness);
-		}
-	}
-
-	static final class InMemorySnapshots implements FreshnessSnapshotRepository {
-		final List<FreshnessSnapshot> all = new ArrayList<>();
-
-		@Override
-		public void upsert(FreshnessSnapshot snapshot) {
-			all.removeIf(s -> s.datasetSourceId() == snapshot.datasetSourceId()
-					&& s.observedOn().equals(snapshot.observedOn()));
-			all.add(snapshot);
-		}
-
-		@Override
-		public List<FreshnessSnapshot> history(int datasetSourceId, int limit) {
-			return all.stream().filter(s -> s.datasetSourceId() == datasetSourceId)
-					.sorted((a, b) -> b.observedOn().compareTo(a.observedOn())).limit(limit).toList();
-		}
-
-		@Override
-		public Optional<FreshnessSnapshot> latest(int datasetSourceId) {
-			return history(datasetSourceId, 1).stream().findFirst();
-		}
 	}
 
 }

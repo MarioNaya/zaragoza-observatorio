@@ -24,4 +24,13 @@ public interface DatasetRepository {
 	/** Marca desnormalizada de la última instantánea (para filtrar y ordenar el listado). */
 	void recordLatestFreshness(int sourceId, DeclaredFreshness freshness, Double ratio, LocalDate observedOn);
 
+	/**
+	 * Fichas que toca observar: nunca observadas primero, después las observadas antes de {@code observedBefore},
+	 * de más antigua a más reciente y con desempate por {@code sourceId}. Como máximo {@code limit}.
+	 */
+	List<Dataset> findDueForObservation(Instant observedBefore, int limit);
+
+	/** Marca desnormalizada de la última observación (instante, método intentado y último cambio observado). */
+	void recordObservation(int sourceId, Observation observation);
+
 }

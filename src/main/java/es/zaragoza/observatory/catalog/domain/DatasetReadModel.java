@@ -1,5 +1,6 @@
 package es.zaragoza.observatory.catalog.domain;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -18,22 +19,26 @@ public interface DatasetReadModel {
 
 	CatalogSummary summary();
 
-	/** Ficha más la marca desnormalizada de su última instantánea (puede no haberla aún). */
+	/**
+	 * Ficha más las marcas desnormalizadas de su última instantánea declarada y de su última observación (puede
+	 * no haberlas aún).
+	 */
 	record DatasetListing(Dataset dataset, DeclaredFreshness latestFreshness, Double latestRatio,
-			LocalDate latestSnapshotOn) {
+			LocalDate latestSnapshotOn, Instant observedAt, ObservationMethod latestObservationMethod,
+			Instant latestObservedChange) {
 	}
 
 	/**
 	 * Filtros combinables (todos opcionales). {@code periodicity} admite el valor {@link #UNDECLARED} para las
-	 * fichas sin {@code accrualPeriodicity}.
+	 * fichas sin {@code accrualPeriodicity}; {@code observation} filtra por el método de la última observación.
 	 */
 	record DatasetFilter(String periodicity, String publicationStatus, Boolean hasGeo, Boolean open, Boolean hasApi,
-			DeclaredFreshness freshness, String text) {
+			DeclaredFreshness freshness, String text, ObservationMethod observation) {
 
 		public static final String UNDECLARED = "UNDECLARED";
 
 		public static DatasetFilter none() {
-			return new DatasetFilter(null, null, null, null, null, null, null);
+			return new DatasetFilter(null, null, null, null, null, null, null, null);
 		}
 	}
 
@@ -50,7 +55,7 @@ public interface DatasetReadModel {
 		}
 
 		public enum Field {
-			TITLE, SOURCE_ID, ISSUED, DECLARED_MODIFIED, METADATA_UPDATED, DECLARED_RATIO
+			TITLE, SOURCE_ID, ISSUED, DECLARED_MODIFIED, METADATA_UPDATED, DECLARED_RATIO, OBSERVED_CHANGE
 		}
 
 		public enum Direction {
@@ -85,11 +90,13 @@ public interface DatasetReadModel {
 
 	/**
 	 * Agregados del catálogo. {@code byPeriodicity} usa {@link DatasetFilter#UNDECLARED} para las fichas sin
-	 * periodicidad; {@code byDeclaredFreshness} incluye todas las categorías, con 0 donde no haya fichas.
+	 * periodicidad; {@code byDeclaredFreshness} y {@code byObservationMethod} incluyen todas las categorías, con 0
+	 * donde no haya fichas; {@code withoutObservation} son las fichas aún no observadas.
 	 */
 	record CatalogSummary(long datasets, Map<DeclaredFreshness, Long> byDeclaredFreshness,
 			Map<String, Long> byPeriodicity, long withApi, long open, long explorable, long withGeo,
-			LocalDate latestSnapshotOn, long withoutSnapshot) {
+			LocalDate latestSnapshotOn, long withoutSnapshot, Map<ObservationMethod, Long> byObservationMethod,
+			long withoutObservation) {
 	}
 
 }

@@ -21,8 +21,10 @@ import jakarta.persistence.Table;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel.DatasetListing;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.domain.Observation;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 
-/** Tabla {@code catalog_dataset} (V004) más la colección {@code catalog_distribution}. */
+/** Tabla {@code catalog_dataset} (V004, V005) más la colección {@code catalog_distribution}. */
 @Entity
 @Table(name = "catalog_dataset")
 class DatasetEntity {
@@ -80,6 +82,16 @@ class DatasetEntity {
 	@Column(name = "latest_snapshot_on")
 	private LocalDate latestSnapshotOn;
 
+	@Column(name = "observed_at", columnDefinition = "timestamptz")
+	private Instant observedAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "latest_observation_method", columnDefinition = "text")
+	private ObservationMethod latestObservationMethod;
+
+	@Column(name = "latest_observed_change", columnDefinition = "timestamptz")
+	private Instant latestObservedChange;
+
 	@Column(name = "first_seen_at", nullable = false, columnDefinition = "timestamptz")
 	private Instant firstSeenAt;
 
@@ -102,7 +114,7 @@ class DatasetEntity {
 		return entity;
 	}
 
-	/** Copia los campos de la fuente y actualiza {@code lastSeenAt}; conserva primera aparición y frescura. */
+	/** Copia los campos de la fuente y actualiza {@code lastSeenAt}; conserva primera aparición, frescura y observación. */
 	void apply(Dataset dataset, Instant seenAt) {
 		title = dataset.title();
 		description = dataset.description();
@@ -128,6 +140,12 @@ class DatasetEntity {
 		latestSnapshotOn = observedOn;
 	}
 
+	void recordObservation(Observation observation) {
+		observedAt = observation.observedAt();
+		latestObservationMethod = observation.method();
+		latestObservedChange = observation.lastChange();
+	}
+
 	Dataset toDomain() {
 		return new Dataset(sourceId, title, description, issued, declaredModified, metadataUpdated,
 				declaredPeriodicity, periodicityDays, publicationStatus, hasGeo, open, explorable, apiTag,
@@ -135,7 +153,8 @@ class DatasetEntity {
 	}
 
 	DatasetListing toListing() {
-		return new DatasetListing(toDomain(), latestFreshness, latestRatio, latestSnapshotOn);
+		return new DatasetListing(toDomain(), latestFreshness, latestRatio, latestSnapshotOn, observedAt,
+				latestObservationMethod, latestObservedChange);
 	}
 
 	Integer getSourceId() {

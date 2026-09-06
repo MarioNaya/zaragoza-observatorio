@@ -13,8 +13,9 @@ import jakarta.persistence.Table;
 
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.domain.FreshnessSnapshot;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 
-/** Tabla {@code catalog_freshness_snapshot} (V004). */
+/** Tabla {@code catalog_freshness_snapshot} (V004, V005). */
 @Entity
 @Table(name = "catalog_freshness_snapshot")
 class FreshnessSnapshotEntity {
@@ -44,14 +45,27 @@ class FreshnessSnapshotEntity {
 	@Column(name = "declared_freshness", nullable = false, columnDefinition = "text")
 	private DeclaredFreshness declared;
 
+	@Column(name = "observed_at", columnDefinition = "timestamptz")
+	private Instant observedAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "observation_method", columnDefinition = "text")
+	private ObservationMethod observationMethod;
+
+	@Column(name = "observed_url", columnDefinition = "text")
+	private String observedUrl;
+
 	@Column(name = "observed_last_change", columnDefinition = "timestamptz")
 	private Instant observedLastChange;
 
 	@Column(name = "observed_records")
 	private Integer observedRecords;
 
-	@Column(name = "observation_method", columnDefinition = "text")
-	private String observationMethod;
+	@Column(name = "observation_detail", columnDefinition = "text")
+	private String observationDetail;
+
+	@Column(name = "observation_error", columnDefinition = "text")
+	private String observationError;
 
 	protected FreshnessSnapshotEntity() {
 	}
@@ -71,14 +85,19 @@ class FreshnessSnapshotEntity {
 		periodicityDays = snapshot.periodicityDays();
 		declaredRatio = snapshot.declaredRatio();
 		declared = snapshot.declared();
+		observedAt = snapshot.observedAt();
+		observationMethod = snapshot.observationMethod();
+		observedUrl = snapshot.observedUrl();
 		observedLastChange = snapshot.observedLastChange();
 		observedRecords = snapshot.observedRecords();
-		observationMethod = snapshot.observationMethod();
+		observationDetail = snapshot.observationDetail();
+		observationError = snapshot.observationError();
 	}
 
 	FreshnessSnapshot toDomain() {
 		return new FreshnessSnapshot(id, datasetSourceId, observedOn, takenAt, declaredAgeDays, periodicityDays,
-				declaredRatio, declared, observedLastChange, observedRecords, observationMethod);
+				declaredRatio, declared, observedAt, observationMethod, observedUrl, observedLastChange,
+				observedRecords, observationDetail, observationError);
 	}
 
 }

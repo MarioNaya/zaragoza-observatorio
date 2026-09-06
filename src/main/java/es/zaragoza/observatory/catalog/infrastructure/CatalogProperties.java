@@ -9,17 +9,36 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Parámetros del módulo {@code catalog}. Endpoint y campos verificados en S0.1 (y {@code fl} con {@code formato}
- * comprobado con una petición real el 2026-09-06); umbrales de frescura de SPEC.md §4.6/§9.
+ * comprobado con una petición real el 2026-09-06); umbrales de frescura de SPEC.md §4.6/§9; muestreo de
+ * distribuciones según S1.1 (recomendaciones 4 y 5).
  */
 @ConfigurationProperties(prefix = "zaragoza.catalog")
 public record CatalogProperties(
 		@DefaultValue("https://www.zaragoza.es/web/espacio-de-datos/servicio/catalogo.json") URI catalogUrl,
 		@DefaultValue({ "id", "title", "description_basic", "issued", "modified", "lastUpdated", "accrualPeriodicity",
 				"status", "geo", "abierto", "explorable", "formato" }) List<String> fields,
-		@DefaultValue("PT6H") Duration interval, @DefaultValue Freshness freshness) {
+		@DefaultValue("PT6H") Duration interval, @DefaultValue Freshness freshness,
+		@DefaultValue Sampling observation) {
 
 	public record Freshness(@DefaultValue("1.0") double onTimeMax, @DefaultValue("2.0") double slightDelayMax,
 			@DefaultValue("5.0") double delayedMax) {
+	}
+
+	/**
+	 * Muestreo de distribuciones (eje observado).
+	 *
+	 * @param enabled permite desactivar el planificador (tests)
+	 * @param interval cada cuánto se vuelve a observar una ficha
+	 * @param tick cada cuánto se procesa un lote de fichas vencidas
+	 * @param initialDelay espera tras el arranque antes del primer lote
+	 * @param batchSize fichas por lote (436 fichas / 60 ≈ 8 lotes ≈ 80 min para todo el catálogo)
+	 * @param requestDelay pausa entre peticiones (S0.5: 1–2 req/s por cortesía)
+	 * @param maxFileDistributions tope de {@code HEAD} por ficha cuando tiene muchos ficheros
+	 */
+	public record Sampling(@DefaultValue("true") boolean enabled, @DefaultValue("P1D") Duration interval,
+			@DefaultValue("PT10M") Duration tick, @DefaultValue("PT2M") Duration initialDelay,
+			@DefaultValue("60") int batchSize, @DefaultValue("PT0.5S") Duration requestDelay,
+			@DefaultValue("10") int maxFileDistributions) {
 	}
 
 }

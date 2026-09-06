@@ -6,7 +6,6 @@ import java.util.concurrent.Semaphore;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestClient;
 
@@ -32,12 +31,6 @@ import tools.jackson.databind.json.JsonMapper;
 @EnableConfigurationProperties(IngestionProperties.class)
 @EnableScheduling
 class IngestionConfiguration {
-
-	@Bean
-	RestClient zaragozaRestClient(RestClient.Builder builder, IngestionProperties properties) {
-		// El builder de Boot ya aplica spring.http.clients.* (timeouts, redirecciones) y los customizers de test.
-		return builder.defaultHeader(HttpHeaders.USER_AGENT, properties.http().userAgent()).build();
-	}
 
 	@Bean
 	Retry zaragozaRetry(IngestionProperties properties) {

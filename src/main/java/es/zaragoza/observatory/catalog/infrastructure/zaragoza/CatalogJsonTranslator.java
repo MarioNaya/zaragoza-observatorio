@@ -59,7 +59,8 @@ public class CatalogJsonTranslator {
 		List<Distribution> distributions = new ArrayList<>();
 		for (JsonNode f : node.path("formato")) {
 			distributions.add(new Distribution(f.path("id").isNumber() ? f.path("id").asInt() : null,
-					text(f, "mediaType"), text(f, "accessURL"), text(f, "downloadURL"), text(f, "title")));
+					text(f, "mediaType"), text(f, "accessURL"), text(f, "downloadURL"), text(f, "title"),
+					text(f, "wfsFeatureName")));
 		}
 		return new Dataset(id.asInt(), title, text(node, "description_basic"), dateTime(text(node, "issued")),
 				dateTime(text(node, "modified")), dateTime(text(node, "lastUpdated")), periodicity,

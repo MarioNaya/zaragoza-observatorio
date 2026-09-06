@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import es.zaragoza.observatory.catalog.domain.DatasetReadModel;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.domain.ObservationMethod;
 
 /** Lectura del monitor con Specifications de Spring Data: filtros combinables, orden explícito y paginación. */
 @Repository
@@ -65,9 +66,22 @@ class JpaDatasetReadModel implements DatasetReadModel {
 				.sorted((a, b) -> Long.compare((Long) b[1], (Long) a[1]))
 				.forEach(row -> byPeriodicity.put(row[0] == null ? DatasetFilter.UNDECLARED : (String) row[0],
 						(Long) row[1]));
+		Map<ObservationMethod, Long> byObservation = new EnumMap<>(ObservationMethod.class);
+		for (ObservationMethod m : ObservationMethod.values()) {
+			byObservation.put(m, 0L);
+		}
+		long withoutObservation = 0;
+		for (Object[] row : jpa.countByLatestObservationMethod()) {
+			if (row[0] == null) {
+				withoutObservation += (Long) row[1];
+			}
+			else {
+				byObservation.put((ObservationMethod) row[0], (Long) row[1]);
+			}
+		}
 		return new CatalogSummary(jpa.count(), byFreshness, byPeriodicity, jpa.countByHasApiTrue(),
 				jpa.countByOpenTrue(), jpa.countByExplorableTrue(), jpa.countByHasGeoTrue(), jpa.latestSnapshotOn(),
-				withoutSnapshot);
+				withoutSnapshot, byObservation, withoutObservation);
 	}
 
 	static Specification<DatasetEntity> specification(DatasetFilter filter) {
@@ -93,6 +107,9 @@ class JpaDatasetReadModel implements DatasetReadModel {
 			if (filter.freshness() != null) {
 				predicates.add(cb.equal(root.get("latestFreshness"), filter.freshness()));
 			}
+			if (filter.observation() != null) {
+				predicates.add(cb.equal(root.get("latestObservationMethod"), filter.observation()));
+			}
 			if (filter.text() != null && !filter.text().isBlank()) {
 				String pattern = "%" + filter.text().strip().toLowerCase(Locale.ROOT) + "%";
 				predicates.add(cb.like(cb.lower(root.get("title")), pattern));
@@ -111,6 +128,7 @@ class JpaDatasetReadModel implements DatasetReadModel {
 			case DECLARED_MODIFIED -> "declaredModified";
 			case METADATA_UPDATED -> "metadataUpdated";
 			case DECLARED_RATIO -> "latestRatio";
+			case OBSERVED_CHANGE -> "latestObservedChange";
 		};
 		Sort.Order primary = new Sort.Order(direction, property).nullsLast();
 		return Sort.by(primary, Sort.Order.asc("sourceId"));

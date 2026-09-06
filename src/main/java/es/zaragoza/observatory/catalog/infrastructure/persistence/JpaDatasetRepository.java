@@ -5,12 +5,14 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
+import es.zaragoza.observatory.catalog.domain.Observation;
 
 @Repository
 class JpaDatasetRepository implements DatasetRepository {
@@ -50,6 +52,19 @@ class JpaDatasetRepository implements DatasetRepository {
 	@Transactional
 	public void recordLatestFreshness(int sourceId, DeclaredFreshness freshness, Double ratio, LocalDate observedOn) {
 		jpa.findById(sourceId).ifPresent(entity -> entity.recordLatestFreshness(freshness, ratio, observedOn));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Dataset> findDueForObservation(Instant observedBefore, int limit) {
+		return jpa.findDueForObservation(observedBefore, PageRequest.of(0, Math.max(1, limit))).stream()
+				.map(DatasetEntity::toDomain).toList();
+	}
+
+	@Override
+	@Transactional
+	public void recordObservation(int sourceId, Observation observation) {
+		jpa.findById(sourceId).ifPresent(entity -> entity.recordObservation(observation));
 	}
 
 }
