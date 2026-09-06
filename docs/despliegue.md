@@ -1,5 +1,7 @@
 # Despliegue
 
+**Instancia en marcha**: <https://observatorio-production-ed20.up.railway.app> (proyecto `zaragoza-observatorio`, entorno `production`, región `europe-west4`), desplegada el 2026-09-07.
+
 Procedimiento para poner en marcha una instancia del observatorio. Las decisiones que lo sostienen están en [ADR-008](decisions/ADR-008-despliegue.md); aquí solo están los pasos y las comprobaciones.
 
 Plataforma: **Railway**, con dos servicios en el mismo proyecto — la aplicación (imagen construida desde el `Dockerfile` del repositorio) y una base de datos **PostGIS**. La aplicación **no arranca contra un PostgreSQL sin PostGIS**: la primera migración hace `CREATE EXTENSION postgis`.
@@ -40,10 +42,12 @@ railway config apply            # aplica tras confirmar
 
 `plan` redacta los valores de las variables, así que se puede pegar en cualquier sitio. **Nunca usar `railway config pull --include-variables`**: descifra los secretos y los escribe en el fichero.
 
-Dos cosas que conviene tener presentes:
+Cuatro cosas que conviene tener presentes, tres de ellas aprendidas a base de fallos en el primer despliegue:
 
-- **En IaC, lo que no está en el fichero se borra.** Un servicio nuevo se añade ahí, no por el panel.
-- **El volumen de la base de datos lo aprovisiona Railway** con sus valores por defecto; que el plan muestre `volumeAttachments: null` es lo normal, no una base de datos efímera.
+- **En IaC, lo que no está en el fichero se borra**, variables incluidas. Un servicio nuevo se añade ahí, no por el panel.
+- **El volumen de la base de datos lo aprovisiona Railway** con sus valores por defecto; que el primer plan muestre `volumeAttachments: null` es lo normal, no una base de datos efímera.
+- **La base de datos se declara como `service` con `image(...)`, nunca con `database(...)`.** El ayudante `database()` acepta una imagen propia, pero al aplicarla Railway convierte el recurso en servicio y el plan entra en un bucle de borrar y recrear. Si `railway config plan` propone «Create database X / Delete service X», es esto.
+- **`PGDATA` va en un directorio propio.** Railway inicializa el volumen con su Postgres 18; PostgreSQL 17 no arranca sobre ese clúster y se queda en bucle con `unrecognized configuration parameter "autovacuum_worker_slots"`. Si la base no levanta, mirar `railway logs --service postgis --deployment`.
 
 Tras el primer `apply`, el dominio público:
 
