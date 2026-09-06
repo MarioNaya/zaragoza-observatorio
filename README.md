@@ -14,11 +14,13 @@ Repositorio: <https://github.com/MarioNaya/zaragoza-observatorio>
 - **Arquitectura (diagramas)**: [`docs/arquitectura.md`](docs/arquitectura.md)
 - **Decisiones (ADR)**: [`docs/decisions/`](docs/decisions/)
 - **Hechos verificados sobre la API municipal**: [`docs/spikes/`](docs/spikes/README.md)
+- **Despliegue**: [`docs/despliegue.md`](docs/despliegue.md)
 
 ```powershell
 .\mvnw.cmd verify              # requiere Docker en marcha (Testcontainers con PostGIS)
 .\mvnw.cmd spring-boot:run     # app + PostGIS vía Docker Compose (añadir "-Dspring-boot.run.arguments=--server.port=8085" si el 8080 está ocupado)
 .\mvnw.cmd test -Pspikes       # spikes exploratorios contra la API real
+docker compose -f compose.prod.yaml up --build -d   # la imagen de producción, en local
 ```
 
 ## API (fase 1: monitor de frescura del catálogo)
