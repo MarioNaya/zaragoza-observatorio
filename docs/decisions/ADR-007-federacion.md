@@ -11,7 +11,7 @@ SPEC.md §4.6 dejó la marca `federated` («aparece en RDF/datos.gob.es») pendi
 
 - es una Linked Data API con paginación propia (`_page` desde 0, `_pageSize` con tope efectivo de 200; el enlace `next` pierde el `_pageSize`), sin recuento total, sin `Last-Modified` ni `ETag`; 369 datasets en dos páginas;
 - cada item lleva en `identifier` la URL municipal de la ficha con su `id` (369 de 369): ese es el enlace;
-- 261 datasets están en los dos sitios (todos `abierto=S`); 175 fichas del catálogo no están federadas (149 `abierto=N`, 11 vacío, 15 abiertas); y **108 datasets federados no aparecen en el listado `catalogo.json`** aunque existen en el detalle municipal: son partes de series y colecciones (`datasetRelacionado` con `IS_PART_OF`) que el listado de primer nivel no devuelve;
+- 261 datasets están en los dos sitios (todos `abierto=S`); 175 fichas del catálogo no están federadas (149 `abierto=N`, 11 vacío, 15 abiertas); y **108 datasets federados no aparecen en el listado `catalogo.json`** aunque existen en el detalle municipal: son partes de series y colecciones (`datasetRelacionado` con `IS_PART_OF`) que el listado de primer nivel no devuelve, y algunos de sus padres (16 «Carril Bici», 2940 «Temperatura Ambiental e Islas de calor») tampoco están ni en el listado ni federados;
 - el `modified` de datos.gob.es coincide con el del catálogo en los 237 casos comparables.
 
 `ingestion` solo paginaba por `start`/`rows` y solo leía envoltorios de la sede, arrays y documentos.
