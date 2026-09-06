@@ -21,6 +21,13 @@ spring:
       pool:
         # Los jobs de ingesta se ejecutan en serie; sustituye a ShedLock mientras haya una sola instancia (ADR-004).
         size: 1
+  http:
+    clients:
+      # Reglas de S0.5: timeouts de lectura >= 30 s (hay endpoints de 11 s) y nunca seguir redirecciones
+      # (la URL sin extensión redirige a HTML; usamos siempre .json).
+      connect-timeout: 30s
+      read-timeout: 60s
+      redirects: dont-follow
 
 management:
   endpoints:
@@ -28,11 +35,31 @@ management:
       exposure:
         include: health,info,modulith
 
-# Fuentes municipales (SPEC.md §2, docs/spikes/README.md). Solo declaradas; el cliente llega en fase 1.
+# Módulo ingestion (SPEC.md §4.5, docs/spikes/S0.5-api.md, ADR-004). Valores por defecto explícitos.
 zaragoza:
-  api:
-    base-url: https://www.zaragoza.es
-    open311-base-url: https://www.zaragoza.es/api/recurso/open311
+  ingestion:
+    http:
+      max-concurrent-requests: 4
+      user-agent: "observatorio-zaragoza/0.0.1 (+https://github.com/marionayadeluis)"
+    retry:
+      max-attempts: 3
+      initial-backoff: PT1S
+      multiplier: 2.0
+    circuit-breaker:
+      sliding-window-size: 6
+      minimum-calls: 3
+      failure-rate-threshold: 50
+      wait-in-open-state: PT2M
+    # Cortesía entre páginas (1-2 req/s, S0.5) y tope de páginas por ejecución.
+    page-delay: PT0.5S
+    max-pages: 1000
+    # Retención de raw_payload (SPEC.md §9, provisional).
+    raw-retention: P14D
+    scheduler:
+      enabled: true
+      tick: PT10M
+      initial-delay: PT30S
+      raw-purge-cron: "0 30 4 * * *"
 
 ---
 # Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).

@@ -9,7 +9,6 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * SPEC.md §4.4 y regla 4 de CLAUDE.md: hexagonal estricta dentro de cada módulo.
- * {@code allowEmptyShould(true)} mientras no existan clases de dominio; retirar cuando las haya.
  */
 @AnalyzeClasses(packages = "es.zaragoza.observatory", importOptions = ImportOption.DoNotIncludeTests.class)
 class HexagonalArchitectureTests {
@@ -18,16 +17,21 @@ class HexagonalArchitectureTests {
 	static final ArchRule domainIsFrameworkFree = noClasses()
 			.that().resideInAPackage("..domain..")
 			.should().dependOnClassesThat().resideInAnyPackage(
-					"org.springframework..", "jakarta.persistence..", "org.hibernate..",
-					"..application..", "..infrastructure..")
-			.allowEmptyShould(true)
+					"org.springframework..", "jakarta.persistence..", "org.hibernate..", "tools.jackson..",
+					"io.github.resilience4j..", "..application..", "..infrastructure..")
 			.because("el paquete domain no importa Spring, JPA ni nada de infrastructure (SPEC.md regla 4)");
 
 	@ArchTest
 	static final ArchRule applicationDoesNotDependOnInfrastructure = noClasses()
 			.that().resideInAPackage("..application..")
-			.should().dependOnClassesThat().resideInAPackage("..infrastructure..")
-			.allowEmptyShould(true)
+			.should().dependOnClassesThat().resideInAnyPackage("..infrastructure..", "jakarta.persistence..",
+					"org.hibernate..", "org.springframework.web..", "org.springframework.data..")
 			.because("los casos de uso dependen de puertos del dominio, no de adaptadores");
+
+	@ArchTest
+	static final ArchRule moduleApiDoesNotDependOnInternals = noClasses()
+			.that().resideInAPackage("es.zaragoza.observatory.(*)")
+			.should().dependOnClassesThat().resideInAnyPackage("..application..", "..infrastructure..")
+			.because("la superficie pública de un módulo (su paquete raíz) no expone adaptadores ni casos de uso");
 
 }
