@@ -1,2 +1,5 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+# Se ejecutan dentro de un contenedor Linux (ADR-008): nunca CRLF.
+/Dockerfile text eol=lf
+/.dockerignore text eol=lf

@@ -99,12 +99,46 @@ zaragoza:
       interval: P1D
 
 ---
-# Perfil prod: logs estructurados JSON (SPEC.md §4.2 Observabilidad).
+# Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara
+# explícitamente: si falta una variable, la aplicación no arranca en vez de caer a un valor de dev.
 spring:
   config:
     activate:
       on-profile: prod
+  # La base de datos la aporta el servicio PostGIS del entorno (plantilla postgis/postgis:17-3.5,
+  # la misma imagen que dev y Testcontainers). PGHOST, PGPORT, PGDATABASE, PGUSER y PGPASSWORD son
+  # las variables que publica el servicio Postgres de Railway y las estándar de libpq.
+  datasource:
+    url: jdbc:postgresql://${PGHOST}:${PGPORT:5432}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+  docker:
+    compose:
+      # No hay compose.yaml dentro de la imagen; se desactiva para que Boot no lo busque al arrancar.
+      enabled: false
+server:
+  # Railway inyecta PORT=8080 en ejecución y exige escuchar en todas las interfaces.
+  port: ${PORT:8080}
+  address: 0.0.0.0
+  # Un redespliegue manda SIGTERM: se deja terminar la ingesta en curso antes de cerrar.
+  shutdown: graceful
 logging:
+  # Logs estructurados JSON (SPEC.md §4.2 Observabilidad).
   structured:
     format:
       console: ecs
+management:
+  endpoints:
+    web:
+      exposure:
+        # `health` lo necesita el healthcheck de la plataforma. Sin `modulith`: publica la estructura
+        # interna de módulos, no aporta nada a quien consume la API y ya está en docs/arquitectura.md
+        # y validada por ModularityTests en cada build; sigue disponible en local (ADR-008).
+        include: health,info
+springdoc:
+  # El contrato de la API propia es parte del producto para reutilizadores (SPEC.md §6): visible en
+  # producción. Explícito porque Boot avisa de que por defecto queda abierto.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
