@@ -8,7 +8,7 @@
 |---|---|---|
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
-| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.9 (revisada al cerrar cada sesión); ADR-001..008 |
+| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.9 (revisada al cerrar cada sesión); ADR-001..009 |
 | Fase 1: `ingestion` + `catalog` (eje declarado) | **Hecho** (2026-09-06, segunda sesión) | Integrado en `main`; API REST, contrato OpenAPI, instantáneas diarias |
 | Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures redactados, historial limpiado con `git filter-repo`; regla 22 |
 | Fase 1: eje observado de la frescura (S1.1) | **Hecho** (2026-09-06, tercera sesión) | `DistributionHttpObserver`, `ObserveDatasets`, Flyway V005, API con filtro/orden/resumen por método; ADR-005 |
@@ -42,6 +42,7 @@ Conclusiones que condicionan todo lo demás (siguen vigentes):
 | [ADR-006](decisions/ADR-006-inventario-api.md) | Inventario de endpoints: el Swagger se ingiere como documento único (`DOCUMENT`, sin `rows`/`start`) y se sincroniza entero en `catalog_api_endpoint`; cruce por `apiTag` al leer, sin tabla de enlace; la observación solo usa `<declarado>/list` |
 | [ADR-007](decisions/ADR-007-federacion.md) | Federación: datos.gob.es paginado por número (`_page`/`_pageSize` ≤ 200, `RESULT_ITEMS`), tabla propia `catalog_federated_dataset` con upsert por página y baja de lo no visto al completar la ingesta (evento); `federated` resuelto al leer por `sourceId`; los 108 federados sin ficha se conservan; las partes de series no se ingieren hasta spike y ADR |
 | [ADR-008](decisions/ADR-008-despliegue.md) | Despliegue: imagen propia (`Dockerfile` de la raíz, JRE 21 no root, capas de Boot; los tests no corren en el builder) sobre Railway con la imagen PostGIS `postgis/postgis:17-3.5`; conexión por variables `PG*` sin valor por defecto; una sola réplica (sin ShedLock); en `prod` actuator solo `health`/`info` (**sin `modulith`**) y springdoc visible; infraestructura declarada en `.railway/railway.ts` (IaC, sin secretos), no en el panel ni en el deprecado `railway.json` |
+| [ADR-009](decisions/ADR-009-memoria-y-coste.md) | El coste se paga en RAM residente (10 $/GB/mes), no en peticiones: topes de JVM **explícitos** (`-Xmx256m`, `UseSerialGC`, `TieredStopAtLevel=1`) en vez de `MaxRAMPercentage`, que con el límite de 8 GB del plan dejaba el proceso en ~690 MB; medido, baja a ~368 MB. **Serverless no se usa**: el planificador es el producto. Filtrar bots no reduce la factura (sin coste por petición, egress 0) |
 
 Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local y el repositorio remoto se llaman `zaragoza-observatorio` (<https://github.com/MarioNaya/zaragoza-observatorio>); no importa para el build.
 
@@ -50,7 +51,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 1. Arrancar Docker Desktop y comprobar `docker info` (Testcontainers y Compose lo necesitan). Se puede lanzar desde PowerShell: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` y esperar a que `docker info` responda.
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~1,5 min); debe estar en verde antes de tocar nada.
-4. Leer `CLAUDE.md` (reglas 1–26) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
+4. Leer `CLAUDE.md` (reglas 1–27) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
 5. **`main` se despliega solo**: el servicio de Railway construye desde esa rama, así que un push a `main` redespliega la instancia. Razón de más para no romperla. Estado del despliegue: `railway status`, `railway logs --service observatorio --deployment` (antes, en PowerShell: `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"`, ver `CLAUDE.md`).
 6. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` integra toda la fase 1 y el despliegue (2026-09-07). Las ramas `feat/fase1-ingestion-catalog`, `feat/s11-frescura-observada`, `feat/swagger-federated` y `feat/despliegue` pueden borrarse en local y en GitHub.
 
@@ -127,7 +128,7 @@ Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría obse
 
 ```
 SPEC.md                         especificación viva (v0.9, ADR-000)
-CLAUDE.md                       reglas de trabajo (1–26) y contexto operativo
+CLAUDE.md                       reglas de trabajo (1–27) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
 docs/despliegue.md              runbook de despliegue en Railway (IaC, variables, comprobaciones)
@@ -135,7 +136,7 @@ docs/despliegue.md              runbook de despliegue en Railway (IaC, variables
 package.json, package-lock.json  única dependencia: el SDK `railway` que importa .railway/railway.ts
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)
 docs/arquitectura.html          página HTML autónoma de la fase 0 (nombres previos a la implementación)
-docs/decisions/                 ADR-000..008
+docs/decisions/                 ADR-000..009
 docs/spikes/                    informes S0.1..S0.6 y S1.1..S1.3, matriz CSV, índice
 pom.xml, compose.yaml           Boot 4.1.1, Modulith 2.1.1, Resilience4j 2.4.0, springdoc 3.1.0, perfil -Pspikes
 Dockerfile, .dockerignore       imagen de producción multietapa (JDK 21 -> JRE 21, no root, capas de Boot); ADR-008

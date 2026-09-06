@@ -111,7 +111,26 @@ Lo que el servicio consume al día, y lo que hay que declarar en el alta como re
 
 Todas salen con el `User-Agent` de `zaragoza.http.user-agent`, que identifica el proyecto y enlaza al repositorio.
 
-## 6. Notas
+## 6. Coste
+
+Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada por petición**, egress a 0,05 $/GB y volumen a 0,15 $/GB/mes. En un servicio con poco tráfico la factura es casi toda memoria ocupada las 24 horas (ADR-009).
+
+| Concepto | Consumo | Coste aproximado |
+|---|---|---|
+| `observatorio` (JVM acotada) | ~368 MB | ~3,7 $/mes |
+| `postgis` | ~125 MB de media | ~1,25 $/mes |
+| Volumen | 5 GB | 0,75 $/mes |
+| Egress | medido: 0 MB | ~0 |
+| **Total** | | **~5,7 $/mes** |
+
+Comprobarlo con `railway metrics --service observatorio`. **Si la memoria sube de forma sostenida por encima de ~400 MB, es una regresión**: mirar si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`.
+
+Dos cosas que **no** reducen esta factura, por si tienta:
+
+- **Filtrar bots**: el rastreo de vulnerabilidades genera 4xx, pero Railway no cobra por petición y el egress medido es 0 MB. Diez mil respuestas de error al mes son céntimos. Es higiene, no ahorro — y requeriría un dominio propio delante (Cloudflare) que este proyecto no tiene.
+- **Modo Serverless**: no aplica. El servicio mantiene el pool a `postgis` y sale a la API municipal cada 10 minutos, así que no se dormiría; y si se durmiera, el planificador no correría y la serie de instantáneas dejaría de acumularse (ADR-009).
+
+## 7. Notas
 
 - **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso el repositorio no lleva ninguno y la infraestructura se declara en `.railway/railway.ts`, que es su sustituto soportado (§2).
 - **Migraciones**: Flyway corre al arrancar y `ddl-auto=validate` comprueba que las entidades casan. Un despliegue con una entidad nueva sin su migración falla al arrancar, no en caliente (ADR-004).

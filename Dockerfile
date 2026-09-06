@@ -28,9 +28,14 @@ FROM eclipse-temurin:21-jre-noble AS runtime
 # Todo el dominio usa Clock.systemUTC() y Europe/Madrid explícito (ZaragozaTime), así que la zona
 # del contenedor no afecta a ningún dato; se fija para que el cron de purga de raw_payload y las
 # marcas de los logs coincidan con la hora local de Zaragoza.
+# Memoria acotada a propósito, no por porcentaje (ADR-009). Railway le presenta a la JVM el límite
+# del plan —8 GB—, así que un MaxRAMPercentage la deja crecer hasta varios GB de heap: sin presión,
+# la JVM no recoge basura ni devuelve memoria, y la factura se paga por RAM residente (10 $/GB/mes).
+# Este servicio ingiere documentos de pocos MB y atiende un tráfico mínimo; el tope es holgado.
+# ExitOnOutOfMemoryError: con una sola instancia, preferimos que reinicie a que agonice.
 ENV TZ=Europe/Madrid \
     SPRING_PROFILES_ACTIVE=prod \
-    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
+    JAVA_TOOL_OPTIONS="-Xms128m -Xmx256m -Xss512k -XX:MaxMetaspaceSize=192m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=64m"
 
 RUN useradd --system --uid 10001 --create-home observatory \
     && install -d -o observatory -g observatory /app
