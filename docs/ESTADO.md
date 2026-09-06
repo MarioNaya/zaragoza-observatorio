@@ -30,7 +30,7 @@ Conclusiones que condicionan todo lo demás (fase 0, siguen vigentes):
 | [ADR-003](decisions/ADR-003-contexto-spending.md) | El gasto público es el contexto `spending`, sin entidades territoriales |
 | [ADR-004](decisions/ADR-004-eventos-jdbc-resiliencia.md) | Registro de eventos Modulith sobre JDBC con tabla creada por Flyway (`ddl-auto=validate`); Resilience4j core programático; ShedLock aplazado (pool de 1 hilo); `MockRestServiceServer` en lugar de WireMock; springdoc para OpenAPI |
 
-Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local se llama `zaragoza-observatorio` (renombrada por el usuario el 2026-09-06); no importa para el build.
+Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local y el repositorio remoto se llaman `zaragoza-observatorio` (<https://github.com/MarioNaya/zaragoza-observatorio>); no importa para el build.
 
 ## 3. Cómo arrancar una sesión
 
@@ -87,7 +87,7 @@ Con API 69, abiertos 276, explorables 110, con geo 317. Ficha más reciente por 
 ## 6. Pendientes del usuario
 
 - **Alta como reutilizador en el portal municipal** (SPEC.md §2.2): sigue pendiente. No bloquea nada (toda la API es GET público sin clave), pero conviene hacerlo antes de desplegar, registrar las URL consumidas (catálogo, y en fase 2 quejas y distritos) y aprovechar para pedir inversión por junta y presupuestos participativos como datos abiertos.
-- Integrar `feat/fase1-ingestion-catalog` en `main` (fast-forward) y crear el remoto Git cuando se quiera publicar.
+- Integrar `feat/fase1-ingestion-catalog` en `main` (fast-forward, o con un pull request en GitHub). El remoto existe desde el 2026-09-06: `origin` = <https://github.com/MarioNaya/zaragoza-observatorio> (`main` y la rama de fase 1 subidas).
 - Si se quiere usar el 8080, parar el contenedor phpMyAdmin que lo ocupa.
 
 ## 7. Dudas abiertas

@@ -4,6 +4,8 @@ Plataforma que ingesta los datos abiertos del Ayuntamiento de Zaragoza (API REST
 
 Monolito modular con Spring Boot 4.1 y Spring Modulith, arquitectura hexagonal por módulo, PostgreSQL + PostGIS, Java 21.
 
+Repositorio: <https://github.com/MarioNaya/zaragoza-observatorio>
+
 ## Empezar
 
 - **Estado del proyecto y siguiente paso**: [`docs/ESTADO.md`](docs/ESTADO.md)

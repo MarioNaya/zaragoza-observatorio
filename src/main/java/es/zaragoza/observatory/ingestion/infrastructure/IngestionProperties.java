@@ -20,7 +20,7 @@ public record IngestionProperties(@DefaultValue Http http, @DefaultValue Retry r
 	 * @param userAgent identificación del reutilizador en cada petición
 	 */
 	public record Http(@DefaultValue("4") int maxConcurrentRequests,
-			@DefaultValue("observatorio-zaragoza/0.0.1 (+https://github.com/marionayadeluis)") String userAgent) {
+			@DefaultValue("observatorio-zaragoza/0.0.1 (+https://github.com/MarioNaya/zaragoza-observatorio)") String userAgent) {
 	}
 
 	/** Reintento con backoff exponencial solo ante fallos reintentables (5xx, timeouts, E/S, HTML). */

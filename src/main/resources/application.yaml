@@ -45,7 +45,7 @@ zaragoza:
   ingestion:
     http:
       max-concurrent-requests: 4
-      user-agent: "observatorio-zaragoza/0.0.1 (+https://github.com/marionayadeluis)"
+      user-agent: "observatorio-zaragoza/0.0.1 (+https://github.com/MarioNaya/zaragoza-observatorio)"
     retry:
       max-attempts: 3
       initial-backoff: PT1S
