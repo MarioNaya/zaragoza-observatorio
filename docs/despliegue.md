@@ -132,6 +132,8 @@ Dos cosas que **no** reducen esta factura, por si tienta:
 
 ## 7. Notas
 
+- ⚠️ **Pendiente: el volumen no tiene copias de seguridad.** La serie de instantáneas no se puede rehacer, así que esto es el mayor riesgo abierto del despliegue. Se declara con `backupSchedules` (`DAILY`/`WEEKLY`/`MONTHLY`) sobre `postgis-volume` en `.railway/railway.ts` y se aplica con `railway config apply`; después, verificar en el panel que la primera copia existe. Es la tarea inmediata de la próxima sesión (`ESTADO.md` §4). **Borrar esta nota cuando esté hecho y comprobado**, no cuando esté planificado.
+
 - **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso el repositorio no lleva ninguno y la infraestructura se declara en `.railway/railway.ts`, que es su sustituto soportado (§2).
 - **Migraciones**: Flyway corre al arrancar y `ddl-auto=validate` comprueba que las entidades casan. Un despliegue con una entidad nueva sin su migración falla al arrancar, no en caliente (ADR-004).
 - **Redespliegues**: `server.shutdown=graceful`, así que una ingesta en curso termina antes de cerrar. Las publicaciones de eventos incompletas se reintentan al arrancar (`republish-outstanding-events-on-restart`, ADR-004).
