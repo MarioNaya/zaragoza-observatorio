@@ -9,7 +9,7 @@ La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de a
 3. **Respetar las fronteras de módulo.** Cada cambio debe pasar `ApplicationModules.verify()`. No se accede a tablas ni a clases internas de otro módulo. En particular: `workspace` nunca depende de un módulo de dominio; `territory` nunca tiene tablas propias.
 4. **Hexagonal estricta**: el paquete `domain` no importa Spring, JPA ni nada de `infrastructure`. Los puertos son interfaces del dominio; los adaptadores viven en `infrastructure`.
 5. **Idempotencia en toda ingesta.** Reejecutar un job no duplica datos.
-6. **Nada de conclusiones en el código.** No se introducen etiquetas interpretativas ("degradado", "sospechoso", "anómalo") ni indicadores compuestos sin una decisión explícita documentada en `docs/decisions/` (formato ADR).
+6. **Nada de conclusiones en el código.** No se introducen etiquetas interpretativas ("degradado", "sospechoso", "anómalo") ni indicadores compuestos sin una decisión explícita documentada en `docs/decisions/` (formato ADR). **Limita la voz del producto, no la inferencia del usuario**: dar cruces, denominadores y series para que saque sus propias conclusiones es el objetivo (SPEC.md §1.1), no una excepción; no invocar esta regla para recortar capacidad de análisis.
 7. **Toda agregación territorial expone denominador y caveats.**
 8. **El backend ordena, filtra, pagina y agrega; el frontend pinta.** Ningún endpoint devuelve listas sin criterio de ordenación explícito.
 9. **No se crea un módulo por dataset.** Una fuente nueva se asigna a un bounded context existente salvo decisión documentada en ADR.
