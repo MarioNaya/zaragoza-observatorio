@@ -31,7 +31,7 @@ flowchart LR
   subgraph ACL["Adaptadores anti-corrupción (por módulo)"]
     direction TB
     A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>api.json → ApiEndpoint (SwaggerJsonTranslator · ApiInventoryIngestionJob, S1.2)<br/>datos.gob.es → FederatedDataset (FederationJsonTranslator · FederationIngestionJob, S1.3)<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado) · baja de federados no vistos<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
-    A_CIT["citizen<br/>list.json → ServiceRequest<br/>geometry → punto WGS84"]
+    A_CIT["citizen<br/>quejas-sugerencias/list.json con fl de 8 campos, SIN texto libre (ADR-012)<br/>ServiceRequestJsonTranslator · dos jobs con marca de agua:<br/>altas por requested_datetime · cierres por updated_datetime (S2.2)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
     A_GEO["geo<br/>distrito.json?srsname=wgs84 → District + Boundary<br/>DistrictJsonTranslator · DistrictsIngestionJob<br/>DatasetIngested → DistrictProfileHttpReader: 29 detalles → idpadron + PopulationRecord<br/>PostgisDistrictLocator: ST_Contains → junta (ADR-011)"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
   end
@@ -39,7 +39,7 @@ flowchart LR
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
     direction TB
     T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger),<br/>catalog_federated_dataset (V007 federación)"]
-    T_CIT["citizen: service_request (point 4326)"]
+    T_CIT["citizen: citizen_service_request (V009)<br/>lon/lat + district_id resuelto + district_declared<br/>sin columna de texto libre (ADR-012)"]
     T_GEO["geo: geo_district (geometry 4326 + GiST),<br/>geo_population_record (V008)<br/>census_section: pendiente"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
     T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
@@ -62,6 +62,8 @@ flowchart LR
 
 Flujo de una ingesta (SPEC.md §4.5, implementado en fase 1): (1) el scheduler recorre los beans `IngestionJob` que declara cada módulo y ejecuta los vencidos según su `interval()`; (2) `RunIngestion` abre un `IngestionRun` y pide páginas a `ZaragozaHttpClient` con la estrategia del `SourceDescriptor` (`OFFSET` por `start` hasta agotar `totalCount` o recibir página corta; `NONE` una sola petición; `DOCUMENT` un documento único sin parámetros de paginación, el Swagger de la API, S1.2; `PAGE` por número de página con nombres propios, datos.gob.es, S1.3; `If-Modified-Since` no sirve, S0.5); (3) cada página se guarda en `raw_payload` y se entrega al `handle()` del job; (4) el job traduce con su adaptador anti-corrupción y persiste con upsert idempotente por identificador de origen; (5) el cierre del run y la publicación de `DatasetIngested` van en una sola transacción (`CompleteIngestionRun`), y Modulith registra el evento en `event_publication`; (6) los módulos escuchan `DatasetIngested` con `@ApplicationModuleListener`: `catalog`, tras cada ingesta del catálogo, toma la instantánea diaria de frescura de todas las fichas, y `geo`, tras la de las juntas, lee el detalle de cada una para completar el `idpadron` y el padrón (29 peticiones; ADR-011).
 
+Una variante del paso 2 la estrena `citizen` (S2.2): su `SourceDescriptor` **se construye en cada ejecución** con una marca de agua leída de su propia tabla, de modo que la primera ejecución barre el histórico completo y las siguientes piden solo lo nuevo. Son dos jobs sobre el mismo endpoint —uno por eje de fecha— porque un `DatasetRef` es una ejecución periódica con su propio registro, y sin el eje de `updated_datetime` no se vería nunca el cierre de un expediente antiguo.
+
 ## 2. Módulos Modulith y dependencias permitidas
 
 ```mermaid
@@ -75,12 +77,12 @@ flowchart TB
   end
   subgraph DOM["dominios"]
     CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint, FederatedDataset"]
-    CIT["citizen (fase 2)<br/>ServiceRequest, Category"]
+    CIT["citizen (fase 2, implementado)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
     SPE["spending (fase 3)<br/>OCDS, presupuesto, subvenciones<br/>sin dependencia de geo (ADR-003)"]
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]
-    GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>locate(point) → RESOLVED / AMBIGUOUS / OUTSIDE"]
+    GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>API pública Geo: locate/locateAll, districtNames (sinónimos), districts (denominador)"]
   end
   SH["shared · kernel mínimo<br/>DatasetRef, IngestionRun, UserId, eventos base<br/>todos pueden depender de él; él de nadie"]
 

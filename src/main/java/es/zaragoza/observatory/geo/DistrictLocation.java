@@ -1,4 +1,4 @@
-package es.zaragoza.observatory.geo.domain;
+package es.zaragoza.observatory.geo;
 
 import java.util.List;
 

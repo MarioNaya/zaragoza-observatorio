@@ -3,10 +3,10 @@ package es.zaragoza.observatory.geo.infrastructure.persistence;
 import java.util.List;
 import java.util.Locale;
 
-import es.zaragoza.observatory.geo.domain.Boundary;
+import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.geo.domain.Boundary.Polygon;
 import es.zaragoza.observatory.geo.domain.Boundary.Ring;
-import es.zaragoza.observatory.geo.domain.GeoPoint;
+import es.zaragoza.observatory.geo.domain.Boundary;
 
 /**
  * Escribe un {@link Boundary} como GeoJSON para {@code ST_GeomFromGeoJSON}. Se genera a mano y no con Jackson

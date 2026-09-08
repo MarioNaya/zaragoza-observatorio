@@ -7,9 +7,9 @@ import java.util.Locale;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import es.zaragoza.observatory.geo.domain.DistrictLocation;
+import es.zaragoza.observatory.geo.DistrictLocation;
+import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.geo.domain.DistrictLocator;
-import es.zaragoza.observatory.geo.domain.GeoPoint;
 import jakarta.persistence.EntityManager;
 
 /**

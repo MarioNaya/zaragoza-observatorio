@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import es.zaragoza.observatory.geo.DistrictLocation;
+import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.geo.GeoSources;
 import es.zaragoza.observatory.geo.domain.District;
-import es.zaragoza.observatory.geo.domain.DistrictLocation;
 import es.zaragoza.observatory.geo.domain.DistrictLocator;
 import es.zaragoza.observatory.geo.domain.DistrictRepository;
-import es.zaragoza.observatory.geo.domain.GeoPoint;
 import es.zaragoza.observatory.geo.domain.PopulationRepository;
 import es.zaragoza.observatory.geo.infrastructure.GeoProperties;
 import es.zaragoza.observatory.geo.infrastructure.web.GeoDtos.ApiItem;

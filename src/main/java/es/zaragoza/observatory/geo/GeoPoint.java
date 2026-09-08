@@ -1,4 +1,4 @@
-package es.zaragoza.observatory.geo.domain;
+package es.zaragoza.observatory.geo;
 
 /**
  * Un punto en WGS84 (EPSG:4326), en el orden en que lo publica la API municipal con {@code srsname=wgs84} y en

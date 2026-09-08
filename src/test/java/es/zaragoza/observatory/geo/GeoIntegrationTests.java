@@ -26,12 +26,12 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import es.zaragoza.observatory.TestcontainersConfiguration;
+import es.zaragoza.observatory.geo.DistrictLocation;
+import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.geo.domain.District;
 import es.zaragoza.observatory.geo.domain.DistrictKind;
-import es.zaragoza.observatory.geo.domain.DistrictLocation;
 import es.zaragoza.observatory.geo.domain.DistrictLocator;
 import es.zaragoza.observatory.geo.domain.DistrictRepository;
-import es.zaragoza.observatory.geo.domain.GeoPoint;
 import es.zaragoza.observatory.geo.domain.PopulationRepository;
 import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionJob;

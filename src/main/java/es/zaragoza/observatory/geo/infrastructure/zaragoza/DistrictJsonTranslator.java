@@ -6,12 +6,12 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import es.zaragoza.observatory.geo.domain.Boundary;
+import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.geo.domain.Boundary.Polygon;
 import es.zaragoza.observatory.geo.domain.Boundary.Ring;
+import es.zaragoza.observatory.geo.domain.Boundary;
 import es.zaragoza.observatory.geo.domain.District;
 import es.zaragoza.observatory.geo.domain.DistrictKind;
-import es.zaragoza.observatory.geo.domain.GeoPoint;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 

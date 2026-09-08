@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
+import es.zaragoza.observatory.geo.application.GeoService;
 import es.zaragoza.observatory.geo.application.RegisterDistricts;
 import es.zaragoza.observatory.geo.application.UpdateDistrictProfiles;
+import es.zaragoza.observatory.geo.domain.DistrictLocator;
 import es.zaragoza.observatory.geo.domain.DistrictProfileReader;
 import es.zaragoza.observatory.geo.domain.DistrictRepository;
 import es.zaragoza.observatory.geo.domain.PopulationRepository;
@@ -23,6 +25,12 @@ class GeoConfiguration {
 	@Bean
 	RegisterDistricts registerDistricts(DistrictRepository districts) {
 		return new RegisterDistricts(districts);
+	}
+
+	/** Superficie pública del módulo para los demás (regla 3): resolver puntos y casar nombres de junta. */
+	@Bean
+	GeoService geoService(DistrictLocator locator, DistrictRepository districts, PopulationRepository population) {
+		return new GeoService(locator, districts, population);
 	}
 
 	/**
