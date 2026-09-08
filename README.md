@@ -25,7 +25,7 @@ Repositorio: <https://github.com/MarioNaya/zaragoza-observatorio>
 docker compose -f compose.prod.yaml up --build -d   # la imagen de producción, en local
 ```
 
-## API (fase 1: monitor de frescura del catálogo)
+## API (fase 1: monitor de frescura · fase 2: territorio)
 
 Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y URL consultada), `ingestedAt` (fin de la última ingesta con éxito) y `caveats`.
 
@@ -38,8 +38,13 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 | `GET /api/v1/catalog/api-tags` | Cruce catálogo ↔ Swagger: cada tag con sus operaciones documentadas y las fichas que lo declaran (0 operaciones = tag declarado que el Swagger no documenta; sin fichas = fuente sin ficha) |
 | `GET /api/v1/catalog/api-endpoints` | Inventario de operaciones del Swagger de la API (`tag`, `q`, `templated`; `sort=document|path|tag`) |
 | `GET /api/v1/catalog/federation` | Datasets del publicador municipal en datos.gob.es con `inCatalog` (`inCatalog`, `q`; `sort=id|title`); los que no tienen ficha en el listado municipal son partes de series y colecciones |
+| `GET /api/v1/geo/districts` | Las 29 juntas municipales y vecinales con sus **dos numeraciones** (`id` de la API y `padronId` de los datasets de población) y el padrón del último año (filtro `kind`; `sort=id|name|padronId`) |
+| `GET /api/v1/geo/districts/{id}` | Una junta con su serie de padrón (2020, 2021, 2022 y 2024: la serie **no** es continua) |
+| `GET /api/v1/geo/locate?lon=&lat=` | La junta que contiene un punto WGS84: `RESOLVED`, `AMBIGUOUS` (los polígonos oficiales se solapan en el entorno de Juslibol) u `OUTSIDE` |
 | `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
 
 La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* pregunta a diario a una distribución de cada ficha y publica lo que devuelve con su método: `FILE_HEADERS` (`Last-Modified` del fichero, por `HEAD`), `API_MAX_DATE` (valor máximo de un campo de fecha de la API de la sede, pedido con `sort desc`, más `totalCount`), `API_COUNT` (solo `totalCount`), `WFS_HITS` (`numberMatched`) o `NOT_OBSERVABLE`; los intentos fallidos (servicios inexistentes, redirecciones, intranet) quedan registrados con su causa. Ninguno de los dos ejes es un juicio sobre el dato: cada respuesta lleva `caveats`. El Swagger 2.0 de la API municipal se ingiere a diario como inventario de endpoints y se cruza con las fichas por el tag que declaran (S1.2, ADR-006), y el listado del publicador en datos.gob.es se ingiere a diario para marcar las fichas federadas y mostrar los datasets federados que el listado municipal omite (S1.3, ADR-007).
+
+La asignación territorial **no se pide a la API municipal**: su buscador de direcciones acierta la junta el 89,5 % de las veces sin permitir distinguir el acierto del fallo, y los parámetros de consulta espacial que documenta no filtran por proximidad (S2.1). Se resuelve en casa con `ST_Contains` sobre la geometría oficial de las 29 juntas, que coincide con la junta que asigna el ayuntamiento en el 99,69 % de los 1.308 registros contrastados (ADR-011). Un registro sin coordenadas queda **sin asignar** y se cuenta como tal: no se geocodifica por dirección para rellenar el hueco.
 
 Datos: Ayuntamiento de Zaragoza, portal de datos abiertos (`https://www.zaragoza.es/sede/portal/datos-abiertos/`), bajo su licencia de reutilización. Cada respuesta de la API propia indica el dataset de origen y la fecha de ingesta.

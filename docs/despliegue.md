@@ -9,7 +9,7 @@ Plataforma: **Railway**, con dos servicios en el mismo proyecto — la aplicaci�
 ## 1. Antes de desplegar
 
 ```powershell
-.\mvnw.cmd verify                     # 122 tests con Testcontainers; los tests NO corren en el builder
+.\mvnw.cmd verify                     # 134 tests con Testcontainers; los tests NO corren en el builder
 git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures   # regla 22
 ```
 
@@ -85,16 +85,21 @@ No hace falta declarar `SPRING_PROFILES_ACTIVE=prod` ni `PORT`: el perfil lo fij
 curl https://<dominio>/actuator/health            # {"status":"UP"}
 curl https://<dominio>/actuator/modulith          # 404: no se expone en producción (ADR-008 §6)
 curl https://<dominio>/v3/api-docs                # contrato OpenAPI 3.1.0
-curl https://<dominio>/api/v1/catalog/summary     # a los ~40 s del arranque: 436 fichas
+curl https://<dominio>/api/v1/catalog/summary     # a los ~40 s del arranque: fichas del catálogo
+curl https://<dominio>/api/v1/geo/districts       # a los ~45 s: las 29 juntas con su padrón
 ```
 
-En los logs (ECS JSON) debe verse Flyway aplicando las 7 migraciones la primera vez, y a los 30 s las tres ingestas:
+En los logs (ECS JSON) debe verse Flyway aplicando las 8 migraciones la primera vez, y a los 30 s las cuatro ingestas:
 
 ```
 ingestion … succeeded for sede:catalogo/api: 1 records in 1 pages
-ingestion … succeeded for data-space:catalogo: 436 records in 1 pages
+ingestion … succeeded for data-space:catalogo: 434 records in 1 pages
 ingestion … succeeded for datos-gob-es:publisher/L01502973: 369 records in 2 pages
+ingestion … succeeded for sede:distrito: 29 records in 1 pages
+geo profiles: 29 districts read, 29 with padronId, 116 population records, 0 failed
 ```
+
+**Un despliegue que trae una migración nueva** (el primero fue `V008`, el 2026-09-08) se reconoce por `Successfully validated N migrations` seguido de `Migrating schema "public" to version "…"` y `Successfully applied 1 migration`. Con `ddl-auto=validate`, un fallo ahí aborta el arranque: conviene mirar los logs mientras redespliega, no después.
 
 A los 2 minutos empieza el muestreo observado, en lotes de 60 fichas cada 10 minutos: el catálogo completo queda observado en unas 12 horas y a partir de ahí una vez al día. Esa es la serie que hace falta para la ADR de la categoría observada (ADR-005 §6).
 
@@ -107,6 +112,8 @@ Lo que el servicio consume al día, y lo que hay que declarar en el alta como re
 | `catalogo.json` (espacio de datos) | cada 6 h | 1 petición, ~2 MB |
 | `catalogo/api.json` (Swagger de la sede) | 1 vez al día | 1 petición, ~1,3 MB |
 | datos.gob.es, publicador `L01502973` | 1 vez al día | 2 peticiones, ~1 MB |
+| `distrito.json?srsname=wgs84` (juntas con geometría) | 1 vez al día | 1 petición, ~1,4 MB |
+| `distrito/{id}.json` (padrón de cada junta) | 1 vez al día | 29 peticiones ligeras, espaciadas 0,3 s |
 | Muestreo observado | 1 vez al día por ficha | ~436 peticiones ligeras (`rows=1`, `HEAD`, `resultType=hits`), espaciadas 0,5 s |
 
 Todas salen con el `User-Agent` de `zaragoza.http.user-agent`, que identifica el proyecto y enlaza al repositorio.

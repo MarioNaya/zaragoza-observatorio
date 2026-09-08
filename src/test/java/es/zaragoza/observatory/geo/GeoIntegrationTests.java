@@ -171,6 +171,13 @@ class GeoIntegrationTests {
 				.isEqualTo(DistrictLocation.Status.OUTSIDE);
 		assertThat(locator.locateAll(List.of())).isEmpty();
 
+		// Los 29 polígonos publicados no son una partición: este punto del norte rural cae a la vez en Alfocea
+		// (14) y Juslibol (18), S2.1. Se elige la de menor id y se conservan las dos candidatas (ADR-011).
+		DistrictLocation overlap = locator.locate(new GeoPoint(-0.99088949, 41.73899086));
+		assertThat(overlap.status()).isEqualTo(DistrictLocation.Status.AMBIGUOUS);
+		assertThat(overlap.districtId()).isEqualTo(14);
+		assertThat(overlap.candidates()).containsExactly(14, 18);
+
 		// --- segunda ingesta: idempotente (regla 5) y sin perder el idpadron --------------------------------
 		server.reset();
 		expectDistrictListing();
@@ -214,6 +221,10 @@ class GeoIntegrationTests {
 		resolved.extractingPath("$.item.districtName").isNotNull();
 		assertThat(mvc.get().uri("/api/v1/geo/locate").param("lon", "-3.7038").param("lat", "40.4168"))
 				.hasStatusOk().bodyJson().extractingPath("$.item.status").isEqualTo("OUTSIDE");
+		var overlapping = assertThat(mvc.get().uri("/api/v1/geo/locate")
+				.param("lon", "-0.99088949").param("lat", "41.73899086")).hasStatusOk().bodyJson();
+		overlapping.extractingPath("$.item.status").isEqualTo("AMBIGUOUS");
+		overlapping.extractingPath("$.item.candidates").asArray().containsExactly(14, 18);
 		assertThat(mvc.get().uri("/api/v1/geo/locate").param("lon", "999").param("lat", "0"))
 				.hasStatus(HttpStatus.BAD_REQUEST);
 	}
