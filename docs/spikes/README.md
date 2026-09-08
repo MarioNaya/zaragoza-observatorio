@@ -17,6 +17,7 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S1.1 | Frescura observada: qué devuelven las distribuciones (cabeceras de ficheros, fechas máximas en API, recuentos WFS) y a qué coste | `S11ObservedFreshnessSpike` | [`S1.1-frescura-observada.md`](S1.1-frescura-observada.md) | hecho 2026-09-06 |
 | S1.2 | Inventario de endpoints: forma del Swagger de la API, cruce por tag con las fichas y si los paths documentados sirven para observar las fichas cuyo endpoint declarado falla | `S12ApiInventorySpike` | [`S1.2-inventario-api.md`](S1.2-inventario-api.md) | hecho 2026-09-06 |
 | S1.3 | Federación en datos.gob.es: paginación real, enlace por `identifier`, qué fichas no están federadas y qué datasets federados faltan en el listado municipal | `S13FederationSpike` | [`S1.3-federacion.md`](S1.3-federacion.md) | hecho 2026-09-06 |
+| S2.1 | Resolución dirección/punto → junta: si la API la resuelve de verdad, qué numeración usa cada fuente y qué porcentaje de cada una queda sin asignar | `S21TerritoryResolutionSpike` | [`S2.1-resolucion-territorial.md`](S2.1-resolucion-territorial.md) | hecho 2026-09-08 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
@@ -26,6 +27,8 @@ Fixtures de S1.2 (2026-09-06, `catalog/`): `swagger-api.json` regrabado (idénti
 
 Fixtures de S1.3 (2026-09-06, `catalog/`): `datos-gob-es-page0.json` regrabado (`_pageSize=50&_page=0`, 50 datasets) con `datos-gob-es-page0.headers`, `datos-gob-es-page-last.json` (`_pageSize=200&_page=1`, 169) y `datos-gob-es-page-beyond.json` (`_page=99`, `items` vacío). Los usan `FederationJsonTranslatorTest`, `ZaragozaHttpClientTest` y `CatalogIntegrationTests`.
 
+Fixtures de S2.1 (2026-09-08, `geo/`): `distrito.json_srsname-wgs84_rows-100` regrabado (las 29 juntas con su polígono en WGS84), `portalero-direccion-alfonso-i-39.json` + `.headers` y `portalero-direccion-inexistente.json` (la búsqueda que devuelve otra calle), `locales-vacios-junta-punto-page0.json` (punto y junta oficial en la misma respuesta, la base de la comprobación de la resolución geométrica) y `quejas-district-geometria.json` (`fl` explícito sin `title` ni `description`, regla 22). Los usará el módulo `geo` en sus tests.
+
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
 ## Conclusiones de fase 0 (criterio de salida de SPEC.md §3)
@@ -34,6 +37,14 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **(b) Contexto de gasto**: `spending` = OCDS + presupuesto (snapshots de ejecución) + subvenciones, sin entidades territoriales. Decidido en [ADR-003](../decisions/ADR-003-contexto-spending.md) el 2026-09-05.
 - **(c) Modelos** revisados en cada informe: `catalog` (S0.1), `spending` (S0.2, S0.6), `citizen` (S0.3), `geo` (S0.4: la unidad es la **junta**, no el barrio).
 - Reglas del cliente HTTP de `ingestion` en S0.5.
+
+## Conclusiones de fase 2 (S2.1, 2026-09-08)
+
+- **La API municipal no resuelve la junta.** `portalero/v2` es un buscador de direcciones que acierta la junta en el 89,5 % y **no permite distinguir un acierto de un fallo** (sin `totalCount`, sin `junta.id`, devolviendo otra calle cuando la pedida no existe); `point`/`distance` no filtra por proximidad en ninguno de los dos recursos que lo documentan. La resolución territorial se hace en casa, con `ST_Contains` sobre los 29 polígonos (ADR-011).
+- **La vía geométrica está probada contra la fuente oficial**: 99,69 % de acuerdo con `locales-vacios.portal.junta` (1.304 de 1.308) y 99,0 % con `edificio-historico` (491 de 496), con 0 puntos fuera de las juntas.
+- **`distrito.id` ↔ `idpadron` resuelto**: los dos números vienen juntos en `distrito/{id}.indicadores` (`iddatosab` e `idpadron`). El padrón por junta tiene 2020, 2021, 2022 y 2024; **falta 2023**.
+- **La cobertura territorial es muy desigual**: 99–100 % de registros con punto en `licencia-obra`, `registro-licencia` y `via-publica`, pero **49 %** en quejas y en locales vacíos (corrige S0.6, que daba las 3.824 fichas de `locales-vacios` como geolocalizadas). Sin punto no hay junta: se cuenta como `unassigned`.
+- **Los 29 polígonos no son una partición** (0,29 % de solape, siempre con Juslibol) y los nombres de junta tienen variantes que no casan (`DISTRITO SUR`, `SAN JUAN DE MOZARRIFAR`).
 
 ## Conclusiones de fase 1 (S1.1, 2026-09-06)
 
