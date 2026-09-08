@@ -1,6 +1,6 @@
 # Estado del proyecto y arranque de sesión
 
-Última actualización: 2026-09-07, cierre de la quinta sesión (despliegue hecho y memoria acotada: ADR-008, ADR-009, `docs/despliegue.md`, `.railway/railway.ts`). **La fase 1 está cerrada y la instancia está en marcha** en <https://observatorio-production-ed20.up.railway.app>, ingiriendo a diario y con un coste medido de ~5,7 $/mes. **La próxima sesión empieza por una tarea concreta y corta: declarar las copias del volumen de producción (§4).** Es el único riesgo presente del despliegue y no debe arrastrarse otra sesión más. Después, de la fase 1 solo queda esperar a que se acumule la serie de instantáneas. En esta sesión se revisó además **qué es este producto de verdad** tras los spikes: los cruces territoriales que sí son posibles y el papel del monitor de frescura como capa de credibilidad (§1, SPEC.md §1). Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
+Última actualización: 2026-09-08, cierre de la sexta sesión (**copias del volumen hechas y verificadas**: ADR-010, `docs/despliegue.md` §7). **La fase 1 está cerrada, la instancia está en marcha** en <https://observatorio-production-ed20.up.railway.app> **y su volumen ya está respaldado** (`DAILY`, `WEEKLY` y `MONTHLY`, más una copia manual comprobada). Con eso se cierra el último riesgo presente del despliegue; lo que queda de la fase 1 es tiempo: **la próxima sesión empieza mirando la serie de instantáneas acumulada** (§4), que es el dato que se lleva toda la fase esperando. Este documento es el punto de entrada de cada sesión de trabajo: qué está hecho, qué decisiones rigen, cómo se arranca el entorno y cuál es el siguiente paso concreto. Se actualiza al cerrar cada sesión.
 
 ## 1. Dónde estamos
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Paso 2 de §10: esqueleto | **Hecho** | Spring Boot 4.1.1 + Modulith 2.1.1 + Java 21, PostGIS en Compose y Testcontainers, Flyway, tests de arquitectura |
 | Fase 0: spikes S0.1–S0.6 | **Hecho** | Seis clases `@Tag("spike")`, fixtures reales, informes en `docs/spikes/` |
-| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.11 (revisada al cerrar cada sesión); ADR-001..009 |
+| Paso 4 de §10: revisar la especificación | **Hecho** | `SPEC.md` v0.12 (revisada al cerrar cada sesión); ADR-001..010 |
 | Fase 1: `ingestion` + `catalog` (eje declarado) | **Hecho** (2026-09-06, segunda sesión) | Integrado en `main`; API REST, contrato OpenAPI, instantáneas diarias |
 | Higiene del repositorio | **Hecho** (2026-09-06) | Fixtures redactados, historial limpiado con `git filter-repo`; regla 22 |
 | Fase 1: eje observado de la frescura (S1.1) | **Hecho** (2026-09-06, tercera sesión) | `DistributionHttpObserver`, `ObserveDatasets`, Flyway V005, API con filtro/orden/resumen por método; ADR-005 |
@@ -17,7 +17,8 @@
 | Fase 1: **preparación del despliegue** | **Hecho** (2026-09-06, quinta sesión) | `Dockerfile` multietapa, `.dockerignore`, perfil `prod` completo, `compose.prod.yaml`; ADR-008 y `docs/despliegue.md`. Imagen construida y arrancada en local contra PostGIS: 436 fichas, 497 operaciones, 369 federados desde la imagen de producción (§5) |
 | Fase 1: **instancia desplegada** | **Hecho** (2026-09-07, quinta sesión) | Railway, proyecto `zaragoza-observatorio`, región `europe-west4`: servicio `postgis` (imagen `postgis/postgis:17-3.5` con volumen) y servicio `observatorio` desde `main`. Verificado en la URL pública: 436 fichas, 497 operaciones, 369 federados (§5) |
 | Fase 1: **memoria y coste acotados** | **Hecho** (2026-09-07, quinta sesión) | ADR-009: topes de JVM explícitos en el `Dockerfile` y `tomcat.threads.max`. Medido en local (367,8 MB estables) y en la instancia: **688 → 356 MB**, ~5,7 $/mes en total (§5) |
-| Fase 1: primera serie de instantáneas observadas | En curso: primer barrido completo el 2026-09-07 (436/436); faltan días, no fichas | §4 |
+| Fase 1: **copias del volumen** | **Hecho** (2026-09-08, sexta sesión) | ADR-010: `DAILY` (6 días), `WEEKLY` (27) y `MONTHLY` (89) sobre `postgis-volume`, activadas por la API pública porque **la IaC no las aplica**; copia manual `verificacion-inicial` creada y comprobada (§5). El workspace pasa a Pro: 20 $/mes con 20 $ de uso incluido |
+| Fase 1: primera serie de instantáneas observadas | En curso: primer barrido completo el 2026-09-07 (436/436); el 2026-09-08 hay **dos días** de serie y ya se ve movimiento real (§5). Faltan días, no fichas | §4 |
 | Fases 2–5 | Pendientes | `geo`, `citizen`, `spending`, `territory`, frontend, `identity`, `workspace` |
 
 Conclusiones que condicionan todo lo demás (siguen vigentes):
@@ -46,6 +47,7 @@ Conclusiones que condicionan todo lo demás (siguen vigentes):
 | [ADR-007](decisions/ADR-007-federacion.md) | Federación: datos.gob.es paginado por número (`_page`/`_pageSize` ≤ 200, `RESULT_ITEMS`), tabla propia `catalog_federated_dataset` con upsert por página y baja de lo no visto al completar la ingesta (evento); `federated` resuelto al leer por `sourceId`; los 108 federados sin ficha se conservan; las partes de series no se ingieren hasta spike y ADR |
 | [ADR-008](decisions/ADR-008-despliegue.md) | Despliegue: imagen propia (`Dockerfile` de la raíz, JRE 21 no root, capas de Boot; los tests no corren en el builder) sobre Railway con la imagen PostGIS `postgis/postgis:17-3.5`; conexión por variables `PG*` sin valor por defecto; una sola réplica (sin ShedLock); en `prod` actuator solo `health`/`info` (**sin `modulith`**) y springdoc visible; infraestructura declarada en `.railway/railway.ts` (IaC, sin secretos), no en el panel ni en el deprecado `railway.json` |
 | [ADR-009](decisions/ADR-009-memoria-y-coste.md) | El coste se paga en RAM residente (10 $/GB/mes), no en peticiones: topes de JVM **explícitos** (`-Xmx256m`, `UseSerialGC`, `TieredStopAtLevel=1`) en vez de `MaxRAMPercentage`, que con el límite de 8 GB del plan dejaba el proceso en ~690 MB; medido, baja a 367,8 MB en local y **356 MB** en la instancia. **Serverless no se usa**: el planificador es el producto. Filtrar bots no reduce la factura (sin coste por petición, egress 0) |
+| [ADR-010](decisions/ADR-010-copias-de-seguridad.md) | Copias del volumen: **fuera de la IaC** (Railway muestra `backupSchedules` en el `plan`, pero el `apply` no lo aplica ni lo lee), gobernadas por la API pública sobre el id de la **instancia** del volumen; `DAILY` + `WEEKLY` + `MONTHLY`; exigen plan **Pro** y suben el suelo de coste a 20 $/mes; el **PITR no es alternativa** con la imagen PostGIS; una política declarada no es una copia: se verifica con `volumeInstanceBackupList` |
 
 Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoza.observatory`. La carpeta local y el repositorio remoto se llaman `zaragoza-observatorio` (<https://github.com/MarioNaya/zaragoza-observatorio>); no importa para el build.
 
@@ -55,7 +57,7 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~1,5 min); debe estar en verde antes de tocar nada.
 4. Leer `CLAUDE.md` (reglas 1–27) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
-5. **Mirar el recuadro de tarea inmediata al principio de §4.** Mientras siga ahí, es lo primero que se hace en la sesión; se borra cuando esté hecho y verificado, no cuando esté planificado.
+5. **Mirar el principio de §4**: ahí está lo primero que se hace en la sesión. Si hay un recuadro de tarea inmediata, se borra cuando esté hecho y verificado, no cuando esté planificado.
 6. **`main` se despliega solo**: el servicio de Railway construye desde esa rama, así que un push a `main` redespliega la instancia. Razón de más para no romperla. Estado del despliegue: `railway status`, `railway logs --service observatorio --deployment` (antes, en PowerShell: `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"`, ver `CLAUDE.md`).
 7. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` integra toda la fase 1 y el despliegue (2026-09-07). Las ramas `feat/fase1-ingestion-catalog`, `feat/s11-frescura-observada`, `feat/swagger-federated` y `feat/despliegue` pueden borrarse en local y en GitHub.
 
@@ -80,20 +82,12 @@ El puerto 8080 suele estar ocupado en esta máquina por un contenedor phpMyAdmin
 
 ## 4. Siguiente paso: lo que queda de la fase 1 y la fase 2
 
-> ### ⚠️ Tarea inmediata de la próxima sesión: copias del volumen
->
-> **Hacerla lo primero, antes de retomar cualquier otra cosa.** Es el único riesgo presente —no futuro— del despliegue, y cada día que pasa se arrastra con datos nuevos dentro. Esta documentación declara en tres sitios que la serie de instantáneas «no se puede rehacer», y hoy el activo señalado como irrepetible es el único sin protección.
->
-> Cómo: `backupSchedules` (`DAILY` / `WEEKLY` / `MONTHLY`) es un campo del tipo `VolumeMount` de la SDK, así que se declara en `.railway/railway.ts` sobre el volumen `postgis-volume` y se aplica con `railway config plan` y `railway config apply` (en PowerShell, antes: `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"`; ver `CLAUDE.md`). Después, **comprobar en el panel que la primera copia existe de verdad**: una política declarada y no verificada no es una copia de seguridad.
->
-> Son diez minutos. No dejarla para «cuando toque tocar infraestructura».
+La fase 1 está completa, desplegada y respaldada. Lo que queda es tiempo:
 
-La fase 1 está completa y desplegada. Hecho lo anterior, lo demás es tiempo:
-
-1. **Primera serie de instantáneas observadas.** El **primer barrido completo ya terminó el 2026-09-07 (436 de 436 fichas observadas)**; a partir de ahí la instancia reobserva cada ficha una vez al día, así que lo que falta es acumular *días*, no fichas: una sola foto no es una serie. Con dos o tres semanas habrá con qué decidir. Con ella: decidir en una ADR si existe una categoría observada y cómo se cruza con la declarada (ADR-005 §6), afinar los umbrales `zaragoza.catalog.freshness.*` y la retención de `raw_payload`. También dirá si el Swagger y la federación cambian (hoy no hay marca de cambio en ninguna de las dos fuentes; `firstSeenAt`/`lastSeenAt` son la única serie). **Tras las copias, mirar la serie antes que nada**: es el dato que llevamos toda la fase 1 esperando.
-2. ~~Copias del volumen~~ → subida a tarea inmediata, arriba.
+1. **Primera serie de instantáneas observadas. Es lo primero de la próxima sesión.** El **primer barrido completo terminó el 2026-09-07 (436 de 436 fichas)**; a partir de ahí la instancia reobserva cada ficha una vez al día, así que lo que falta es acumular *días*, no fichas: una sola foto no es una serie. El 2026-09-08 hay dos días y ya se ve movimiento real (§5). Con dos o tres semanas habrá con qué decidir: si existe una categoría observada y cómo se cruza con la declarada (ADR-005 §6, ADR propia), los umbrales `zaragoza.catalog.freshness.*` y la retención de `raw_payload`. También dirá si el Swagger y la federación cambian (hoy no hay marca de cambio en ninguna de las dos fuentes; `firstSeenAt`/`lastSeenAt` son la única serie). Se mira con `GET /api/v1/catalog/datasets/{id}/freshness-history` y, para el conjunto, por SQL sobre la base de producción.
+2. ~~Copias del volumen~~ → hecho y verificado el 2026-09-08 (ADR-010). **Lo que queda abierto de esto**: la restauración no se ha ensayado nunca, y todas las copias viven en Railway; si el riesgo de proveedor llega a importar, la vía es un volcado lógico periódico fuera de Railway (ADR-010, alternativas). Conviene mirar de vez en cuando que las programadas aparecen de verdad: `volumeInstanceBackupList` (`docs/despliegue.md` §7).
 3. **Limpieza pendiente en el volumen de producción**: el clúster de PostgreSQL 18 que Railway inicializó por defecto sigue en `/var/lib/postgresql/data/pgdata`, inservible pero intacto (ADR-008 §8). Se conservó por prudencia; se puede borrar cuando conste que la instancia va bien.
-4. **Vigilar el coste y la memoria** (ADR-009): `railway metrics --service observatorio`. La referencia es **~356 MB**; si sube de forma sostenida por encima de ~400 MB es una regresión, y lo primero que hay que mirar es si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`. Ojo: el límite de gasto de Railway es **de la cuenta, no del proyecto**, y hay otra aplicación en la misma cuenta.
+4. **Vigilar el coste y la memoria** (ADR-009, ADR-010): `railway metrics --service observatorio`. La referencia es **~356 MB**; si sube de forma sostenida por encima de ~400 MB es una regresión, y lo primero que hay que mirar es si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`. Desde el 2026-09-08 el plan es **Pro (20 $/mes con 20 $ de uso incluido)**, así que mientras el consumo quepa en el crédito la factura es plana y la memoria ya no se traduce en dinero — pero sí en margen. Ojo: el crédito y el límite de gasto son **de la cuenta, no del proyecto**, y hay otra aplicación en la misma cuenta.
 5. **Primer despliegue con migración nueva**: `main` se despliega solo (dos redespliegues ya comprobados el 2026-09-07, ambos con los datos intactos), pero todavía no se ha desplegado un cambio que traiga una migración Flyway. Con `ddl-auto=validate`, un fallo de ese tipo aborta el arranque, no se manifiesta en caliente: conviene estar delante la primera vez.
 
 Mejoras menores, solo si hacen falta: `apiDefinition`/`parameters` del Swagger para conocer los campos ordenables sin sondear; `fl=<campo>` en el `sort`; `ETag`/`Content-Length` como firma de cambio para ficheros sin `Last-Modified` (2 de 72); `produces` del Swagger para saber qué endpoints tienen `application/geo+json`.
@@ -108,7 +102,21 @@ Después viene la **fase 2** (`geo` y `citizen`, SPEC.md §3). El orden importa:
 
 Y, con spike propio, la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06 y 00:26 del 2026-09-07)
+## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30 del 2026-09-08)
+
+**10:30 CEST del 2026-09-08 (sexta sesión, copias y serie).** La instancia sigue viva y sola: `summary` con `ingestedAt` 2026-09-08T04:30:33Z, `latestSnapshotOn` 2026-09-08, **`withoutSnapshot` 0 y `withoutObservation` 0** — las 436 fichas observadas otra vez, sin intervención. El reparto por método se mueve un poco entre días (`FILE_HEADERS` 73, `API_MAX_DATE` 89, `API_COUNT` 47, `WFS_HITS` 76, `NOT_OBSERVABLE` 151), lo que ya es una señal: la observabilidad de una ficha no es estable.
+
+**La serie empieza a decir cosas.** Dos días de historia en `freshness-history`, y en el primero que se mira ya hay movimiento real: «Censo de Asociaciones» (132) pasa de 2.823 registros y `creationDate` máximo 2026-07-26 (instantánea del 07) a **2.827 registros y 2026-08-16** (instantánea del 08). Es exactamente lo que el eje observado existe para ver, y lo que la periodicidad declarada de esa ficha (`NOT_EVALUABLE`) no dice.
+
+**Copias del volumen (ADR-010).** Antes: `volumeInstanceBackupScheduleList` y `volumeInstanceBackupList` vacíos, ninguna copia desde el despliegue. La ruta prevista —declararlo en `.railway/railway.ts`— resultó ser un callejón: `railway config plan` muestra el cambio, pero `apply` responde `status: "applied"` con `changes: []` y no toca nada (probado con la CLI 5.49.2, con la 5.49.5 y con plan fijado `--out`/`--plan`), y tampoco lee el estado real: con el calendario ya activo, el `plan` seguía anunciando `null → ["DAILY"]`. En Hobby, además, la mutación devolvía `Not Authorized`: las copias y el PITR son de plan Pro. Con el workspace en Pro, por la API pública:
+
+| Calendario | Cron (UTC) | Retención |
+|---|---|---|
+| `DAILY` | `51 16 * * *` | 518 400 s = 6 días |
+| `WEEKLY` | `39 11 * * 6` | 2 332 800 s = 27 días |
+| `MONTHLY` | `4 8 1 * *` | 7 689 600 s = 89 días |
+
+Y una copia real, no una promesa: `verificacion-inicial`, creada a las 08:43:22Z, `referencedMB` 334, sin caducidad; tardó segundos, sin redespliegue ni corte. El PITR quedó descartado por la propia CLI: `railway postgres pitr status --service postgis` responde que corre sobre las imágenes de base de datos de Railway y que `postgis/postgis:17-3.5` no es una de ellas.
 
 **00:26 del 2026-09-07 (quinta sesión, instancia desplegada).** <https://observatorio-production-ed20.up.railway.app>. `health` UP; `/actuator/modulith` **404**; `/v3/api-docs` con OpenAPI 3.1.0 y 7 rutas; `summary` con **436 fichas, 497 operaciones en 84 tags y 369 federados** (261 con ficha, 108 sin ella), `ingestedAt` 2026-09-06T22:26:43Z. El muestreo observado arrancó con su primer lote de 60 fichas (`FILE_HEADERS` 11, `API_MAX_DATE` 17, `API_COUNT` 15, `WFS_HITS` 1, `NOT_OBSERVABLE` 16; 376 sin observar). Las mismas cifras que en local, ahora desde la nube.
 
@@ -137,7 +145,7 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 
 ## 6. Pendientes del usuario
 
-- **Vigilar el coste de Railway**: hay dos servicios y un volumen de 5 GB corriendo de forma continua. Conviene mirar el consumo en el panel los primeros días y decidir si compensa.
+- **Vigilar el coste de Railway**: hay dos servicios y un volumen de 5 GB corriendo de forma continua, y desde el 2026-09-08 el plan es **Pro** (20 $/mes con 20 $ de uso incluido), que se paga por las copias del volumen (ADR-010). El consumo del proyecto es ~5,7 $/mes, así que cabe de sobra en el crédito; lo que conviene mirar es **la cuenta entera**, porque el crédito es de la cuenta y hay otra aplicación en ella. Si algún día el proyecto deja de justificar 20 $/mes, la alternativa documentada es volver a Hobby y sustituir las copias por un volcado lógico fuera de Railway (ADR-010, alternativas).
 - **Elegir licencia del repositorio**: hoy no hay `LICENSE`, y un repositorio público sin licencia es técnicamente «todos los derechos reservados» — lo contrario del mensaje del proyecto. Es una decisión tuya (MIT, Apache-2.0, AGPL…), no técnica.
 - **Integración continua**: no existe `.github/workflows`. El build solo está verde porque se lanza a mano. Un workflow que ejecute `./mvnw verify` en cada push es barato y, en un repositorio público, se lee de un vistazo.
 - **Reiniciar Claude Code** para que registre el MCP de Railway, ya configurado (`C:\Users\mario\.claude.json`). No hace falta para desplegar —la CLI basta— pero el instalador lo avisa.
@@ -148,12 +156,12 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 
 ## 7. Dudas abiertas
 
-Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría observada y cruce declarado/observado (ADR tras la primera serie), umbrales de frescura, retención de `raw_payload` (14 días provisional), qué hacer con las fichas sin distribución observable (151) más allá de declararlo en `caveats`, la ingesta de las partes de series y colecciones que el listado omite (108 federadas; fase 2 con spike), la **imagen nativa con GraalVM** (bajaría de ~356 MB a 80–150 MB; aplazada en ADR-009) y la **limpieza del clúster de Postgres 18 que quedó en el volumen**. La exposición de `/actuator/modulith` en producción queda **resuelta**: no se expone (ADR-008 §6).
+Listadas en `SPEC.md` §9. Las que tocan al cierre de la fase 1: categoría observada y cruce declarado/observado (ADR tras la primera serie), umbrales de frescura, retención de `raw_payload` (14 días provisional), qué hacer con las fichas sin distribución observable (151) más allá de declararlo en `caveats`, la ingesta de las partes de series y colecciones que el listado omite (108 federadas; fase 2 con spike), la **imagen nativa con GraalVM** (bajaría de ~356 MB a 80–150 MB; aplazada en ADR-009), la **limpieza del clúster de Postgres 18 que quedó en el volumen** y, de las copias, lo que no se ha probado: **una restauración de verdad** y el hecho de que todas vivan en el mismo proveedor (ADR-010). La exposición de `/actuator/modulith` en producción queda **resuelta**: no se expone (ADR-008 §6). La copia del volumen queda **resuelta** (ADR-010), pero no por la vía prevista: la IaC de Railway no aplica ese campo.
 
 ## 8. Mapa del repositorio
 
 ```
-SPEC.md                         especificación viva (v0.9, ADR-000)
+SPEC.md                         especificación viva (v0.12, ADR-000)
 CLAUDE.md                       reglas de trabajo (1–27) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
@@ -162,7 +170,7 @@ docs/despliegue.md              runbook de despliegue en Railway (IaC, variables
 package.json, package-lock.json  única dependencia: el SDK `railway` que importa .railway/railway.ts
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)
 docs/arquitectura.html          página HTML autónoma de la fase 0 (nombres previos a la implementación)
-docs/decisions/                 ADR-000..009
+docs/decisions/                 ADR-000..010
 docs/spikes/                    informes S0.1..S0.6 y S1.1..S1.3, matriz CSV, índice
 pom.xml, compose.yaml           Boot 4.1.1, Modulith 2.1.1, Resilience4j 2.4.0, springdoc 3.1.0, perfil -Pspikes
 Dockerfile, .dockerignore       imagen de producción multietapa (JDK 21 -> JRE 21, no root, capas de Boot); ADR-008

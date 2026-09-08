@@ -123,6 +123,8 @@ Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada po
 | Egress | medido: 0 MB | ~0 |
 | **Total** | | **~5,7 $/mes** |
 
+Sobre ese consumo va el plan. El workspace está en **Pro: 20 $/mes con 20 $ de uso incluido**, y se paga por las copias de seguridad del volumen, que Hobby (5 $/mes con 5 $ incluidos) no ofrece (ADR-010, §7). Con el consumo actual la factura es plana: 20 $/mes, con el uso dentro del crédito. **El crédito es de la cuenta, no del proyecto**, y en esta cuenta hay otra aplicación.
+
 Comprobarlo con `railway metrics --service observatorio`. **Si la memoria sube de forma sostenida por encima de ~400 MB, es una regresión**: mirar si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`.
 
 Dos cosas que **no** reducen esta factura, por si tienta:
@@ -130,9 +132,44 @@ Dos cosas que **no** reducen esta factura, por si tienta:
 - **Filtrar bots**: el rastreo de vulnerabilidades genera 4xx, pero Railway no cobra por petición y el egress medido es 0 MB. Diez mil respuestas de error al mes son céntimos. Es higiene, no ahorro — y requeriría un dominio propio delante (Cloudflare) que este proyecto no tiene.
 - **Modo Serverless**: no aplica. El servicio mantiene el pool a `postgis` y sale a la API municipal cada 10 minutos, así que no se dormiría; y si se durmiera, el planificador no correría y la serie de instantáneas dejaría de acumularse (ADR-009).
 
-## 7. Notas
+## 7. Copias de seguridad del volumen
 
-- ⚠️ **Pendiente: el volumen no tiene copias de seguridad.** La serie de instantáneas no se puede rehacer, así que esto es el mayor riesgo abierto del despliegue. Se declara con `backupSchedules` (`DAILY`/`WEEKLY`/`MONTHLY`) sobre `postgis-volume` en `.railway/railway.ts` y se aplica con `railway config apply`; después, verificar en el panel que la primera copia existe. Es la tarea inmediata de la próxima sesión (`ESTADO.md` §4). **Borrar esta nota cuando esté hecho y comprobado**, no cuando esté planificado.
+Activas desde el 2026-09-08 sobre `postgis-volume`: **DAILY** (6 días de retención), **WEEKLY** (27) y **MONTHLY** (89). Protegen lo único irrepetible del proyecto, la serie de instantáneas y observaciones. Las razones y lo que se probó están en [ADR-010](decisions/ADR-010-copias-de-seguridad.md); aquí, los comandos.
+
+**No se declaran en `.railway/railway.ts`.** La IaC acepta el campo y lo muestra en el `plan`, pero el `apply` responde `changes: []` y no hace nada, ni tampoco lee el estado real: la línea dejaría un cambio pendiente perpetuo. Se gobiernan por la API pública. Hace falta plan **Pro**; en Hobby la mutación responde `Not Authorized`.
+
+El identificador que piden todas las llamadas es el de la **instancia** del volumen, no el del volumen:
+
+```powershell
+$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"
+
+railway api 'query V($id: String!) { project(id: $id) { volumes { edges { node { name volumeInstances { edges { node { id mountPath } } } } } } } }' --raw-var id=<projectId>
+```
+
+Consultar el estado (esto es lo que hay que mirar de vez en cuando; una política declarada no es una copia):
+
+```powershell
+railway api 'query S($v: String!) { volumeInstanceBackupScheduleList(volumeInstanceId: $v) { kind cron retentionSeconds } volumeInstanceBackupList(volumeInstanceId: $v) { id name createdAt expiresAt referencedMB } }' --raw-var v=<volumeInstanceId>
+```
+
+Fijar los calendarios (la lista es completa: lo que no se pase, se quita). Como los argumentos son una lista de enumerados, van en un fichero JSON de variables — las comillas dobles no sobreviven al paso por PowerShell:
+
+```powershell
+# vars.json → { "v": "<volumeInstanceId>", "kinds": ["DAILY", "WEEKLY", "MONTHLY"] }
+railway api 'mutation M($v: String!, $kinds: [VolumeInstanceBackupScheduleKind!]!) { volumeInstanceBackupScheduleUpdate(volumeInstanceId: $v, kinds: $kinds) }' --variables "@vars.json"
+```
+
+Copia manual inmediata, que es como se comprueba que el mecanismo funciona sin esperar a la programada (tarda segundos, no interrumpe el servicio y no requiere redespliegue):
+
+```powershell
+railway api 'mutation B($v: String!, $n: String) { volumeInstanceBackupCreate(volumeInstanceId: $v, name: $n) { workflowId } }' --raw-var v=<volumeInstanceId> --raw-var n=verificacion
+```
+
+Las copias manuales **no caducan** (`expiresAt: null`); las programadas sí, según la retención de su calendario. Restaurar (`volumeInstanceBackupRestore`, o el panel) monta un volumen nuevo con los datos de la copia en la ruta original y deja el anterior desmontado pero conservado; el cambio se prepara para revisarlo y hay que desplegar. **No se ha ensayado una restauración**: hacerlo exige una ventana sobre producción.
+
+**El PITR no está disponible aquí**, y no por el plan: `railway postgres pitr status --service postgis` responde que corre sobre las imágenes de base de datos de Railway y que `postgis/postgis:17-3.5` no es una de ellas. Cambiar de imagen rompería `V001` (ADR-008). Las copias del volumen son el único mecanismo de recuperación.
+
+## 8. Notas
 
 - **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso el repositorio no lleva ninguno y la infraestructura se declara en `.railway/railway.ts`, que es su sustituto soportado (§2).
 - **Migraciones**: Flyway corre al arrancar y `ddl-auto=validate` comprueba que las entidades casan. Un despliegue con una entidad nueva sin su migración falla al arrancar, no en caliente (ADR-004).

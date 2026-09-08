@@ -54,6 +54,21 @@ export default defineRailway(() => {
     },
   });
 
+  // Las copias de seguridad del volumen NO se declaran aquí (ADR-010). El campo existe en el grafo
+  // —`postgis.volumeAttachments["postgis-volume"].backupSchedules = ["DAILY"]` compila y `railway
+  // config plan` lo muestra como cambio pendiente—, pero `railway config apply` responde
+  // `status: "applied"` con `changes: []` y no toca nada, ni con la CLI 5.49.2 ni con la 5.49.5, ni
+  // con plan fijado (`--out`/`--plan`), ni después de subir el workspace a Pro. Tampoco lo lee: con
+  // el calendario diario ya activo, el `plan` sigue anunciando `null → ["DAILY"]`. Dejar la línea
+  // aquí dejaría `plan` sucio para siempre, y este fichero depende de que un `plan` limpio
+  // signifique «sin deriva».
+  //
+  // El calendario vive en la instancia del volumen y se gobierna por la API pública (mutación
+  // `volumeInstanceBackupScheduleUpdate`, consulta `volumeInstanceBackupScheduleList`). Los comandos
+  // exactos, la verificación y la restauración están en `docs/despliegue.md`; la decisión, en
+  // `docs/decisions/ADR-010-copias-de-seguridad.md`. Estado a 2026-09-08: DAILY (6 días de
+  // retención) sobre `postgis-volume`, más una copia manual `verificacion-inicial`.
+
   // La aplicación se construye con el `Dockerfile` de la raíz, que Railway detecta solo.
   const observatorio = service("observatorio", {
     source: github("MarioNaya/zaragoza-observatorio", { branch: "main", checkSuites: false }),
