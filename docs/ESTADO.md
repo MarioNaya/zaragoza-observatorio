@@ -56,10 +56,10 @@ Nombre del proyecto: `observatorio-zaragoza`; groupId y paquete base `es.zaragoz
 1. Arrancar Docker Desktop y comprobar `docker info` (Testcontainers y Compose lo necesitan). Se puede lanzar desde PowerShell: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` y esperar a que `docker info` responda.
 2. `.\mvnw.cmd -v` debe decir Java 21 (el `java` del PATH es Java 8; el wrapper usa `JAVA_HOME`).
 3. `.\mvnw.cmd verify`: build completo con PostGIS real (~1,5 min); debe estar en verde antes de tocar nada.
-4. Leer `CLAUDE.md` (reglas 1–27) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
+4. Leer `CLAUDE.md` (reglas 1–28) y, para cualquier endpoint, `docs/spikes/README.md` y el informe correspondiente. Nunca escribir un endpoint o campo de memoria.
 5. **Mirar el principio de §4**: ahí está lo primero que se hace en la sesión. Si hay un recuadro de tarea inmediata, se borra cuando esté hecho y verificado, no cuando esté planificado.
 6. **`main` se despliega solo**: el servicio de Railway construye desde esa rama, así que un push a `main` redespliega la instancia. Razón de más para no romperla. Estado del despliegue: `railway status`, `railway logs --service observatorio --deployment` (antes, en PowerShell: `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"`, ver `CLAUDE.md`).
-7. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` integra toda la fase 1 y el despliegue (2026-09-07). Las ramas `feat/fase1-ingestion-catalog`, `feat/s11-frescura-observada`, `feat/swagger-federated` y `feat/despliegue` pueden borrarse en local y en GitHub.
+7. Trabajo en rama por funcionalidad (`feat/…`), commits pequeños, `main` siempre en verde. `main` integra toda la fase 1, el despliegue y las copias (2026-09-08), y sigue a `origin/main`. Las ramas `feat/fase1-ingestion-catalog`, `feat/s11-frescura-observada`, `feat/swagger-federated` y `feat/despliegue` **pueden borrarse sin mirar**: comprobado el 2026-09-08 con `git log main..<rama>`, ninguna tiene un solo commit que no esté ya en `main`.
 
 Al cerrar una sesión: `.\mvnw.cmd verify` en verde; actualizar este documento (§1, §4, §5, §6), `SPEC.md` si cambió el modelo o el alcance, y los informes de spikes; pasar la comprobación de datos personales de la regla 22 (`git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures`) y de secretos antes de `git push`; commits descriptivos y push de la rama.
 
