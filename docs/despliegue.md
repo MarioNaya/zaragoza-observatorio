@@ -9,7 +9,7 @@ Plataforma: **Railway**, con dos servicios en el mismo proyecto â€” la aplicaciÃ
 ## 1. Antes de desplegar
 
 ```powershell
-.\mvnw.cmd verify                     # 134 tests con Testcontainers; los tests NO corren en el builder
+.\mvnw.cmd verify                     # build completo con Testcontainers; los tests NO corren en el builder
 git grep -i -E '\b[0-9]{8}[A-Z]\b|atentamente|set-cookie' -- src/test/resources/fixtures   # regla 22
 ```
 
