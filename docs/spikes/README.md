@@ -18,6 +18,7 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S1.2 | Inventario de endpoints: forma del Swagger de la API, cruce por tag con las fichas y si los paths documentados sirven para observar las fichas cuyo endpoint declarado falla | `S12ApiInventorySpike` | [`S1.2-inventario-api.md`](S1.2-inventario-api.md) | hecho 2026-09-06 |
 | S1.3 | Federación en datos.gob.es: paginación real, enlace por `identifier`, qué fichas no están federadas y qué datasets federados faltan en el listado municipal | `S13FederationSpike` | [`S1.3-federacion.md`](S1.3-federacion.md) | hecho 2026-09-06 |
 | S2.1 | Resolución dirección/punto → junta: si la API la resuelve de verdad, qué numeración usa cada fuente y qué porcentaje de cada una queda sin asignar | `S21TerritoryResolutionSpike` | [`S2.1-resolucion-territorial.md`](S2.1-resolucion-territorial.md) | hecho 2026-09-08 |
+| S2.2 | Quejas y sugerencias: si `fl` permite no pedir el texto libre, cuántos registros tiene el listado, si el incremental puede capturar los cierres y qué cobertura territorial hay en el histórico | `S22CitizenIngestionSpike` | [`S2.2-quejas-ingesta.md`](S2.2-quejas-ingesta.md) | hecho 2026-09-08 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
@@ -28,6 +29,8 @@ Fixtures de S1.2 (2026-09-06, `catalog/`): `swagger-api.json` regrabado (idénti
 Fixtures de S1.3 (2026-09-06, `catalog/`): `datos-gob-es-page0.json` regrabado (`_pageSize=50&_page=0`, 50 datasets) con `datos-gob-es-page0.headers`, `datos-gob-es-page-last.json` (`_pageSize=200&_page=1`, 169) y `datos-gob-es-page-beyond.json` (`_page=99`, `items` vacío). Los usan `FederationJsonTranslatorTest`, `ZaragozaHttpClientTest` y `CatalogIntegrationTests`.
 
 Fixtures de S2.1 (2026-09-08, `geo/`): `distrito.json_srsname-wgs84_rows-100` regrabado (las 29 juntas con su polígono en WGS84), `portalero-direccion-alfonso-i-39.json` + `.headers` y `portalero-direccion-inexistente.json` (la búsqueda que devuelve otra calle), `locales-vacios-junta-punto-page0.json` (punto y junta oficial en la misma respuesta, la base de la comprobación de la resolución geométrica) y `quejas-district-geometria.json` (`fl` explícito sin `title` ni `description`, regla 22). Los usan `DistrictJsonTranslatorTest`, `DistrictProfileHttpReaderTest` y `GeoIntegrationTests` del módulo `geo`; el de `locales-vacios` es el que sostiene la comprobación de aceptación de ADR-011.
+
+Fixtures de S2.2 (2026-09-08, `open311/`): `services.json` regrabado (100 servicios) y `sede-list-ingest-page.json` + `.headers`, que es **la petición de ingesta tal cual la hará producción**: `rows=500&srsname=wgs84&sort=requested_datetime desc` con el `fl` de ocho campos de ADR-012. Ese fixture no contiene texto libre porque no se pidió, no porque se redactara después.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
@@ -45,6 +48,15 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **`distrito.id` ↔ `idpadron` resuelto**: los dos números vienen juntos en `distrito/{id}.indicadores` (`iddatosab` e `idpadron`). El padrón por junta tiene 2020, 2021, 2022 y 2024; **falta 2023**.
 - **La cobertura territorial es muy desigual**: 99–100 % de registros con punto en `licencia-obra`, `registro-licencia` y `via-publica`, pero **49 %** en quejas y en locales vacíos (corrige S0.6, que daba las 3.824 fichas de `locales-vacios` como geolocalizadas). Sin punto no hay junta: se cuenta como `unassigned`.
 - **Los 29 polígonos no son una partición** (0,29 % de solape, siempre con Juslibol) y los nombres de junta tienen variantes que no casan (`DISTRITO SUR`, `SAN JUAN DE MOZARRIFAR`).
+
+## Conclusiones de fase 2 (S2.2, 2026-09-08)
+
+- **El texto libre se puede no pedir**: `fl` recorta de verdad la respuesta del listado de quejas, así que `title`, `description` y `service_notice` no entran en el sistema (ADR-012). La redacción por patrones no era alternativa: 2 DNI en 7.000 registros frente a **3.353 (47,9 %) con fórmula de firma**, donde el nombre no lo encuentra ninguna expresión regular.
+- **El listado tiene 89.432 registros** (2013-01-08 → hoy) y sigue siendo **un subconjunto**: `statistics.json` cuenta ~40.000 cerradas al año.
+- **El orden por defecto no es fiable** (sin `sort`, el primer registro fue de 2014 el día 8 y de 2013 el día 5): la ingesta manda `sort` explícito siempre. Con él, la paginación por offset es repetible y no solapa.
+- **`updated_datetime` admite FIQL y `sort`**: el incremental puede capturar los cierres, incluidos los de expedientes antiguos (se observó una queja de 2015 cerrada en septiembre de 2026).
+- **La cobertura de punto en el histórico va del 16 % al 45 % según el año** (S0.3 midió 50 % sobre los 500 más recientes): las series por junta y año no son comparables entre sí sin publicar la cobertura al lado.
+- **Cuatro sinónimos de nombre de junta con evidencia** (ADR-011 §5): `DISTRITO SUR` → 30, `SAN JUAN DE MOZARRIFAR` → 25, `TORRECILLA` → 26 y `CASCO HISTÓRICO` con un U+0093 intercalado → 3.
 - **Comprobado después con PostGIS** (módulo `geo`, 2026-09-08): `ST_Contains` reproduce el ray casting del spike registro a registro sobre la página grabada de `locales-vacios` (233 de 237, las 4 discrepancias en el borde Delicias/La Almozara). La prueba vive en `GeoIntegrationTests` y es la comprobación de aceptación de ADR-011.
 
 ## Conclusiones de fase 1 (S1.1, 2026-09-06)
