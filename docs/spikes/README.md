@@ -45,6 +45,7 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **`distrito.id` ↔ `idpadron` resuelto**: los dos números vienen juntos en `distrito/{id}.indicadores` (`iddatosab` e `idpadron`). El padrón por junta tiene 2020, 2021, 2022 y 2024; **falta 2023**.
 - **La cobertura territorial es muy desigual**: 99–100 % de registros con punto en `licencia-obra`, `registro-licencia` y `via-publica`, pero **49 %** en quejas y en locales vacíos (corrige S0.6, que daba las 3.824 fichas de `locales-vacios` como geolocalizadas). Sin punto no hay junta: se cuenta como `unassigned`.
 - **Los 29 polígonos no son una partición** (0,29 % de solape, siempre con Juslibol) y los nombres de junta tienen variantes que no casan (`DISTRITO SUR`, `SAN JUAN DE MOZARRIFAR`).
+- **Comprobado después con PostGIS** (módulo `geo`, 2026-09-08): `ST_Contains` reproduce el ray casting del spike registro a registro sobre la página grabada de `locales-vacios` (233 de 237, las 4 discrepancias en el borde Delicias/La Almozara). La prueba vive en `GeoIntegrationTests` y es la comprobación de aceptación de ADR-011.
 
 ## Conclusiones de fase 1 (S1.1, 2026-09-06)
 

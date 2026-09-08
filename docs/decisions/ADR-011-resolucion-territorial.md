@@ -30,8 +30,10 @@ S0.4 y S0.6 dejaron escrito que «el ayuntamiento resuelve dirección → junta 
 
 ## Consecuencias
 
-- `geo` es un shared kernel con tablas propias (`geo_district`, `geo_population_record`) y una migración Flyway con columna `geometry(Polygon, 4326)` e índice GiST; PostGIS ya está en `V001`.
-- La ingesta de `geo` son dos fuentes: el listado de juntas con geometría (una petición) y los indicadores por junta (29 peticiones), ambas con `IngestionJob` propio en el módulo dueño (ADR-004).
+- `geo` es un shared kernel con tablas propias (`geo_district`, `geo_population_record`) y una migración Flyway (`V008__geo.sql`) con columna de geometría e índice GiST; PostGIS ya está en `V001`. La columna se declara `geometry(Geometry, 4326)` y no `geometry(Polygon, …)`: hoy las 29 juntas son polígonos simples (S2.1), pero un MultiPolygon en origen no debe tumbar la ingesta de la capa base. El SRID sí se fija.
+- La entidad JPA **no mapea la columna de geometría**: se escribe con `ST_GeomFromGeoJSON` y se consulta con `ST_Contains` en SQL nativo. Así el módulo no arrastra Hibernate Spatial ni JTS para lo único que hace con la geometría, que es dejar que la base de datos resuelva la pertenencia. `ddl-auto=validate` no se queja: comprueba que existan las columnas mapeadas, no al revés.
+- La ingesta de `geo` tiene dos partes y solo la primera es un `IngestionJob` (ADR-004): el listado de juntas con geometría es **una** petición y sí lo es; los indicadores son **29 URL distintas**, que no caben en un `SourceDescriptor` —describe una URL— y el listado no los devuelve aunque el Swagger declare el campo (comprobado el 2026-09-08). Se leen con un puerto del dominio (`DistrictProfileReader`) disparado por el listener de `DatasetIngested`, que es el mismo patrón del muestreo observado de `catalog` (ADR-005).
+- **La tabla de sinónimos de nombres (punto 5) no existe todavía**: ninguna fuente ingerida trae hoy el nombre de junta como texto. Se crea con `citizen`, que es la primera que lo necesita (`district` de las quejas), y no antes: una tabla de sinónimos sin nadie que la use envejece sin que nadie lo note.
 - La serie de padrón tiene **2020, 2021, 2022 y 2024**: falta 2023. Las normalizaciones declaran el año usado y la serie no se presenta como continua.
 - `citizen` (y cualquier fuente territorial futura) depende de `geo` para `districtId`, y guarda además el declarado. `geo` no depende de nadie.
 - La resolución es un `JOIN` espacial en base de datos, no una llamada por registro: ingerir 42.321 locales no son 42.321 peticiones a nadie.

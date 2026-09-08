@@ -222,6 +222,10 @@ class S21TerritoryResolutionSpike {
 						Math.min(120, r.body().length())));
 				continue;
 			}
+			if (j.id() == 6) {
+				// El Rabal: fixture del detalle, que es de donde salen `idpadron` y el padrón (lo usa `geo`).
+				SpikeFixtures.save(FIXTURES, "distrito-6-indicadores.json", r.body());
+			}
 			JsonNode indicadores = r.json().path("indicadores");
 			if (indicadores.size() == 0) {
 				sinIndicadores++;

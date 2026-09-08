@@ -30,7 +30,7 @@ flowchart LR
     direction TB
     A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>api.json → ApiEndpoint (SwaggerJsonTranslator · ApiInventoryIngestionJob, S1.2)<br/>datos.gob.es → FederatedDataset (FederationJsonTranslator · FederationIngestionJob, S1.3)<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado) · baja de federados no vistos<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
     A_CIT["citizen<br/>list.json → ServiceRequest<br/>geometry → punto WGS84"]
-    A_GEO["geo<br/>distrito → District<br/>indicadores → PopulationRecord"]
+    A_GEO["geo<br/>distrito.json?srsname=wgs84 → District + Boundary<br/>DistrictJsonTranslator · DistrictsIngestionJob<br/>DatasetIngested → DistrictProfileHttpReader: 29 detalles → idpadron + PopulationRecord<br/>PostgisDistrictLocator: ST_Contains → junta (ADR-011)"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
   end
 
@@ -38,7 +38,7 @@ flowchart LR
     direction TB
     T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger),<br/>catalog_federated_dataset (V007 federación)"]
     T_CIT["citizen: service_request (point 4326)"]
-    T_GEO["geo: district, census_section,<br/>population_record"]
+    T_GEO["geo: geo_district (geometry 4326 + GiST),<br/>geo_population_record (V008)<br/>census_section: pendiente"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
     T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
   end
@@ -78,7 +78,7 @@ flowchart TB
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]
-    GEO["geo (fase 2) · shared kernel<br/>District, CensusSection, PopulationRecord<br/>locate(point) → District"]
+    GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>locate(point) → RESOLVED / AMBIGUOUS / OUTSIDE"]
   end
   SH["shared · kernel mínimo<br/>DatasetRef, IngestionRun, UserId, eventos base<br/>todos pueden depender de él; él de nadie"]
 
