@@ -3,8 +3,8 @@ package es.zaragoza.observatory.geo.infrastructure.web;
 import java.time.Instant;
 import java.util.List;
 
+import es.zaragoza.observatory.geo.DistrictLocation;
 import es.zaragoza.observatory.geo.domain.District;
-import es.zaragoza.observatory.geo.domain.DistrictLocation;
 import es.zaragoza.observatory.geo.domain.PopulationRecord;
 
 /** Cuerpos de respuesta del módulo {@code geo} (SPEC.md §4.7): datos de origen, sin índices derivados. */

@@ -594,4 +594,42 @@ class S22CitizenIngestionSpike {
 		metric(ID, "\n(«registros en `start=500`» dice si la ventana semanal cabe en una página o hay que paginar.)");
 	}
 
+	// --- 8. codificación de la query -------------------------------------------------------------------
+
+	/**
+	 * Las sondas anteriores codifican toda la query con {@code URLEncoder} ({@code %3D}, {@code %2C},
+	 * {@code %3A}), pero {@code ZaragozaHttpClient.buildUri} construye la URI con
+	 * {@code UriComponentsBuilder}, que solo escapa los caracteres ilegales: el espacio pasa a {@code %20} y el
+	 * {@code =} y el {@code :} del FIQL viajan crudos. Son equivalentes tras decodificar, pero eso es una
+	 * suposición sobre el servidor y aquí no se suponen cosas (regla 1): se comprueba que las dos formas
+	 * devuelven lo mismo.
+	 */
+	@Test
+	@Order(8)
+	void queryEncoding() {
+		heading(ID, "8. Codificación de la query: cruda frente a percent-encoded");
+
+		String base = LIST + "?srsname=wgs84&fl=service_request_id%2Crequested_datetime&rows=3&start=0";
+		String rawFiql = base + "&sort=requested_datetime%20asc&q=requested_datetime=ge=2026-01-01T00:00:00Z";
+		String encodedFiql = base + "&sort=" + ZaragozaSpikeClient.enc("requested_datetime asc") + "&q="
+				+ ZaragozaSpikeClient.enc("requested_datetime=ge=2026-01-01T00:00:00Z");
+
+		var rows = new ArrayList<List<String>>();
+		String reference = null;
+		for (var probe : List.of(Map.entry("cruda (la que produce `buildUri`)", rawFiql),
+				Map.entry("percent-encoded (la de las sondas anteriores)", encodedFiql))) {
+			Response response = api.tryGet(probe.getValue());
+			List<JsonNode> found = records(response);
+			String ids = found.stream().map(r -> text(r, "service_request_id")).reduce((x, y) -> x + "," + y)
+					.orElse("-");
+			if (reference == null) {
+				reference = ids;
+			}
+			rows.add(List.of(probe.getKey(), String.valueOf(response.status()), String.valueOf(found.size()), ids,
+					ids.equals(reference) ? "=" : "**distinto**"));
+		}
+		table(ID, List.of("forma de la query", "estado", "registros", "ids", "¿igual que la primera?"), rows);
+		metric(ID, "\n- URL cruda: `" + rawFiql + "`");
+	}
+
 }

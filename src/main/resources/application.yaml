@@ -97,6 +97,18 @@ zaragoza:
       url: https://datos.gob.es/apidata/catalog/dataset/publisher/L01502973.json
       page-size: 200
       interval: P1D
+  # Módulo citizen (docs/spikes/S0.3-open311.md, S2.2, ADR-011, ADR-012). La proyección `fields` es la
+  # garantía de que el texto libre de las quejas no se pide: añadir ahí title, description o service_notice hace
+  # fallar el arranque a propósito (CitizenProperties). El listado se recorre por dos ejes con marca de agua,
+  # siempre con `sort` explícito: el orden por defecto de la fuente no está documentado y no es estable.
+  citizen:
+    list-url: https://www.zaragoza.es/sede/servicio/quejas-sugerencias/list.json
+    fields: service_request_id,status,service_code,service_name,requested_datetime,updated_datetime,geometry,district
+    rows: 500
+    interval: P1D
+    # Las fechas del origen no llevan zona y el filtro FIQL se manda con Z: se retrocede la marca de agua lo
+    # suficiente para que esa duda no pueda saltarse registros (el upsert es idempotente, S2.2).
+    watermark-margin: PT6H
 
 ---
 # Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara

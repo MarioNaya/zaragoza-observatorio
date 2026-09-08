@@ -18,6 +18,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
@@ -285,6 +286,21 @@ class ZaragozaHttpClientTest {
 				Pagination.none(500), ResponseShape.ENVELOPE);
 		assertThat(ZaragozaHttpClient.buildUri(geo, 0, 0))
 				.hasToString("https://www.zaragoza.es/sede/servicio/distrito.json?srsname=wgs84&rows=500");
+		// Quejas (S2.2): el `sort` lleva un espacio y el FIQL lleva `=` y `:`. UriComponentsBuilder escapa solo
+		// lo ilegal, así que el espacio pasa a %20 y el resto viaja crudo. S2.2 §8 comprobó contra la API real
+		// que esa forma devuelve exactamente lo mismo que la percent-encoded.
+		String complaints = "https://www.zaragoza.es/sede/servicio/quejas-sugerencias/list.json";
+		var complaintsQuery = new LinkedHashMap<String, String>();
+		complaintsQuery.put("srsname", "wgs84");
+		complaintsQuery.put("sort", "requested_datetime asc");
+		complaintsQuery.put("q", "requested_datetime=ge=2026-09-01T00:00:00Z");
+		var citizen = new SourceDescriptor(DatasetRef.of(Sources.SEDE, "quejas-sugerencias"), URI.create(complaints),
+				complaintsQuery, Pagination.offset(500), ResponseShape.ARRAY);
+		assertThat(ZaragozaHttpClient.buildUri(citizen, 0, 1000).toString())
+				.startsWith(complaints + "?")
+				.contains("sort=requested_datetime%20asc")
+				.contains("q=requested_datetime=ge=2026-09-01T00:00:00Z")
+				.endsWith("rows=500&start=1000");
 	}
 
 	@Test

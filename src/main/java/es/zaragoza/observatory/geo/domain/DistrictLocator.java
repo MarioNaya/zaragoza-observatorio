@@ -2,6 +2,9 @@ package es.zaragoza.observatory.geo.domain;
 
 import java.util.List;
 
+import es.zaragoza.observatory.geo.DistrictLocation;
+import es.zaragoza.observatory.geo.GeoPoint;
+
 /**
  * Puerto de resolución territorial (ADR-011): dado un punto, la junta que lo contiene. Es la única vía admitida
  * para asignar territorio en todo el proyecto.

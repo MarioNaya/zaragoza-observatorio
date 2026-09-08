@@ -3,6 +3,8 @@ package es.zaragoza.observatory.geo.domain;
 import java.util.List;
 import java.util.Objects;
 
+import es.zaragoza.observatory.geo.GeoPoint;
+
 /**
  * El contorno de una junta en WGS84, tal como lo devuelve {@code distrito.json?srsname=wgs84}: uno o varios
  * polígonos, cada uno con su anillo exterior y sus posibles agujeros (S0.4, S2.1).
