@@ -112,6 +112,23 @@ class ServiceRequestJsonTranslatorTest {
 	}
 
 	@Test
+	void readsTheThreeStatusesTheSourcePublishesAndFlagsTheRest() {
+		// `rejected` no salió en los 7.000 registros muestreados por S2.2: apareció una sola vez en la carga
+		// completa de 89.432. Lo que hizo que no se perdiera fue el valor UNKNOWN, que sigue estando para el
+		// siguiente valor inesperado.
+		String body = """
+				[{"service_request_id":1,"status":"open","service_code":"1","requested_datetime":"2026-09-01T10:00:00"},
+				 {"service_request_id":2,"status":"closed","service_code":"1","requested_datetime":"2026-09-01T10:00:00"},
+				 {"service_request_id":3,"status":"rejected","service_code":"1","requested_datetime":"2026-09-01T10:00:00"},
+				 {"service_request_id":4,"status":"inventado","service_code":"1","requested_datetime":"2026-09-01T10:00:00"},
+				 {"service_request_id":5,"service_code":"1","requested_datetime":"2026-09-01T10:00:00"}]
+				""";
+		assertThat(translator.translate(body)).extracting(ServiceRequestDraft::status)
+				.containsExactly(ServiceRequestStatus.OPEN, ServiceRequestStatus.CLOSED,
+						ServiceRequestStatus.REJECTED, ServiceRequestStatus.UNKNOWN, ServiceRequestStatus.UNKNOWN);
+	}
+
+	@Test
 	void rejectsAnythingThatIsNotAnArray() {
 		assertThatThrownBy(() -> translator.translate("{\"totalCount\":1,\"result\":[]}"))
 				.isInstanceOf(IllegalArgumentException.class)

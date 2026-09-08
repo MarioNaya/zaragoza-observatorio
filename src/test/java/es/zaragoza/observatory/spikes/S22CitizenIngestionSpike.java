@@ -632,4 +632,61 @@ class S22CitizenIngestionSpike {
 		metric(ID, "\n- URL cruda: `" + rawFiql + "`");
 	}
 
+	// --- 10. ¿el barrido completo trae todos los registros? ----------------------------------------------
+
+	/**
+	 * La sonda que faltaba, y la que más cara habría salido no hacer. Las anteriores comprueban que dos páginas
+	 * <b>consecutivas</b> no solapan, y de ahí es tentador concluir que un barrido completo es exacto. No lo es
+	 * por los dos ejes: se recorre el listado entero por cada uno pidiendo solo el identificador y se cuenta
+	 * cuántos <b>distintos</b> salen. La diferencia con las 89.432 filas es exactamente lo que la ingesta
+	 * perdería.
+	 * <p>
+	 * Son ~360 peticiones diminutas ({@code fl=service_request_id}), unos 4 minutos. Es el precio de saber si lo
+	 * que se ingiere está completo, que no es una pregunta que se pueda contestar por analogía (regla 1).
+	 */
+	@Test
+	@Order(10)
+	void aFullSweepIsOnlyExactByOneOfTheTwoAxes() {
+		heading(ID, "10. El barrido completo, contado por identificadores distintos");
+
+		var rows = new ArrayList<List<String>>();
+		var idsByField = new LinkedHashMap<String, Set<String>>();
+		for (String field : List.of("requested_datetime", "updated_datetime")) {
+			var all = new ArrayList<String>();
+			int pages = 0;
+			for (int start = 0;; start += ROWS) {
+				Response response = api.tryGet(listUrl(params("rows", String.valueOf(ROWS), "start",
+						String.valueOf(start), "fl", "service_request_id", "sort", field + " asc")));
+				List<JsonNode> page = records(response);
+				pages++;
+				page.forEach(record -> all.add(text(record, "service_request_id")));
+				if (page.size() < ROWS) {
+					break;
+				}
+			}
+			var distinct = new java.util.LinkedHashSet<>(all);
+			idsByField.put(field, distinct);
+			rows.add(List.of("`" + field + " asc`", String.valueOf(pages), String.valueOf(all.size()),
+					String.valueOf(distinct.size()), String.valueOf(all.size() - distinct.size())));
+		}
+		table(ID, List.of("eje del barrido", "páginas", "filas devueltas", "**ids distintos**", "filas de más"),
+				rows);
+
+		Set<String> byRequested = idsByField.get("requested_datetime");
+		Set<String> byUpdated = idsByField.get("updated_datetime");
+		var missing = new java.util.LinkedHashSet<>(byRequested);
+		missing.removeAll(byUpdated);
+		var extra = new java.util.LinkedHashSet<>(byUpdated);
+		extra.removeAll(byRequested);
+		metric(ID, "\n- registros que aparecen por `requested_datetime` y **nunca** por `updated_datetime`: **"
+				+ missing.size() + "**; al revés: " + extra.size() + ".");
+		metric(ID, "- Causa: muchas quejas comparten el mismo `updated_datetime` (se cierran por lotes) y entre"
+				+ " filas empatadas el orden no es estable de una página a otra, así que la paginación por offset"
+				+ " repite unas y se salta otras. Por `requested_datetime` los empates son raros y el barrido sale"
+				+ " exacto.");
+
+		assertThat(byRequested).as("el barrido por requested_datetime no debería perder ni repetir nada")
+				.hasSizeGreaterThanOrEqualTo(byUpdated.size());
+	}
+
 }

@@ -35,6 +35,16 @@ S2.2 midió lo que hacía falta para decidir en vez de opinar:
 - Si el ayuntamiento anonimizase el texto en origen, la decisión se puede revisar con una ADR nueva; mientras tanto, el argumento no depende de la buena fe de nadie.
 - El listado de sede tiene 89.432 registros y `statistics.json` cuenta ~40.000 cerradas al año: **es un subconjunto**, y así se declara en `caveats`. No se puede decir «las quejas de Zaragoza», sino «las quejas publicadas en el listado abierto».
 
+## Adenda del 2026-09-08: lo que enseñó la primera ingesta real
+
+Al ejecutar la carga contra la API de verdad —no contra fixtures— apareció algo que ninguna sonda del spike había pillado y que no cambia esta decisión pero sí el diseño de la ingesta que la aplica:
+
+- **El barrido completo solo es exacto por `requested_datetime`.** Por `updated_datetime asc`, las mismas 179 páginas y 89.432 filas devuelven solo **80.628 identificadores distintos**: las quejas se cierran por lotes, comparten `updated_datetime`, y entre filas empatadas el orden no es estable de una página a otra, así que la paginación por offset repite unas y **se salta 8.804**. La primera carga real lo dejó a la vista: 89.432 registros declarados, 80.628 filas en la tabla.
+- **Consecuencia**: la carga del histórico la hace **solo** el job de altas, y el de cierres nunca recorre el listado entero —si no tiene marca de agua, arranca desde ahora—. Documentado en `docs/spikes/S2.2-quejas-ingesta.md` §10 y fijado con tests.
+- **Y la marca de agua es de cada job, no de la tabla.** Los dos escriben en `citizen_service_request`, así que el de altas encontraba la tabla ya poblada por el de cierres y concluía que tenía el histórico: en la primera ejecución trajo 25 registros en vez de 89.432. Ahora cada job mira su propio registro de ejecuciones antes de aplicar la marca.
+
+Lo que esto confirma sobre el método, más allá de esta fuente: **una ingesta se comprueba contando identificadores distintos, no filas**, y que dos páginas consecutivas no solapen no dice nada sobre el barrido completo.
+
 ## Alternativas descartadas
 
 - **Almacenar el texto redactado por detección de patrones.** Es la opción que parece diligente y es la peor: quita el 0,03 % que una expresión regular sabe encontrar, deja el 48 % que no, y convierte un problema visible en uno invisible. Además obliga a custodiar el original en `raw_payload` mientras se redacta.

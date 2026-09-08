@@ -25,7 +25,7 @@ Repositorio: <https://github.com/MarioNaya/zaragoza-observatorio>
 docker compose -f compose.prod.yaml up --build -d   # la imagen de producción, en local
 ```
 
-## API (fase 1: monitor de frescura · fase 2: territorio)
+## API (fase 1: monitor de frescura · fase 2: territorio y ciudadanía)
 
 Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y URL consultada), `ingestedAt` (fin de la última ingesta con éxito) y `caveats`.
 
@@ -41,10 +41,15 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 | `GET /api/v1/geo/districts` | Las 29 juntas municipales y vecinales con sus **dos numeraciones** (`id` de la API y `padronId` de los datasets de población) y el padrón del último año (filtro `kind`; `sort=id|name|padronId`) |
 | `GET /api/v1/geo/districts/{id}` | Una junta con su serie de padrón (2020, 2021, 2022 y 2024: la serie **no** es continua) |
 | `GET /api/v1/geo/locate?lon=&lat=` | La junta que contiene un punto WGS84: `RESOLVED`, `AMBIGUOUS` (los polígonos oficiales se solapan en el entorno de Juslibol) u `OUTSIDE` |
+| `GET /api/v1/citizen/requests` | Quejas y sugerencias paginadas y ordenadas (`sort=requestedAt|updatedAt|id`), con filtros `district` (la junta **resuelta**), `serviceCode`, `status`, `assignment`, `from`, `to`. **Sin el texto de la queja**: no se pide al origen |
+| `GET /api/v1/citizen/aggregations?by=district\|category\|month` | Recuentos por junta, categoría o mes, cada grupo con su padrón, el año usado, las quejas por mil habitantes, la **cobertura de punto** del grupo y la mediana de tiempo de respuesta de sus cerradas; la respuesta, con el reparto por estado de asignación y el total sin asignar |
+| `GET /api/v1/citizen/summary` | Totales ingeridos, rango temporal, reparto por estado y contraste entre la junta resuelta y la que declara el origen |
 | `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
 
 La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* pregunta a diario a una distribución de cada ficha y publica lo que devuelve con su método: `FILE_HEADERS` (`Last-Modified` del fichero, por `HEAD`), `API_MAX_DATE` (valor máximo de un campo de fecha de la API de la sede, pedido con `sort desc`, más `totalCount`), `API_COUNT` (solo `totalCount`), `WFS_HITS` (`numberMatched`) o `NOT_OBSERVABLE`; los intentos fallidos (servicios inexistentes, redirecciones, intranet) quedan registrados con su causa. Ninguno de los dos ejes es un juicio sobre el dato: cada respuesta lleva `caveats`. El Swagger 2.0 de la API municipal se ingiere a diario como inventario de endpoints y se cruza con las fichas por el tag que declaran (S1.2, ADR-006), y el listado del publicador en datos.gob.es se ingiere a diario para marcar las fichas federadas y mostrar los datasets federados que el listado municipal omite (S1.3, ADR-007).
 
 La asignación territorial **no se pide a la API municipal**: su buscador de direcciones acierta la junta el 89,5 % de las veces sin permitir distinguir el acierto del fallo, y los parámetros de consulta espacial que documenta no filtran por proximidad (S2.1). Se resuelve en casa con `ST_Contains` sobre la geometría oficial de las 29 juntas, que coincide con la junta que asigna el ayuntamiento en el 99,69 % de los 1.308 registros contrastados (ADR-011). Un registro sin coordenadas queda **sin asignar** y se cuenta como tal: no se geocodifica por dirección para rellenar el hueco.
+
+**El texto de las quejas no está aquí, y no por descuido.** El ayuntamiento publica `title` y `description` de cada queja sin anonimizar: contienen nombres, firmas y algún DNI. Como la API permite pedir solo los campos que interesan, este observatorio **no los pide**: no se descargan, no se almacenan y no hay columna donde guardarlos (ADR-012). Se descartó redactarlos con expresiones regulares porque los números lo desaconsejaban: en una muestra de 7.000 registros había 2 DNI y 3.353 (47,9 %) fórmulas de firma, es decir, nombres que ninguna expresión regular reconoce. Lo que se pierde con esa decisión —búsqueda por texto, análisis de temas— se declara en vez de disimularlo. El listado abierto tampoco son todas las quejas: tiene 89.432 registros desde 2013, mientras que las estadísticas municipales cuentan del orden de 40.000 incidencias cerradas al año; y la proporción de quejas con coordenadas varía entre el 16 % y el 45 % según el año, así que cada cifra viaja con su cobertura al lado (S2.2).
 
 Datos: Ayuntamiento de Zaragoza, portal de datos abiertos (`https://www.zaragoza.es/sede/portal/datos-abiertos/`), bajo su licencia de reutilización. Cada respuesta de la API propia indica el dataset de origen y la fecha de ingesta.

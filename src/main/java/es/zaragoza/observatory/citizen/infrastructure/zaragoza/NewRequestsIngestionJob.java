@@ -9,19 +9,24 @@ import es.zaragoza.observatory.citizen.CitizenSources;
 import es.zaragoza.observatory.citizen.application.RegisterServiceRequests;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestRepository;
 import es.zaragoza.observatory.citizen.infrastructure.CitizenProperties;
+import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.shared.DatasetRef;
 
 /**
- * Altas: recorre el listado por {@code requested_datetime} desde la última alta guardada. En la primera
- * ejecución no hay marca y hace la carga completa del histórico (89.432 registros desde 2013-01-08, ~9 min con
- * el retardo de cortesía); después, unas decenas de registros al día (S2.2: ~48 altas diarias).
+ * Altas: recorre el listado por {@code requested_datetime}, que es el único eje por el que el barrido completo
+ * sale exacto (S2.2 §10: 89.432 filas y 89.432 identificadores distintos, sin repeticiones). Por eso
+ * <b>la carga del histórico es cosa suya</b>.
+ * <p>
+ * Mientras no haya completado un barrido con éxito no aplica marca de agua, aunque la tabla ya tenga datos: los
+ * habrá puesto el job de cierres, y lo que ese haya visto no dice nada de lo que falta por aquí. Después de la
+ * primera vez, unas decenas de registros al día (S2.2: ~48 altas diarias).
  */
 @Component
 class NewRequestsIngestionJob extends ServiceRequestsIngestionJob {
 
 	NewRequestsIngestionJob(CitizenProperties properties, ServiceRequestRepository requests,
-			ServiceRequestJsonTranslator translator, RegisterServiceRequests register) {
-		super(properties, requests, translator, register);
+			ServiceRequestJsonTranslator translator, RegisterServiceRequests register, Ingestion ingestion) {
+		super(properties, requests, translator, register, ingestion);
 	}
 
 	@Override
@@ -36,7 +41,7 @@ class NewRequestsIngestionJob extends ServiceRequestsIngestionJob {
 
 	@Override
 	Optional<Instant> watermark() {
-		return requests.latestRequestedAt();
+		return hasCompletedASweep() ? requests.latestRequestedAt() : Optional.empty();
 	}
 
 }
