@@ -34,6 +34,30 @@ Los ~690 MB del servicio de la aplicación son **consecuencia directa de una dec
 - El arranque es ligeramente más lento en régimen permanente por el C1, pero irrelevante: el trabajo real lo marca la latencia de la API municipal, no la nuestra.
 - Si en el futuro hiciera falta bajar más, la vía es la **imagen nativa con GraalVM** (80–150 MB), a costa de un build más largo y de configurar la reflexión de Hibernate, Flyway, Modulith y springdoc. No se hace ahora: el ahorro (~2 $/mes) no compensa el riesgo de tocar el arranque de una instancia que acaba de empezar a acumular la serie de instantáneas, que es lo único irrepetible del proyecto.
 
+## Adenda del 2026-09-08: medida con `geo` y `citizen` dentro
+
+Tras desplegar `geo`, la instancia se estabilizó en **407 MB** frente a la referencia de 356 MB, por encima del umbral de 400 MB que esta ADR marca como señal de regresión. La hipótesis anotada entonces era el **metaspace**, que crece con las clases de cada módulo nuevo. **Medido, no se sostiene.**
+
+Medición con `compose.prod.yaml` —la misma imagen, las mismas banderas, perfil `prod`— sobre la carga completa de `citizen` (89.432 quejas en 179 páginas) más un lote de 60 observaciones. Las banderas no se tocaron: se leen en el log de arranque y son las de esta ADR.
+
+| Momento | RSS | Heap | Metaspace | Clases |
+|---|---|---|---|---|
+| Arranque, sin ingesta | 330,1 MB | 109,5 MB | 100,4 MB | 22.332 |
+| Durante la carga de 89.432 quejas | 356 → 384 MB | 86–137 MB | 107,2 MB | 23.8xx |
+| Al terminar la carga | 384,3 MB | 136,6 MB | 110,0 MB | 24.315 |
+| Tras el primer lote de observación | 390,0 MB | 92,1 MB | 110,1 MB | 24.343 |
+| **Estabilizada** | **388,8 MB** | 92,7 MB | 110,1 MB | 24.343 |
+
+Lo que dicen estos números:
+
+- **El metaspace no aprieta**: 110,1 MB contra un tope de 192 MB (57 %). Los dos módulos nuevos añaden ~10 MB de metaspace sobre los 100,4 MB de arranque. **Bajar `MaxMetaspaceSize` no recuperaría nada** —la JVM solo compromete lo que usa— y sí acercaría un `OutOfMemoryError`. La palanca que la sesión anterior daba por probable no existe.
+- **El heap tampoco**: máximo 136,6 MB durante la carga, contra un tope de 256 MB. La ingesta de 89.432 registros por páginas de 500 no acumula.
+- **El crecimiento es real y modesto**: de **367,8 MB** con dos módulos (medida original de esta ADR) a **388,8 MB** con cuatro y con una tabla de 89.432 filas. Unos **21 MB**, repartidos entre metaspace, code cache y páginas residentes. No es una fuga ni un desajuste: es lo que cuesta tener el doble de módulos.
+
+**Consecuencia para el umbral**: los 400 MB de esta ADR se fijaron con la aplicación de dos módulos, y usarlos ahora como alarma solo produce falsos positivos. El umbral útil no es un número absoluto sino **la línea base de cada configuración**: hoy, ~389 MB en local con los cuatro módulos. Lo que hay que vigilar es un salto respecto de esa línea, no el cruce de una raya puesta para otra aplicación. En dinero no cambia nada: a 10 $/GB/mes, 440 MB son ~4,4 $/mes y el proyecto sigue muy dentro del crédito de 20 $ del plan Pro.
+
+**Lo que no se toca**: ninguna bandera. La medición se hizo justamente para no tocarlas a ciegas, que es lo que esta ADR exige.
+
 ## Alternativas descartadas
 
 - **Modo Serverless (antes App Sleeping)**: duerme el servicio tras 5–10 minutos sin paquetes salientes. **No aplica a esta aplicación, y no por un detalle de configuración sino por su naturaleza**: mantiene el pool de conexiones a `postgis` por la red privada y sale a la API municipal cada 10 minutos (`tick: PT10M`), así que no llegaría a dormirse; y si lo hiciera, el planificador no se ejecutaría y la serie diaria de instantáneas —la única razón de tener esto desplegado— dejaría de acumularse. Este servicio no espera visitas: trabaja solo. Serverless es para lo contrario.
