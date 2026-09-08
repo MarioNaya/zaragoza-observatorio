@@ -41,7 +41,7 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 | `GET /api/v1/geo/districts` | Las 29 juntas municipales y vecinales con sus **dos numeraciones** (`id` de la API y `padronId` de los datasets de población) y el padrón del último año (filtro `kind`; `sort=id|name|padronId`) |
 | `GET /api/v1/geo/districts/{id}` | Una junta con su serie de padrón (2020, 2021, 2022 y 2024: la serie **no** es continua) |
 | `GET /api/v1/geo/locate?lon=&lat=` | La junta que contiene un punto WGS84: `RESOLVED`, `AMBIGUOUS` (los polígonos oficiales se solapan en el entorno de Juslibol) u `OUTSIDE` |
-| `GET /api/v1/citizen/requests` | Quejas y sugerencias paginadas y ordenadas (`sort=requestedAt|updatedAt|id`), con filtros `district` (la junta **resuelta**), `serviceCode`, `status`, `assignment`, `from`, `to`. **Sin el texto de la queja**: no se pide al origen |
+| `GET /api/v1/citizen/requests` | Quejas y sugerencias paginadas y ordenadas (`sort=requestedAt\|updatedAt\|id`), con filtros `district` (la junta **resuelta**), `serviceCode`, `status`, `assignment`, `from`, `to`. **Sin el texto de la queja**: no se pide al origen |
 | `GET /api/v1/citizen/aggregations?by=district\|category\|month` | Recuentos por junta, categoría o mes, cada grupo con su padrón, el año usado, las quejas por mil habitantes, la **cobertura de punto** del grupo y la mediana de tiempo de respuesta de sus cerradas; la respuesta, con el reparto por estado de asignación y el total sin asignar |
 | `GET /api/v1/citizen/summary` | Totales ingeridos, rango temporal, reparto por estado y contraste entre la junta resuelta y la que declara el origen |
 | `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
