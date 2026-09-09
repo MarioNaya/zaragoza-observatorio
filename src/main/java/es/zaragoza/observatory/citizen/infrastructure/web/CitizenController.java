@@ -35,6 +35,7 @@ import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.BucketDto;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.ServiceRequestDto;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.Source;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.SummaryDto;
+import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.YearCoverageDto;
 import es.zaragoza.observatory.geo.DistrictPopulation;
 import es.zaragoza.observatory.geo.DistrictSummary;
 import es.zaragoza.observatory.geo.Geo;
@@ -118,9 +119,14 @@ class CitizenController {
 					summary == null ? null : summary.populationYear());
 		}).toList();
 
+		// La cobertura por año solo acompaña a la serie: en los demás ejes no hay dos años que comparar.
+		List<YearCoverageDto> coverage = axis == AggregationAxis.DISTRICT_YEAR
+				? requests.pointCoverageByYear(filters).stream().map(YearCoverageDto::of).toList()
+				: List.of();
+
 		long matched = items.stream().mapToLong(BucketDto::total).sum();
-		var dto = new AggregationDto(axis.name().toLowerCase(Locale.ROOT), items, AssignmentDto.of(counts), matched,
-				counts.unassigned(), items.stream().mapToLong(BucketDto::internal).sum());
+		var dto = new AggregationDto(axis.name().toLowerCase(Locale.ROOT), items, coverage, AssignmentDto.of(counts),
+				matched, counts.unassigned(), items.stream().mapToLong(BucketDto::internal).sum());
 		return new ApiItem<>(source, ingestedAt(),
 				axis == AggregationAxis.DISTRICT_YEAR ? CitizenCaveats.series() : CitizenCaveats.aggregations(), dto);
 	}

@@ -7,6 +7,7 @@ import java.util.Map;
 import es.zaragoza.observatory.citizen.domain.AggregationBucket;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
 import es.zaragoza.observatory.citizen.domain.ServiceRequest;
+import es.zaragoza.observatory.citizen.domain.YearCoverage;
 
 /** Cuerpos de respuesta del módulo {@code citizen} (SPEC.md §4.7). */
 final class CitizenDtos {
@@ -81,8 +82,21 @@ final class CitizenDtos {
 	 * el total sin asignar. Un mapa por junta que no diga cuántas quejas no tienen punto es una mentira por
 	 * omisión.
 	 */
-	record AggregationDto(String by, List<BucketDto> buckets, AssignmentDto assignment, long matched,
-			long unassigned, long internal) {
+	record AggregationDto(String by, List<BucketDto> buckets, List<YearCoverageDto> coverageByYear,
+			AssignmentDto assignment, long matched, long unassigned, long internal) {
+	}
+
+	/**
+	 * Cobertura de punto de un año entero, sobre todas sus quejas y no solo sobre las situadas. Acompaña a la
+	 * serie por junta y año porque dentro de cada grupo la cobertura es siempre 1 por construcción: sin punto no
+	 * hay junta, así que lo que falta no aparece en ningún grupo (ADR-015).
+	 */
+	record YearCoverageDto(int year, long total, long withPoint, long assigned, double pointCoverage) {
+
+		static YearCoverageDto of(YearCoverage coverage) {
+			return new YearCoverageDto(coverage.year(), coverage.total(), coverage.withPoint(), coverage.assigned(),
+					coverage.pointCoverage());
+		}
 	}
 
 	/**

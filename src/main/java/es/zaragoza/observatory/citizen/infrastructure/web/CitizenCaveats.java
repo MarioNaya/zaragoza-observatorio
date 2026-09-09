@@ -51,10 +51,14 @@ final class CitizenCaveats {
 
 	/** Lo que hay que saber además para leer una serie por junta y año. */
 	static final List<String> SERIES = List.of(
-			"Cada grupo es una junta en un año y trae su propia cobertura de punto: comparar dos años sin mirarla "
-					+ "es comparar dos coberturas distintas, porque va del 16 % al 45 % según el año. Las cifras no "
-					+ "se ajustan por cobertura, ni aquí ni en ninguna parte: un ajuste supondría que lo no "
-					+ "geolocalizado se reparte igual que lo geolocalizado, y eso no está comprobado (ADR-015).",
+			"La cobertura que importa para comparar años está en coverageByYear, no en los grupos. Dentro de un "
+					+ "grupo por junta la cobertura es siempre del 100 % por construcción: sin punto no hay junta, "
+					+ "así que las quejas que no se pudieron situar no aparecen en ningún grupo. coverageByYear "
+					+ "cuenta todas las de cada año y dice cuántas se situaron: va del 16 % al 45 % según el año, "
+					+ "así que dos columnas de la serie no son la misma fracción de la realidad.",
+			"Las cifras no se ajustan por cobertura, ni aquí ni en ninguna parte: un ajuste supondría que lo no "
+					+ "geolocalizado se reparte igual que lo geolocalizado, y eso no está comprobado (ADR-015). Lo "
+					+ "que se publica son las columnas para que quien quiera normalizar lo haga y sepa que lo hizo.",
 			"El padrón que acompaña a cada grupo es el de su propio año, no el del año más reciente. La serie del "
 					+ "padrón por junta solo tiene 2020, 2021, 2022 y 2024 (falta 2023, S2.1), así que los demás "
 					+ "años salen sin denominador y sin quejas por mil habitantes: el hueco se ve, no se rellena "

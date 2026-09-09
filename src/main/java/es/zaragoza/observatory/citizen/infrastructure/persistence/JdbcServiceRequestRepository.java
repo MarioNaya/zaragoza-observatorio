@@ -29,6 +29,7 @@ import es.zaragoza.observatory.citizen.domain.ServiceRequestPage;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestRepository;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestStatus;
+import es.zaragoza.observatory.citizen.domain.YearCoverage;
 import es.zaragoza.observatory.geo.GeoPoint;
 import es.zaragoza.observatory.shared.ZaragozaTime;
 
@@ -199,6 +200,24 @@ class JdbcServiceRequestRepository implements ServiceRequestRepository {
 				rs.getString("bucket_label"), rs.getLong("total"), rs.getLong("closed"), rs.getLong("with_point"),
 				rs.getLong("internal"), nullableInt(rs, "bucket_year"), nullableDouble(rs, "median_hours")),
 				args.toArray());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<YearCoverage> pointCoverageByYear(ServiceRequestQuery filters) {
+		// Sin la condición territorial a propósito: aquí cuentan también las que no se pudieron situar, que son
+		// justo las que la serie por junta no puede enseñar (ADR-015).
+		var where = new Where(filters);
+		String sql = """
+				SELECT EXTRACT(YEAR FROM requested_at AT TIME ZONE '%s')::int AS year, count(*) AS total,
+				       count(*) FILTER (WHERE lon IS NOT NULL) AS with_point,
+				       count(*) FILTER (WHERE district_id IS NOT NULL) AS assigned
+				FROM citizen_service_request%s
+				GROUP BY 1
+				ORDER BY 1
+				""".formatted(ZaragozaTime.ZONE.getId(), where.clause());
+		return jdbc.query(sql, (rs, row) -> new YearCoverage(rs.getInt("year"), rs.getLong("total"),
+				rs.getLong("with_point"), rs.getLong("assigned")), where.args());
 	}
 
 	@Override

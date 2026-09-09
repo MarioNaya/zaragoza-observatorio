@@ -37,6 +37,13 @@ public interface ServiceRequestRepository {
 	/** Agrega por el eje pedido aplicando los filtros de la consulta; el orden lo fija el adaptador (regla 8). */
 	List<AggregationBucket> aggregate(AggregationAxis axis, ServiceRequestQuery filters);
 
+	/**
+	 * Cobertura de punto por año sobre <b>todos</b> los registros que pasan los filtros, tengan junta o no. Es lo
+	 * único que permite comparar dos años de una serie territorial: dentro de un grupo por junta la cobertura es
+	 * siempre del 100 % por construcción (ADR-015).
+	 */
+	List<YearCoverage> pointCoverageByYear(ServiceRequestQuery filters);
+
 	/** Reparto por estado de asignación territorial y contraste con lo declarado, con los mismos filtros. */
 	AssignmentCounts assignmentCounts(ServiceRequestQuery filters);
 

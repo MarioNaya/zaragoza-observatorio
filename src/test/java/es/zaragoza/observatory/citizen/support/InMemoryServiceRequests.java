@@ -17,6 +17,7 @@ import es.zaragoza.observatory.citizen.domain.ServiceRequestPage;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestRepository;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestStatus;
+import es.zaragoza.observatory.citizen.domain.YearCoverage;
 
 /**
  * Doble de {@link ServiceRequestRepository} para tests unitarios. Solo implementa de verdad lo que esos tests
@@ -62,6 +63,16 @@ public final class InMemoryServiceRequests implements ServiceRequestRepository {
 	public ServiceRequestPage search(ServiceRequestQuery query) {
 		List<ServiceRequest> items = List.copyOf(byId.values());
 		return new ServiceRequestPage(items, items.size(), query.page(), query.size());
+	}
+
+	@Override
+	public long count(ServiceRequestQuery filters) {
+		return byId.size();
+	}
+
+	@Override
+	public List<YearCoverage> pointCoverageByYear(ServiceRequestQuery filters) {
+		return List.of();
 	}
 
 	@Override

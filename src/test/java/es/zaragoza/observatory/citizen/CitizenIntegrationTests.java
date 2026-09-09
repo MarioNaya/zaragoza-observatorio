@@ -256,6 +256,19 @@ class CitizenIntegrationTests {
 		byYear.extractingPath("$.caveats").asArray()
 				.anySatisfy(caveat -> assertThat(caveat.toString()).contains("padrón"));
 
+		// La cobertura del año va aparte y cuenta TODAS las quejas, no solo las situadas: dentro de un grupo por
+		// junta la cobertura es siempre 1 por construcción, y eso no dice nada (ADR-015).
+		byYear.extractingPath("$.item.buckets[*].pointCoverage").asArray().containsOnly(1.0);
+		byYear.extractingPath("$.item.coverageByYear").asArray().hasSize(1);
+		byYear.extractingPath("$.item.coverageByYear[0].year").isEqualTo(2026);
+		byYear.extractingPath("$.item.coverageByYear[0].total").isEqualTo(500);
+		byYear.extractingPath("$.item.coverageByYear[0].withPoint").isEqualTo(255);
+		byYear.extractingPath("$.item.coverageByYear[0].assigned").isEqualTo(255);
+		byYear.extractingPath("$.item.coverageByYear[0].pointCoverage").isEqualTo(0.51);
+		// Los demás ejes no la traen: no hay dos años que comparar.
+		assertThat(mvc.get().uri("/api/v1/citizen/aggregations").param("by", "district"))
+				.hasStatusOk().bodyJson().extractingPath("$.item.coverageByYear").asArray().isEmpty();
+
 		// La página grabada es la más reciente, así que todo cae en un año. Se mueven a 2024 los registros de
 		// una junta para comprobar lo que hace la serie cuando el año sí tiene padrón. Es manipulación del
 		// fixture, declarada: la fuente real sí tiene ambos años (S2.2).
