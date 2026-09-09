@@ -70,3 +70,13 @@ Lo que dicen estos números:
 
 - <https://docs.railway.com/reference/pricing> — RAM 10 $/GB/mes, CPU 20 $/vCPU/mes, egress 0,05 $/GB, volumen 0,15 $/GB/mes; sin coste por petición
 - <https://docs.railway.com/reference/app-sleeping> — Serverless: duerme tras ~5–10 min sin paquetes salientes; lo despierta tráfico de internet o de la red privada
+
+## Adenda (2026-09-09): línea base con cinco módulos
+
+Con `urban` desplegado (ADR-016) la instancia ocupa **425 MB** residentes, con una media de 472 y un pico de **480 MB** durante el barrido completo de los 42.342 locales. La línea base anterior, de cuatro módulos, era 416 MB.
+
+Nueve megas por un módulo con dos tablas, 112.000 filas y su API. **No se ha tocado ninguna bandera de la JVM**, y no hay ninguna que ajustar: el pico de 480 MB es del barrido, no del estado estacionario, y el proceso vuelve solo. En dinero son ~4,25 $/mes.
+
+Lo que se vigila a partir de ahora es **el salto respecto de 425 MB**. El umbral de 400 MB con el que nació esta ADR lleva dos módulos produciendo falsos positivos: se fijó para una aplicación de dos módulos y ya no describe nada.
+
+Un detalle que ahorra memoria y volumen por partida doble: esta fuente **no guarda su página cruda** (`IngestionJob.keepsRawPayload()` a `false`, ADR-016 §3). Se hizo por privacidad, pero de paso evita escribir 40 MB por barrido en `raw_payload`.
