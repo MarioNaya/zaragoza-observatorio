@@ -11,6 +11,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -31,6 +32,7 @@ import es.zaragoza.observatory.TestcontainersConfiguration;
 import es.zaragoza.observatory.catalog.domain.ApiEndpointRepository;
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
+import es.zaragoza.observatory.catalog.domain.DatasetRepository.Delisting;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.application.ObserveDatasets;
 import es.zaragoza.observatory.catalog.domain.FederatedDataset;
@@ -386,6 +388,7 @@ class CatalogIntegrationTests {
 		summary.extractingPath("$.byObservationMethod.WFS_HITS").isEqualTo(1);
 		summary.extractingPath("$.byObservationMethod.NOT_OBSERVABLE").isEqualTo(0);
 		summary.extractingPath("$.withoutObservation").isEqualTo(432);
+		summary.extractingPath("$.notListed").isEqualTo(0);
 		summary.extractingPath("$.apiInventory.endpoints").isEqualTo(497);
 		summary.extractingPath("$.apiInventory.tags").isEqualTo(84);
 		summary.extractingPath("$.apiInventory.datasetsWithTag").isEqualTo(68);
@@ -397,6 +400,54 @@ class CatalogIntegrationTests {
 		summary.extractingPath("$.federation.notInCatalog").isEqualTo((int) (50 - federatedInCatalog));
 		summary.extractingPath("$.federation.catalogNotFederated").isEqualTo((int) (436 - federatedInCatalog));
 		summary.extractingPath("$.federation.ingestedAt").asString().isNotEmpty();
+
+		// --- fichas que dejan de aparecer en el listado (ADR-013): se marcan, nunca se borran --------------------
+		Instant staleSeen = Instant.now().minus(Duration.ofDays(3));
+		datasets.upsert(new Dataset(999998, "Ficha que deja de aparecer en el listado", null, null, null, null, null,
+				null, null, null, null, false, null, List.of(), staleSeen, staleSeen), staleSeen);
+		assertThat(datasets.count()).isEqualTo(437);
+
+		server.reset();
+		expectCatalogPage();
+		IngestionRunSummary third = ingestion.run(catalogJob());
+		server.verify();
+		assertThat(third.status()).isEqualTo(RunStatus.SUCCEEDED);
+		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(jdbc
+				.sql("select count(*) from catalog_dataset where delisted_at is not null").query(Long.class).single())
+				.isEqualTo(1L));
+		assertThat(datasets.count()).isEqualTo(437); // la ficha sigue ahí, con su histórico
+		assertThat(datasets.findBySourceId(999998)).isPresent();
+
+		var delisted = assertThat(mvc.get().uri("/api/v1/catalog/datasets/999998")).hasStatusOk().bodyJson();
+		delisted.extractingPath("$.item.listed").isEqualTo(false);
+		delisted.extractingPath("$.item.delistedAt").asString().isNotEmpty();
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets/13")).hasStatusOk().bodyJson()
+				.extractingPath("$.item.listed").isEqualTo(true);
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("listed", "false").param("size", "10"))
+				.hasStatusOk().bodyJson().extractingPath("$.items[*].id").asArray().containsExactly(999998);
+		assertThat(mvc.get().uri("/api/v1/catalog/datasets").param("listed", "true").param("size", "1"))
+				.hasStatusOk().bodyJson().extractingPath("$.page.totalElements").isEqualTo(436);
+		var afterDelisting = assertThat(mvc.get().uri("/api/v1/catalog/summary")).hasStatusOk().bodyJson();
+		afterDelisting.extractingPath("$.datasets").isEqualTo(437); // el total no cambia en silencio
+		afterDelisting.extractingPath("$.notListed").isEqualTo(1);
+
+		// vuelve a aparecer en el listado: la marca se quita, sin rastro de excepción (ADR-013 §3)
+		datasets.upsert(datasets.findBySourceId(999998).orElseThrow(), Instant.now());
+		assertThat(datasets.markNotSeenSince(third.startedAt())).isEqualTo(new Delisting(0, 1));
+		assertThat(mvc.get().uri("/api/v1/catalog/summary")).hasStatusOk().bodyJson()
+				.extractingPath("$.notListed").isEqualTo(0);
+
+		// un listado sin result (respuesta real más allá del final) hace fallar la ingesta: no marca a nadie
+		server.reset();
+		server.expect(requestTo(startsWith(CATALOG_URL + "?"))).andRespond(withSuccess(
+				Fixtures.bytes("catalog/catalogo-rows500-start1000-beyond.json"), JSON_UTF8));
+		IngestionRunSummary emptyListing = ingestion.run(catalogJob());
+		server.verify();
+		assertThat(emptyListing.status()).isEqualTo(RunStatus.FAILED);
+		assertThat(jdbc.sql("select count(*) from catalog_dataset where delisted_at is not null").query(Long.class)
+				.single()).isZero();
+
+		jdbc.sql("delete from catalog_dataset where source_id = 999998").update();
 	}
 
 	@Test

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import es.zaragoza.observatory.catalog.domain.Dataset;
 import es.zaragoza.observatory.catalog.domain.DatasetRepository;
+import es.zaragoza.observatory.catalog.domain.DatasetRepository.Delisting;
 import es.zaragoza.observatory.catalog.domain.DeclaredFreshness;
 import es.zaragoza.observatory.catalog.domain.Observation;
 
@@ -28,6 +29,16 @@ class JpaDatasetRepository implements DatasetRepository {
 	public void upsert(Dataset dataset, Instant seenAt) {
 		jpa.findById(dataset.sourceId()).ifPresentOrElse(existing -> existing.apply(dataset, seenAt),
 				() -> jpa.save(DatasetEntity.insert(dataset, seenAt)));
+	}
+
+	@Override
+	@Transactional
+	public Delisting markNotSeenSince(Instant runStartedAt) {
+		// El orden importa: primero se desmarca lo que ha vuelto, y solo entonces se marca lo que falta, para que
+		// una ficha no pueda quedar marcada y desmarcada en la misma pasada.
+		int relisted = jpa.clearDelistedSeenSince(runStartedAt);
+		int delisted = jpa.markNotSeenSince(runStartedAt);
+		return new Delisting(delisted, relisted);
 	}
 
 	@Override

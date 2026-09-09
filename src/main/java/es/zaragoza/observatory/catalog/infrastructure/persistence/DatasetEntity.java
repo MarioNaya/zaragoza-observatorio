@@ -98,6 +98,10 @@ class DatasetEntity {
 	@Column(name = "last_seen_at", nullable = false, columnDefinition = "timestamptz")
 	private Instant lastSeenAt;
 
+	/** ADR-013: inicio de la primera ingesta completa en la que la ficha no apareció; null = listada. */
+	@Column(name = "delisted_at", columnDefinition = "timestamptz")
+	private Instant delistedAt;
+
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "catalog_distribution", joinColumns = @JoinColumn(name = "dataset_source_id"))
 	@OrderColumn(name = "ordinal")
@@ -154,7 +158,7 @@ class DatasetEntity {
 
 	DatasetListing toListing(String federatedUrl) {
 		return new DatasetListing(toDomain(), latestFreshness, latestRatio, latestSnapshotOn, observedAt,
-				latestObservationMethod, latestObservedChange, federatedUrl);
+				latestObservationMethod, latestObservedChange, federatedUrl, delistedAt);
 	}
 
 	Integer getSourceId() {

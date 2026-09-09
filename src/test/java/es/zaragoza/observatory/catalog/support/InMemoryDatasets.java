@@ -21,10 +21,28 @@ public final class InMemoryDatasets implements DatasetRepository {
 	public final Map<Integer, DeclaredFreshness> latestFreshness = new LinkedHashMap<>();
 	public final Map<Integer, Instant> observedAt = new LinkedHashMap<>();
 	public final Map<Integer, Observation> latestObservation = new LinkedHashMap<>();
+	public final Map<Integer, Instant> delistedAt = new LinkedHashMap<>();
 
 	@Override
 	public void upsert(Dataset dataset, Instant seenAt) {
 		byId.put(dataset.sourceId(), dataset);
+	}
+
+	@Override
+	public Delisting markNotSeenSince(Instant runStartedAt) {
+		int relisted = 0;
+		int delisted = 0;
+		for (Dataset dataset : byId.values()) {
+			boolean seen = !dataset.lastSeenAt().isBefore(runStartedAt);
+			if (seen && delistedAt.remove(dataset.sourceId()) != null) {
+				relisted++;
+			}
+			else if (!seen && !delistedAt.containsKey(dataset.sourceId())) {
+				delistedAt.put(dataset.sourceId(), runStartedAt);
+				delisted++;
+			}
+		}
+		return new Delisting(delisted, relisted);
 	}
 
 	@Override

@@ -43,7 +43,8 @@ final class CatalogDtos {
 			String publicationStatus, Boolean hasGeo, Boolean open, boolean explorable, boolean hasApi, String apiTag,
 			boolean federated, String federatedUrl, DeclaredFreshness latestFreshness, Double latestRatio,
 			LocalDate latestSnapshotOn, Instant observedAt, ObservationMethod latestObservationMethod,
-			Instant latestObservedChange, Instant firstSeenAt, Instant lastSeenAt) {
+			Instant latestObservedChange, Instant firstSeenAt, Instant lastSeenAt, boolean listed,
+			Instant delistedAt) {
 
 		static DatasetSummary from(DatasetListing listing) {
 			Dataset d = listing.dataset();
@@ -52,7 +53,7 @@ final class CatalogDtos {
 					d.explorable(), d.hasApiDistribution(), d.apiTag(), listing.federated(), listing.federatedUrl(),
 					listing.latestFreshness(), listing.latestRatio(), listing.latestSnapshotOn(),
 					listing.observedAt(), listing.latestObservationMethod(), listing.latestObservedChange(),
-					d.firstSeenAt(), d.lastSeenAt());
+					d.firstSeenAt(), d.lastSeenAt(), listing.listed(), listing.delistedAt());
 		}
 	}
 
@@ -71,7 +72,7 @@ final class CatalogDtos {
 			boolean hasApi, String apiTag, DatasetApiEndpoints apiEndpoints, boolean federated, String federatedUrl,
 			List<Distribution> distributions, FreshnessSnapshotDto latestSnapshot, Instant observedAt,
 			ObservationMethod latestObservationMethod, Instant latestObservedChange, Instant firstSeenAt,
-			Instant lastSeenAt) {
+			Instant lastSeenAt, boolean listed, Instant delistedAt) {
 
 		static DatasetDetail from(DatasetListing listing, FreshnessSnapshotDto latest, DatasetApiEndpoints api) {
 			Dataset d = listing.dataset();
@@ -81,7 +82,7 @@ final class CatalogDtos {
 					listing.federated(), listing.federatedUrl(),
 					d.distributions().stream().map(Distribution::from).toList(), latest, listing.observedAt(),
 					listing.latestObservationMethod(), listing.latestObservedChange(), d.firstSeenAt(),
-					d.lastSeenAt());
+					d.lastSeenAt(), listing.listed(), listing.delistedAt());
 		}
 	}
 
@@ -150,7 +151,7 @@ final class CatalogDtos {
 	record Summary(Source source, Instant ingestedAt, List<String> caveats, long datasets,
 			Map<DeclaredFreshness, Long> byDeclaredFreshness, Map<String, Long> byPeriodicity, long withApi,
 			long open, long explorable, long withGeo, LocalDate latestSnapshotOn, long withoutSnapshot,
-			Map<ObservationMethod, Long> byObservationMethod, long withoutObservation,
+			Map<ObservationMethod, Long> byObservationMethod, long withoutObservation, long notListed,
 			ApiInventorySummary apiInventory, FederationSummary federation, Thresholds thresholds) {
 	}
 

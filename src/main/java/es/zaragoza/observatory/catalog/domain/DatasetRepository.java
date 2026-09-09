@@ -14,6 +14,19 @@ public interface DatasetRepository {
 	 */
 	void upsert(Dataset dataset, Instant seenAt);
 
+	/**
+	 * Marca como no listadas (ADR-013) las fichas que no aparecieron en la ingesta iniciada en
+	 * {@code runStartedAt} y quita la marca a las que han vuelto a aparecer. La ficha nunca se borra: su
+	 * histórico de frescura se conserva.
+	 */
+	Delisting markNotSeenSince(Instant runStartedAt);
+
+	/** Resultado de una pasada de marcado: fichas marcadas por primera vez y fichas que han vuelto al listado. */
+	record Delisting(int delisted, int relisted) {
+
+		public static final Delisting NONE = new Delisting(0, 0);
+	}
+
 	Optional<Dataset> findBySourceId(int sourceId);
 
 	/** Todas las fichas, ordenadas por {@code sourceId}. */

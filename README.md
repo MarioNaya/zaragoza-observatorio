@@ -31,10 +31,10 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 
 | Endpoint | Qué devuelve |
 |---|---|
-| `GET /api/v1/catalog/datasets` | Fichas del catálogo paginadas (`page`, `size` ≤ 200) y ordenadas (`sort=title,asc`; campos `title`, `id`, `issued`, `declaredModified`, `metadataUpdated`, `declaredRatio`, `observedLastChange`), con filtros `periodicity`, `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `observation`, `federated`, `q` |
+| `GET /api/v1/catalog/datasets` | Fichas del catálogo paginadas (`page`, `size` ≤ 200) y ordenadas (`sort=title,asc`; campos `title`, `id`, `issued`, `declaredModified`, `metadataUpdated`, `declaredRatio`, `observedLastChange`), con filtros `periodicity`, `status`, `hasGeo`, `open`, `hasApi`, `freshness`, `observation`, `federated`, `listed`, `q` |
 | `GET /api/v1/catalog/datasets/{id}` | Ficha completa, distribuciones, última instantánea de frescura (eje declarado y eje observado) y `apiEndpoints`: operaciones que el Swagger de la API documenta bajo el tag de la ficha |
 | `GET /api/v1/catalog/datasets/{id}/freshness-history` | Histórico de instantáneas, la más reciente primero (`limit`) |
-| `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada, por periodicidad y por método de observación, inventario de endpoints y umbrales vigentes |
+| `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada, por periodicidad y por método de observación, fichas que ya no aparecen en el listado (`notListed`), inventario de endpoints y umbrales vigentes |
 | `GET /api/v1/catalog/api-tags` | Cruce catálogo ↔ Swagger: cada tag con sus operaciones documentadas y las fichas que lo declaran (0 operaciones = tag declarado que el Swagger no documenta; sin fichas = fuente sin ficha) |
 | `GET /api/v1/catalog/api-endpoints` | Inventario de operaciones del Swagger de la API (`tag`, `q`, `templated`; `sort=document|path|tag`) |
 | `GET /api/v1/catalog/federation` | Datasets del publicador municipal en datos.gob.es con `inCatalog` (`inCatalog`, `q`; `sort=id|title`); los que no tienen ficha en el listado municipal son partes de series y colecciones |

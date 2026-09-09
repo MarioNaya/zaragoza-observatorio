@@ -27,6 +27,12 @@ final class Caveats {
 			"apiEndpoints son las operaciones que el Swagger de la API municipal documenta bajo el apiTag de la ficha "
 					+ "(inventario ingerido por separado, con su propio ingestedAt); tagDocumented indica si ese tag "
 					+ "existe en el Swagger. Que un endpoint esté documentado no significa que responda (S1.2).",
+			"listed = false y delistedAt: la ficha no apareció en el último listado municipal ingerido; delistedAt "
+					+ "es el inicio de la primera ingesta completa en la que faltó. Es un hecho sobre el listado, "
+					+ "no sobre el dato: no dice que el ayuntamiento la haya retirado ni que el dato haya "
+					+ "desaparecido. La ficha se conserva con todo su histórico de frescura y se sigue observando; "
+					+ "si vuelve a aparecer, la marca se quita (ADR-013). datasets en /catalog/summary cuenta "
+					+ "todas las fichas ingeridas, listadas o no, y notListed cuenta aparte las que faltan.",
 			"federated y federatedUrl: la ficha aparece en el listado de datos.gob.es del publicador L01502973 en "
 					+ "la última ingesta de la federación (ver GET /catalog/federation). datos.gob.es lista además "
 					+ "datasets sin ficha en este catálogo: partes de series y colecciones que catalogo.json no "
