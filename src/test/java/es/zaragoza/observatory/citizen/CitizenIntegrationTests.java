@@ -313,15 +313,20 @@ class CitizenIntegrationTests {
 					return withSuccess(body, JSON_UTF8).createResponse(request);
 				});
 		assertThat(ingestion.run(job(GeoSources.DISTRICTS)).status()).isEqualTo(RunStatus.SUCCEEDED);
-		// El padrón lo trae el listener de geo, que es asíncrono, y las agregaciones necesitan el denominador
-		// (regla 7). Hacen falta las dos esperas y en este orden: `verify` garantiza que ya no llegarán más
-		// peticiones al servidor simulado —sin eso, el `reset` de abajo pilla al listener a media faena—, y el
-		// recuento garantiza que la escritura ha terminado. Ninguna sirve sola: el recuento puede estar ya en
-		// 116 porque lo dejó otro test (la base de datos es la misma), y `verify` se satisface cuando se hizo
-		// la última petición, no cuando se guardó su respuesta.
-		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> server.verify());
+		// El padrón lo trae el listener de geo, que es **asíncrono**, y las agregaciones necesitan el denominador
+		// (regla 7). Hay que esperar a que ese listener termine antes de tocar el servidor simulado, y lo que
+		// dice si ha terminado es el registro de eventos de Modulith: mientras quede una publicación sin
+		// `completion_date`, hay un listener a medias y sus peticiones aún pueden llegar.
+		//
+		// Las dos alternativas evidentes no valen. Contar filas de `geo_population_record` termina antes de
+		// tiempo, porque **la base de datos es la misma para todos los tests de integración** y esas 116 filas
+		// puede haberlas dejado otro. Y `server.verify()` no es seguro aquí: recorre la lista de expectativas
+		// mientras el listener la está modificando desde otro hilo, y lanza ConcurrentModificationException.
 		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(jdbc
-				.sql("select count(*) from geo_population_record").query(Long.class).single()).isEqualTo(29L * 4));
+				.sql("select count(*) from event_publication where completion_date is null").query(Long.class)
+				.single()).isZero());
+		assertThat(jdbc.sql("select count(*) from geo_population_record").query(Long.class).single())
+				.isEqualTo(29L * 4);
 		server.reset();
 	}
 
