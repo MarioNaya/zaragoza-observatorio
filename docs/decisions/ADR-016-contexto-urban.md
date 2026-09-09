@@ -77,7 +77,7 @@ Y ninguna cifra del producto se llama «locales abiertos» ni «negocios activos
 - El eje territorial pasa de una fuente a dos, con **coberturas muy distintas** (89,4 % frente a 29,1 %). Comparar las dos series por junta sin mirar las dos coberturas engaña, y los `caveats` lo dicen en las dos.
 - Una migración nueva (`V011`) con dos tablas. Con `ddl-auto=validate`, toda entidad necesita su migración y su `columnDefinition` (regla 21).
 - El barrido completo son **40 MB y ~85 páginas**; con el retardo de cortesía de `ingestion` (`PT0.5S`), unos 45 s de peticiones. El incremental diario son 54 registros en una página.
-- La memoria de producción subirá algo (ADR-009): la línea base con cuatro módulos es 416 MB y hay que volver a medirla con cinco. No se toca ninguna bandera de la JVM sin medir antes.
+- La memoria de producción sube algo (ADR-009): **medido el mismo día**, la línea base pasa de 416 MB con cuatro módulos a **425 MB con cinco**, con un pico de 480 MB durante el barrido completo. No se ha tocado ninguna bandera de la JVM.
 - `SPEC.md` §9 pierde la duda del contexto de actividad urbanística y gana la de si el `estado` llega a poder interpretarse.
 - Quedan **tres fuentes más** para este contexto, cada una con su spike: `licencia-obra` (2.042 parcelas, 100 % con punto), `via-publica/incidencia` (100 %) y `locales-vacios` (3.824, 48,8 %).
 

@@ -24,7 +24,7 @@ La especificación viva del proyecto es `SPEC.md` (ADR-000). Las decisiones de a
     - **Verificación inmediata**: tras cualquier cambio de dependencias o de scaffolding, compilación y tests en el mismo paso (`./mvnw verify`, `npm ci && npm run build`). No se encadena un segundo cambio sobre uno que no compila.
     - Ficheros de configuración de herramientas (`pom.xml`, `package.json`, `angular.json`) se editan a mano solo para lo que la herramienta no cubre (plugins de build, perfiles, scripts), y siempre seguido de la verificación anterior.
 
-## Reglas adicionales (ADR-001 a ADR-015)
+## Reglas adicionales (ADR-001 a ADR-016)
 
 16. **Spikes = tests JUnit etiquetados.** Cada spike es una clase `S<fase><n>NombreSpike` (`S04GeoSpike`, `S12ApiInventorySpike`, `S21TerritoryResolutionSpike`) con `@Tag("spike")` en `src/test/java/es/zaragoza/observatory/spikes/`, excluida del build por defecto y ejecutada con `.\mvnw.cmd test -Pspikes`. Guarda respuestas crudas en `src/test/resources/fixtures/zaragoza/` y su informe va en `docs/spikes/`.
 17. **Stack real**: Spring Boot 4.1.x (starters modulares: `spring-boot-starter-webmvc`, `-restclient`, `-flyway`…), Spring Modulith 2.1.x vía BOM, Java 21, Jackson 3 (`tools.jackson`). Cuando dudes de un paquete o artefacto, mira `pom.xml` y `.\mvnw.cmd dependency:tree`, no la memoria.
