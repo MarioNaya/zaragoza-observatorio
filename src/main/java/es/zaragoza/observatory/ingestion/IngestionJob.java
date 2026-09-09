@@ -25,4 +25,20 @@ public interface IngestionJob {
 		return source().dataset().key();
 	}
 
+	/**
+	 * Si la página cruda se guarda en {@code raw_payload} para depuración y reprocesado (SPEC.md §4.5, con la
+	 * retención de {@code zaragoza.ingestion.raw-retention}). Por defecto sí.
+	 * <p>
+	 * Un módulo lo desactiva cuando la respuesta trae <b>datos personales que no se pueden dejar de descargar</b>.
+	 * Es el caso de {@code urban}: la fuente no admite proyección sin romper los registros anidados, así que el
+	 * texto libre llega igual, y guardarlo catorce días en una tabla sería conservar justo lo que ADR-016 §3
+	 * decidió no tener. En {@code citizen} no hizo falta porque allí el texto ni se pide (ADR-012).
+	 * <p>
+	 * Lo que se pierde al desactivarlo es poder reprocesar una página sin volver a pedirla. Es un precio
+	 * consciente, y quien lo pague debe decir aquí por qué.
+	 */
+	default boolean keepsRawPayload() {
+		return true;
+	}
+
 }

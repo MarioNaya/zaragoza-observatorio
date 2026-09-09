@@ -1,6 +1,6 @@
 # Observatorio de Datos Abiertos de Zaragoza
 
-Plataforma que ingesta los datos abiertos del Ayuntamiento de Zaragoza (API REST v2) en una base de datos propia y los sirve por una API REST para ofrecer: un monitor de frescura del catálogo municipal, un observatorio de quejas y sugerencias por junta, y un observatorio de gasto público (contratación OCDS, presupuesto y subvenciones). Herramienta de análisis, no de conclusiones.
+Plataforma que ingesta los datos abiertos del Ayuntamiento de Zaragoza (API REST v2) en una base de datos propia y los sirve por una API REST para ofrecer: un monitor de frescura del catálogo municipal, un observatorio de quejas y sugerencias por junta, un observatorio de la actividad urbana registrada (locales con licencia) y un observatorio de gasto público (contratación OCDS, presupuesto y subvenciones). Herramienta de análisis, no de conclusiones.
 
 Monolito modular con Spring Boot 4.1 y Spring Modulith, arquitectura hexagonal por módulo, PostgreSQL + PostGIS, Java 21.
 
@@ -25,7 +25,7 @@ Repositorio: <https://github.com/MarioNaya/zaragoza-observatorio>
 docker compose -f compose.prod.yaml up --build -d   # la imagen de producción, en local
 ```
 
-## API (fase 1: monitor de frescura · fase 2: territorio y ciudadanía)
+## API (fase 1: monitor de frescura · fase 2: territorio, ciudadanía y actividad urbana)
 
 Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y URL consultada), `ingestedAt` (fin de la última ingesta con éxito) y `caveats`.
 
@@ -44,6 +44,9 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 | `GET /api/v1/citizen/requests` | Quejas y sugerencias paginadas y ordenadas (`sort=requestedAt\|updatedAt\|id`), con filtros `district` (la junta **resuelta**), `serviceCode`, `status`, `assignment`, `internal`, `from`, `to`. **Sin el texto de la queja**: no se pide al origen |
 | `GET /api/v1/citizen/aggregations?by=district\|district_year\|category\|month` | Recuentos por junta, por junta y año, por categoría o por mes: cada grupo con su padrón, el año usado, las quejas por mil habitantes, la mediana de tiempo de respuesta de sus cerradas y cuántos de sus registros son servicios `INTERNAL`; la respuesta, con el reparto por estado de asignación y el total sin asignar. En la serie por junta y año, el padrón es el **de cada año** y `coverageByYear` da la **cobertura de punto de cada año entero**, que es la que permite comparar dos columnas; no se ajusta nada por cobertura |
 | `GET /api/v1/citizen/summary` | Totales ingeridos, cuántos son servicios `INTERNAL`, rango temporal, reparto por estado y contraste entre la junta resuelta y la que declara el origen |
+| `GET /api/v1/urban/premises` | Locales con licencia paginados y ordenados (`sort=createdAt\|updatedAt\|id`), con sus licencias y con filtros `district` (la junta **resuelta**), `iae`, `iaeSection`, `iaeGroup`, `statusCode`, `zone`, `assignment`, `licenceYear`, `from`, `to`. **Sin texto libre de ninguna clase**: no hay columna que lo guarde |
+| `GET /api/v1/urban/aggregations?by=district\|activity\|status\|licence_year\|licence_type\|district_licence_year` | Recuentos por junta, por actividad (agrupación IAE), por estado, por año o tipo de licencia, y el cruce junta × año. Cada respuesta declara en `unit` **qué cuenta**, locales o licencias, y cada grupo trae las dos cifras; los ejes con año llevan `coverageByYear` aparte |
+| `GET /api/v1/urban/summary` | Locales y licencias ingeridos, rango temporal, reparto por código de estado del origen y reparto por estado de asignación territorial |
 | `GET /v3/api-docs` · `/swagger-ui.html` | Contrato OpenAPI 3 y su interfaz |
 
 La frescura *declarada* compara `modified` con `accrualPeriodicity` (ambos declarados por el publicador) contra umbrales configurables; `NOT_EVALUABLE` agrupa las fichas sin periodicidad evaluable o sin `modified` (la mayoría). La frescura *observada* pregunta a diario a una distribución de cada ficha y publica lo que devuelve con su método: `FILE_HEADERS` (`Last-Modified` del fichero, por `HEAD`), `API_MAX_DATE` (valor máximo de un campo de fecha de la API de la sede, pedido con `sort desc`, más `totalCount`), `API_COUNT` (solo `totalCount`), `WFS_HITS` (`numberMatched`) o `NOT_OBSERVABLE`; los intentos fallidos (servicios inexistentes, redirecciones, intranet) quedan registrados con su causa. Ninguno de los dos ejes es un juicio sobre el dato: cada respuesta lleva `caveats`. El Swagger 2.0 de la API municipal se ingiere a diario como inventario de endpoints y se cruza con las fichas por el tag que declaran (S1.2, ADR-006), y el listado del publicador en datos.gob.es se ingiere a diario para marcar las fichas federadas y mostrar los datasets federados que el listado municipal omite (S1.3, ADR-007).

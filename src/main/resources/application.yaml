@@ -109,6 +109,17 @@ zaragoza:
     # Las fechas del origen no llevan zona y el filtro FIQL se manda con Z: se retrocede la marca de agua lo
     # suficiente para que esa duda no pueda saltarse registros (el upsert es idempotente, S2.2).
     watermark-margin: PT6H
+  # Módulo urban (docs/spikes/S2.4-registro-licencia.md, ADR-011, ADR-016). Aquí no hay proyección `fl` y su
+  # ausencia es deliberada: la fuente vacía los objetos anidados cuando se proyecta (una licencia proyectada
+  # llega sin año ni expediente) y `removeproperties` se acepta sin aplicarse, así que el texto libre se
+  # descarga sí o sí y lo descarta el traductor, que es donde está la garantía. El listado se recorre siempre
+  # por `id asc` —único eje sin empates: 22.044 locales comparten un mismo `lastUpdated`— y la ventana
+  # incremental va en `q`, no en `sort`.
+  urban:
+    list-url: https://www.zaragoza.es/sede/servicio/registro-licencia.json
+    rows: 500
+    interval: P1D
+    watermark-margin: PT6H
 
 ---
 # Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara

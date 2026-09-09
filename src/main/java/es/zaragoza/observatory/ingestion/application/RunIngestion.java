@@ -63,7 +63,9 @@ public class RunIngestion {
 			int start = 0;
 			while (true) {
 				RawPage page = gateway.fetch(source, pageNumber, start);
-				payloads.store(RawPayload.of(run.id(), source.dataset(), page));
+				if (job.keepsRawPayload()) {
+					payloads.store(RawPayload.of(run.id(), source.dataset(), page));
+				}
 				job.handle(page);
 				run.pageFetched(page);
 				log.debug("ingestion {} page {} records={} totalCount={} ms={}", run.id(), pageNumber,

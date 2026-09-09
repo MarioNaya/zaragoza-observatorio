@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import es.zaragoza.observatory.citizen.domain.Assignment;
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.citizen.domain.ServiceRequest;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestDraft;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestStatus;
