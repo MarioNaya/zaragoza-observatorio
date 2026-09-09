@@ -89,7 +89,7 @@ curl https://<dominio>/api/v1/catalog/summary     # a los ~40 s del arranque: fi
 curl https://<dominio>/api/v1/geo/districts       # a los ~45 s: las 29 juntas con su padrón
 ```
 
-En los logs (ECS JSON) debe verse Flyway aplicando las 8 migraciones la primera vez, y a los 30 s las cuatro ingestas:
+En los logs (ECS JSON) debe verse Flyway aplicando las 10 migraciones la primera vez, y a los 30 s las cuatro ingestas:
 
 ```
 ingestion … succeeded for sede:catalogo/api: 1 records in 1 pages
@@ -124,7 +124,7 @@ Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada po
 
 | Concepto | Consumo | Coste aproximado |
 |---|---|---|
-| `observatorio` (JVM acotada) | ~368 MB | ~3,7 $/mes |
+| `observatorio` (JVM acotada) | ~416 MB con los cuatro módulos | ~4,2 $/mes |
 | `postgis` | ~125 MB de media | ~1,25 $/mes |
 | Volumen | 5 GB | 0,75 $/mes |
 | Egress | medido: 0 MB | ~0 |
@@ -132,7 +132,7 @@ Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada po
 
 Sobre ese consumo va el plan. El workspace está en **Pro: 20 $/mes con 20 $ de uso incluido**, y se paga por las copias de seguridad del volumen, que Hobby (5 $/mes con 5 $ incluidos) no ofrece (ADR-010, §7). Con el consumo actual la factura es plana: 20 $/mes, con el uso dentro del crédito. **El crédito es de la cuenta, no del proyecto**, y en esta cuenta hay otra aplicación.
 
-Comprobarlo con `railway metrics --service observatorio`. **Si la memoria sube de forma sostenida por encima de ~400 MB, es una regresión**: mirar si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`.
+Comprobarlo con `railway metrics --service observatorio`. **Lo que se vigila es un salto respecto de la línea base de 416 MB** (cuatro módulos, medida el 2026-09-08), no el umbral de 400 MB de la primera versión de ADR-009: se fijó para una aplicación de dos módulos y hoy solo daría falsos positivos. Ante un salto, mirar si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`.
 
 Dos cosas que **no** reducen esta factura, por si tienta:
 

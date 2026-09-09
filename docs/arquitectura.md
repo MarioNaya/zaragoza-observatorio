@@ -10,7 +10,7 @@ Versión gráfica de `SPEC.md` §4 tras la fase 0 (2026-09-05). Tres vistas: có
 flowchart LR
   subgraph AYTO["Fuentes municipales · www.zaragoza.es"]
     direction TB
-    CAT["Catálogo de datasets<br/>web/espacio-de-datos/…/catalogo.json<br/>436 datasets · rows ≤ 500"]
+    CAT["Catálogo de datasets<br/>web/espacio-de-datos/…/catalogo.json<br/>434 datasets (436 hasta 2026-09-08) · rows ≤ 500"]
     SWG["Swagger de la API<br/>sede/servicio/catalogo/api.json<br/>497 operaciones · 84 tags · documento único (S1.2)"]
     FED["Federación datos.gob.es<br/>apidata/catalog/dataset/publisher/L01502973.json<br/>369 datasets · _page/_pageSize ≤ 200 (S1.3)"]
     QYS["Quejas y sugerencias<br/>sede/…/quejas-sugerencias/list.json (+ Open311)<br/>~40.000/año · 50 % con punto"]
@@ -113,7 +113,7 @@ flowchart LR
       DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>Observation, ObservationMethod<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel, DistributionObserver<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
       ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset · CatalogIngestionJob<br/>SwaggerJsonTranslator: Swagger 2.0 → ApiEndpoint · ApiInventoryIngestionJob (S1.2)<br/>FederationJsonTranslator: datos.gob.es → FederatedDataset · FederationIngestionJob (S1.3)<br/>DistributionHttpObserver + ObservationUrls implementan DistributionObserver<br/>(RestClient común de la aplicación; scheduling/CatalogObservationScheduler)"]
       EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)<br/>marca la baja del listado y toma las instantáneas"]
-      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004, V005, V010"]
+      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004 a V007 y V010"]
       WEB -- "puerto de lectura" --> DOMN
       ZGZ -- "caso de uso" --> APP
       ZGZ -. "implementa DistributionObserver" .-> DOMN
