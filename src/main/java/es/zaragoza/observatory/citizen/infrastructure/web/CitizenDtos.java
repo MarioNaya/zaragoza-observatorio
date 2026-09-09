@@ -58,18 +58,21 @@ final class CitizenDtos {
 	 * denominador viaja al lado y quien lea puede rehacerlo o ignorarlo
 	 * @param pointCoverage proporción del grupo que tiene punto: sin esto, comparar dos grupos es comparar dos
 	 * coberturas distintas
+	 * @param year año de alta del grupo en el eje {@code district_year}, {@code null} en los demás
+	 * @param internal registros del grupo que son servicios INTERNAL, que no son quejas ciudadanas. Están dentro
+	 * de {@code total} y se publican aparte para que quien lea pueda restarlos (ADR-015)
 	 */
-	record BucketDto(String key, String label, long total, long closed, long open, long withPoint,
-			Double pointCoverage, Double medianResponseHours, Integer population, Integer populationYear,
-			Double perThousandInhabitants) {
+	record BucketDto(String key, String label, Integer year, long total, long closed, long open, long withPoint,
+			Double pointCoverage, long internal, Double medianResponseHours, Integer population,
+			Integer populationYear, Double perThousandInhabitants) {
 
 		static BucketDto of(AggregationBucket bucket, String label, Integer population, Integer populationYear) {
 			double coverage = bucket.total() == 0 ? 0 : (double) bucket.withPoint() / bucket.total();
 			Double perThousand = population == null || population == 0 ? null
 					: bucket.total() * 1000.0 / population;
-			return new BucketDto(bucket.key(), label != null ? label : bucket.label(), bucket.total(),
+			return new BucketDto(bucket.key(), label != null ? label : bucket.label(), bucket.year(), bucket.total(),
 					bucket.closed(), bucket.total() - bucket.closed(), bucket.withPoint(), coverage,
-					bucket.medianResponseHours(), population, populationYear, perThousand);
+					bucket.internal(), bucket.medianResponseHours(), population, populationYear, perThousand);
 		}
 	}
 
@@ -79,7 +82,7 @@ final class CitizenDtos {
 	 * omisión.
 	 */
 	record AggregationDto(String by, List<BucketDto> buckets, AssignmentDto assignment, long matched,
-			long unassigned) {
+			long unassigned, long internal) {
 	}
 
 	/**
@@ -106,8 +109,8 @@ final class CitizenDtos {
 	 * qué porcentaje del origen se ha ingerido porque el origen no publica su total: hay que sondearlo, y una
 	 * cifra copiada de un spike envejece sin que nadie lo note (S2.2).
 	 */
-	record SummaryDto(long total, Instant earliestRequestedAt, Instant latestRequestedAt, Instant latestUpdatedAt,
-			Map<String, Long> byStatus, AssignmentDto assignment) {
+	record SummaryDto(long total, long internal, Instant earliestRequestedAt, Instant latestRequestedAt,
+			Instant latestUpdatedAt, Map<String, Long> byStatus, AssignmentDto assignment) {
 	}
 
 }

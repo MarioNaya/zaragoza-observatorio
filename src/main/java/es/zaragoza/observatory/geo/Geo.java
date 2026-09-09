@@ -33,4 +33,11 @@ public interface Geo {
 	 */
 	List<DistrictSummary> districts();
 
+	/**
+	 * El padrón de todas las juntas y todos los años disponibles, ordenado por junta y año. Lo necesita quien
+	 * agrega por territorio <b>y</b> por año: {@link #districts()} solo da el año más reciente, y usar ese año
+	 * para toda una serie mezcla dos cosas distintas. La serie no es continua (falta 2023, S2.1).
+	 */
+	List<DistrictPopulation> populations();
+
 }

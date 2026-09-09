@@ -29,6 +29,9 @@ public interface ServiceRequestRepository {
 
 	long count();
 
+	/** Cuántos registros pasan los filtros; con el filtro {@code ONLY} es el recuento de INTERNAL (ADR-015). */
+	long count(ServiceRequestQuery filters);
+
 	ServiceRequestPage search(ServiceRequestQuery query);
 
 	/** Agrega por el eje pedido aplicando los filtros de la consulta; el orden lo fija el adaptador (regla 8). */

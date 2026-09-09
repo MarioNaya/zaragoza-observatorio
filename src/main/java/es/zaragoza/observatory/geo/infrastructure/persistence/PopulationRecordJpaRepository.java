@@ -12,6 +12,8 @@ interface PopulationRecordJpaRepository extends JpaRepository<PopulationRecordEn
 
 	List<PopulationRecordEntity> findByDistrictIdOrderByYearDesc(Integer districtId);
 
+	List<PopulationRecordEntity> findAllByOrderByDistrictIdAscYearDesc();
+
 	Optional<PopulationRecordEntity> findFirstByDistrictIdOrderByYearDesc(Integer districtId);
 
 	@Query("select distinct p.year from PopulationRecordEntity p order by p.year desc")

@@ -22,9 +22,11 @@ final class CitizenCaveats {
 					+ "la ingesta no lo pide (ADR-012). Lo que se publica de cada registro es su identificador, "
 					+ "estado, categoría, fechas y junta.",
 			"La categoría es la del origen (unas 100 en services.json). Los servicios INTERNAL no son quejas "
-					+ "ciudadanas y siguen contando: se pueden filtrar por su código, no se excluyen en silencio. "
-					+ "Del origen se sabe además que services.json no documenta esa categoría y que Open311 no "
-					+ "publica ninguno de esos registros, ni en su listado ni en su detalle (S2.3).");
+					+ "ciudadanas y siguen contando: cada grupo publica cuántos son en internal y el parámetro "
+					+ "internal=exclude los deja fuera si quien lee lo pide. No se excluyen en silencio (ADR-015). "
+					+ "Del origen se sabe además que services.json no documenta esa categoría, que llevan siempre "
+					+ "service_code 2 y que Open311 no publica ninguno de esos registros, ni en su listado ni en su "
+					+ "detalle (S2.3).");
 
 	/** Lo que hay que saber además para leer cualquier cifra por junta. */
 	static final List<String> TERRITORIAL = List.of(
@@ -47,12 +49,30 @@ final class CitizenCaveats {
 					+ "derecha y una media que las ignore sin decirlo engaña. Cada grupo trae cuántas cerradas "
 					+ "sostienen su mediana.");
 
+	/** Lo que hay que saber además para leer una serie por junta y año. */
+	static final List<String> SERIES = List.of(
+			"Cada grupo es una junta en un año y trae su propia cobertura de punto: comparar dos años sin mirarla "
+					+ "es comparar dos coberturas distintas, porque va del 16 % al 45 % según el año. Las cifras no "
+					+ "se ajustan por cobertura, ni aquí ni en ninguna parte: un ajuste supondría que lo no "
+					+ "geolocalizado se reparte igual que lo geolocalizado, y eso no está comprobado (ADR-015).",
+			"El padrón que acompaña a cada grupo es el de su propio año, no el del año más reciente. La serie del "
+					+ "padrón por junta solo tiene 2020, 2021, 2022 y 2024 (falta 2023, S2.1), así que los demás "
+					+ "años salen sin denominador y sin quejas por mil habitantes: el hueco se ve, no se rellena "
+					+ "interpolando.",
+			"2013 y 2014 son un régimen distinto del resto de la serie: casi todo con punto y nada con junta "
+					+ "declarada (S2.2). No se corrige ni se excluye, pero conviene saberlo antes de leer una "
+					+ "tendencia que empiece ahí.");
+
 	static List<String> territorial() {
 		return concat(BASE, TERRITORIAL);
 	}
 
 	static List<String> aggregations() {
 		return concat(BASE, TERRITORIAL, RESPONSE_TIME);
+	}
+
+	static List<String> series() {
+		return concat(BASE, TERRITORIAL, RESPONSE_TIME, SERIES);
 	}
 
 	@SafeVarargs

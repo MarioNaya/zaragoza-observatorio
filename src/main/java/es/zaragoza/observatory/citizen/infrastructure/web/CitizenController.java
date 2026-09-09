@@ -20,6 +20,7 @@ import es.zaragoza.observatory.citizen.domain.AggregationAxis;
 import es.zaragoza.observatory.citizen.domain.AggregationBucket;
 import es.zaragoza.observatory.citizen.domain.Assignment;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
+import es.zaragoza.observatory.citizen.domain.InternalServices;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestPage;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery.SortField;
@@ -34,6 +35,7 @@ import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.BucketDto;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.ServiceRequestDto;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.Source;
 import es.zaragoza.observatory.citizen.infrastructure.web.CitizenDtos.SummaryDto;
+import es.zaragoza.observatory.geo.DistrictPopulation;
 import es.zaragoza.observatory.geo.DistrictSummary;
 import es.zaragoza.observatory.geo.Geo;
 import es.zaragoza.observatory.ingestion.Ingestion;
@@ -70,8 +72,10 @@ class CitizenController {
 			@RequestParam(defaultValue = "50") int size, @RequestParam(defaultValue = "requestedAt,desc") String sort,
 			@RequestParam(required = false) Integer district, @RequestParam(required = false) String serviceCode,
 			@RequestParam(required = false) String status, @RequestParam(required = false) String assignment,
-			@RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to) {
-		ServiceRequestQuery query = query(page, size, sort, district, serviceCode, status, assignment, from, to);
+			@RequestParam(required = false) String internal, @RequestParam(required = false) Instant from,
+			@RequestParam(required = false) Instant to) {
+		ServiceRequestQuery query = query(page, size, sort, district, serviceCode, status, assignment, internal, from,
+				to);
 		ServiceRequestPage result = requests.search(query);
 		Map<Integer, String> names = districtNames();
 		List<ServiceRequestDto> items = result.items().stream().map(request -> ServiceRequestDto.of(request, names))
@@ -89,26 +93,36 @@ class CitizenController {
 	ApiItem<AggregationDto> aggregations(@RequestParam(defaultValue = "district") String by,
 			@RequestParam(required = false) Integer district, @RequestParam(required = false) String serviceCode,
 			@RequestParam(required = false) String status, @RequestParam(required = false) String assignment,
-			@RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to) {
+			@RequestParam(required = false) String internal, @RequestParam(required = false) Instant from,
+			@RequestParam(required = false) Instant to) {
 		AggregationAxis axis = axis(by);
 		ServiceRequestQuery filters = query(0, ServiceRequestQuery.MAX_SIZE, "requestedAt,desc", district, serviceCode,
-				status, assignment, from, to).filtersOnly();
+				status, assignment, internal, from, to).filtersOnly();
 
 		List<AggregationBucket> buckets = requests.aggregate(axis, filters);
 		AssignmentCounts counts = requests.assignmentCounts(filters);
-		Map<Integer, DistrictSummary> districts = axis == AggregationAxis.DISTRICT ? districtsById() : Map.of();
+		boolean territorial = axis == AggregationAxis.DISTRICT || axis == AggregationAxis.DISTRICT_YEAR;
+		Map<Integer, DistrictSummary> districts = territorial ? districtsById() : Map.of();
+		// El padrón que acompaña a cada grupo es el de su propio año, no el del año más reciente: usar el último
+		// para toda una serie mezcla dos cosas distintas. Los años sin padrón se quedan sin él (ADR-015).
+		Map<String, Integer> byYear = axis == AggregationAxis.DISTRICT_YEAR ? populationByYear() : Map.of();
 
 		List<BucketDto> items = buckets.stream().map(bucket -> {
-			DistrictSummary summary = axis == AggregationAxis.DISTRICT ? districts.get(intKey(bucket.key())) : null;
-			return BucketDto.of(bucket, summary == null ? null : summary.shortName(),
-					summary == null ? null : summary.population(),
+			DistrictSummary summary = territorial ? districts.get(intKey(bucket.key())) : null;
+			String label = summary == null ? null : summary.shortName();
+			if (axis == AggregationAxis.DISTRICT_YEAR) {
+				Integer population = bucket.year() == null ? null : byYear.get(bucket.key() + ":" + bucket.year());
+				return BucketDto.of(bucket, label, population, population == null ? null : bucket.year());
+			}
+			return BucketDto.of(bucket, label, summary == null ? null : summary.population(),
 					summary == null ? null : summary.populationYear());
 		}).toList();
 
 		long matched = items.stream().mapToLong(BucketDto::total).sum();
 		var dto = new AggregationDto(axis.name().toLowerCase(Locale.ROOT), items, AssignmentDto.of(counts), matched,
-				counts.unassigned());
-		return new ApiItem<>(source, ingestedAt(), CitizenCaveats.aggregations(), dto);
+				counts.unassigned(), items.stream().mapToLong(BucketDto::internal).sum());
+		return new ApiItem<>(source, ingestedAt(),
+				axis == AggregationAxis.DISTRICT_YEAR ? CitizenCaveats.series() : CitizenCaveats.aggregations(), dto);
 	}
 
 	@GetMapping("/summary")
@@ -116,8 +130,9 @@ class CitizenController {
 		ServiceRequestQuery all = ServiceRequestQuery.all();
 		Map<String, Long> byStatus = new LinkedHashMap<>();
 		requests.statusCounts(all).forEach((status, n) -> byStatus.put(status.name(), n));
-		var dto = new SummaryDto(requests.count(), requests.earliestRequestedAt().orElse(null),
-				requests.latestRequestedAt().orElse(null), requests.latestUpdatedAt().orElse(null), byStatus,
+		var dto = new SummaryDto(requests.count(), requests.count(onlyInternal(all)),
+				requests.earliestRequestedAt().orElse(null), requests.latestRequestedAt().orElse(null),
+				requests.latestUpdatedAt().orElse(null), byStatus,
 				AssignmentDto.of(requests.assignmentCounts(all)));
 		return new ApiItem<>(source, ingestedAt(), CitizenCaveats.aggregations(), dto);
 	}
@@ -125,7 +140,7 @@ class CitizenController {
 	// --- traducción de parámetros ----------------------------------------------------------------------
 
 	private ServiceRequestQuery query(int page, int size, String sort, Integer district, String serviceCode,
-			String status, String assignment, Instant from, Instant to) {
+			String status, String assignment, String internal, Instant from, Instant to) {
 		String[] parts = (sort == null ? "requestedAt,desc" : sort).split(",");
 		SortField field = SORT_FIELDS.get(parts[0].strip());
 		if (field == null) {
@@ -134,8 +149,9 @@ class CitizenController {
 		boolean ascending = parts.length > 1 && parts[1].strip().equalsIgnoreCase("asc");
 		try {
 			return new ServiceRequestQuery(district, blankToNull(serviceCode), enumValue(ServiceRequestStatus.class,
-					status, "status"), enumValue(Assignment.class, assignment, "assignment"), from, to, field,
-					ascending, page, size);
+					status, "status"), enumValue(Assignment.class, assignment, "assignment"),
+					enumValue(InternalServices.Filter.class, internal, "internal"), from, to, field, ascending, page,
+					size);
 		}
 		catch (IllegalArgumentException ex) {
 			throw badRequest(ex.getMessage());
@@ -176,6 +192,22 @@ class CitizenController {
 	private Map<Integer, String> districtNames() {
 		return geo.districts().stream()
 				.collect(Collectors.toMap(DistrictSummary::id, DistrictSummary::shortName));
+	}
+
+	/** Padrón por junta y año, indexado por «junta:año», para casar cada grupo con el denominador de su año. */
+	private Map<String, Integer> populationByYear() {
+		var byKey = new LinkedHashMap<String, Integer>();
+		for (DistrictPopulation record : geo.populations()) {
+			byKey.put(record.districtId() + ":" + record.year(), record.population());
+		}
+		return byKey;
+	}
+
+	/** Los mismos filtros pidiendo solo los INTERNAL, para poder contarlos aparte en el resumen (ADR-015). */
+	private static ServiceRequestQuery onlyInternal(ServiceRequestQuery query) {
+		return new ServiceRequestQuery(query.districtId(), query.serviceCode(), query.status(), query.assignment(),
+				InternalServices.Filter.ONLY, query.from(), query.to(), query.sortField(), query.ascending(),
+				query.page(), query.size());
 	}
 
 	private Map<Integer, DistrictSummary> districtsById() {

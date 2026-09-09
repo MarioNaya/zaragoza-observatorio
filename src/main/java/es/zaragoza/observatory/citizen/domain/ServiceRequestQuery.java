@@ -15,6 +15,8 @@ import java.time.Instant;
  * @param status estado
  * @param assignment cómo quedó la asignación territorial ({@code NO_POINT} incluido: los sin asignar se pueden
  * pedir explícitamente, no son un residuo invisible)
+ * @param internal qué hacer con los servicios {@code INTERNAL}, que no son quejas ciudadanas: por defecto cuentan
+ * (ADR-015). Nulo equivale a {@link InternalServices.Filter#INCLUDE}
  * @param from alta desde (inclusive)
  * @param to alta hasta (exclusive)
  * @param sortField campo de ordenación ya validado contra la lista blanca
@@ -23,7 +25,8 @@ import java.time.Instant;
  * @param size tamaño de página
  */
 public record ServiceRequestQuery(Integer districtId, String serviceCode, ServiceRequestStatus status,
-		Assignment assignment, Instant from, Instant to, SortField sortField, boolean ascending, int page, int size) {
+		Assignment assignment, InternalServices.Filter internal, Instant from, Instant to, SortField sortField,
+		boolean ascending, int page, int size) {
 
 	/** Campos por los que se puede ordenar (lista blanca explícita, regla 8). */
 	public enum SortField {
@@ -53,6 +56,9 @@ public record ServiceRequestQuery(Integer districtId, String serviceCode, Servic
 		if (sortField == null) {
 			sortField = SortField.REQUESTED_AT;
 		}
+		if (internal == null) {
+			internal = InternalServices.Filter.INCLUDE;
+		}
 		if (from != null && to != null && !from.isBefore(to)) {
 			throw new IllegalArgumentException("from must be before to");
 		}
@@ -60,12 +66,13 @@ public record ServiceRequestQuery(Integer districtId, String serviceCode, Servic
 
 	/** Los mismos filtros sin paginación, para agregar. */
 	public ServiceRequestQuery filtersOnly() {
-		return new ServiceRequestQuery(districtId, serviceCode, status, assignment, from, to, sortField, ascending, 0,
-				MAX_SIZE);
+		return new ServiceRequestQuery(districtId, serviceCode, status, assignment, internal, from, to, sortField,
+				ascending, 0, MAX_SIZE);
 	}
 
 	public static ServiceRequestQuery all() {
-		return new ServiceRequestQuery(null, null, null, null, null, null, SortField.REQUESTED_AT, false, 0, MAX_SIZE);
+		return new ServiceRequestQuery(null, null, null, null, InternalServices.Filter.INCLUDE, null, null,
+				SortField.REQUESTED_AT, false, 0, MAX_SIZE);
 	}
 
 }

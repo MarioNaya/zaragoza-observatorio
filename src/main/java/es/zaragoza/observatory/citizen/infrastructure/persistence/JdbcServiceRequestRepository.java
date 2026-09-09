@@ -23,6 +23,7 @@ import es.zaragoza.observatory.citizen.domain.AggregationBucket;
 import es.zaragoza.observatory.citizen.domain.Assignment;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
 import es.zaragoza.observatory.citizen.domain.DistrictAssignment;
+import es.zaragoza.observatory.citizen.domain.InternalServices;
 import es.zaragoza.observatory.citizen.domain.ServiceRequest;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestPage;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery;
@@ -133,6 +134,15 @@ class JdbcServiceRequestRepository implements ServiceRequestRepository {
 
 	@Override
 	@Transactional(readOnly = true)
+	public long count(ServiceRequestQuery filters) {
+		var where = new Where(filters);
+		Long total = jdbc.queryForObject("SELECT count(*) FROM citizen_service_request" + where.clause(), Long.class,
+				where.args());
+		return total == null ? 0 : total;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public ServiceRequestPage search(ServiceRequestQuery query) {
 		var where = new Where(query);
 		Long total = jdbc.queryForObject("SELECT count(*) FROM citizen_service_request" + where.clause(), Long.class,
@@ -152,31 +162,43 @@ class JdbcServiceRequestRepository implements ServiceRequestRepository {
 	@Override
 	@Transactional(readOnly = true)
 	public List<AggregationBucket> aggregate(AggregationAxis axis, ServiceRequestQuery filters) {
-		// El eje territorial agrupa solo lo que tiene junta; lo demás no se reparte ni se esconde: va en
+		// Los dos ejes territoriales agrupan solo lo que tiene junta; lo demás no se reparte ni se esconde: va en
 		// `assignmentCounts` (regla 7).
-		var where = new Where(filters, axis == AggregationAxis.DISTRICT ? "district_id IS NOT NULL" : null);
+		boolean territorial = axis == AggregationAxis.DISTRICT || axis == AggregationAxis.DISTRICT_YEAR;
+		var where = new Where(filters, territorial ? "district_id IS NOT NULL" : null);
+		// El año y el mes son los de la hora local de Zaragoza: agrupar en UTC movería de grupo las quejas de
+		// medianoche y las de Nochevieja.
+		String localTime = "requested_at AT TIME ZONE '" + ZaragozaTime.ZONE.getId() + "'";
 		String key = switch (axis) {
-			case DISTRICT -> "district_id::text";
+			case DISTRICT, DISTRICT_YEAR -> "district_id::text";
 			case CATEGORY -> "service_code";
-			// El mes es el de la hora local de Zaragoza: agrupar en UTC movería de mes las quejas de medianoche.
-			case MONTH -> "to_char(requested_at AT TIME ZONE '" + ZaragozaTime.ZONE.getId() + "', 'YYYY-MM')";
+			case MONTH -> "to_char(" + localTime + ", 'YYYY-MM')";
 		};
+		String year = axis == AggregationAxis.DISTRICT_YEAR
+				? "EXTRACT(YEAR FROM " + localTime + ")::int"
+				: "NULL::int";
 		String label = axis == AggregationAxis.CATEGORY ? "max(service_name)" : "NULL::text";
 		String sql = """
-				SELECT %s AS bucket_key, %s AS bucket_label, count(*) AS total,
+				SELECT %s AS bucket_key, %s AS bucket_year, %s AS bucket_label, count(*) AS total,
 				       count(*) FILTER (WHERE status = 'CLOSED') AS closed,
 				       count(*) FILTER (WHERE lon IS NOT NULL) AS with_point,
+				       count(*) FILTER (WHERE service_code = ?) AS internal,
 				       percentile_cont(0.5) WITHIN GROUP (
 				           ORDER BY EXTRACT(EPOCH FROM (updated_at - requested_at)) / 3600.0)
 				           FILTER (WHERE status = 'CLOSED' AND updated_at IS NOT NULL
 				                     AND updated_at >= requested_at) AS median_hours
 				FROM citizen_service_request%s
-				GROUP BY 1
-				ORDER BY 1
-				""".formatted(key, label, where.clause());
+				GROUP BY 1, 2
+				ORDER BY 1, 2
+				""".formatted(key, year, label, where.clause());
+		// El parámetro del FILTER va delante de los de la cláusula WHERE, en el orden en que aparece en el SQL.
+		var args = new ArrayList<Object>();
+		args.add(InternalServices.CODE);
+		args.addAll(Arrays.asList(where.args()));
 		return jdbc.query(sql, (rs, row) -> new AggregationBucket(rs.getString("bucket_key"),
 				rs.getString("bucket_label"), rs.getLong("total"), rs.getLong("closed"), rs.getLong("with_point"),
-				nullableDouble(rs, "median_hours")), where.args());
+				rs.getLong("internal"), nullableInt(rs, "bucket_year"), nullableDouble(rs, "median_hours")),
+				args.toArray());
 	}
 
 	@Override
@@ -237,6 +259,12 @@ class JdbcServiceRequestRepository implements ServiceRequestRepository {
 			add("service_code = ?", query.serviceCode());
 			add("status = ?", query.status() == null ? null : query.status().name());
 			add("assignment = ?", query.assignment() == null ? null : query.assignment().name());
+			switch (query.internal() == null ? InternalServices.Filter.INCLUDE : query.internal()) {
+				case EXCLUDE -> add("service_code IS DISTINCT FROM ?", InternalServices.CODE);
+				case ONLY -> add("service_code = ?", InternalServices.CODE);
+				case INCLUDE -> {
+				}
+			}
 			add("requested_at >= ?", query.from() == null ? null : Timestamp.from(query.from()));
 			add("requested_at < ?", query.to() == null ? null : Timestamp.from(query.to()));
 			if (extraCondition != null) {
