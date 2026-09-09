@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import es.zaragoza.observatory.geo.DistrictLocation;
 import es.zaragoza.observatory.geo.DistrictNames;
+import es.zaragoza.observatory.geo.DistrictPopulation;
 import es.zaragoza.observatory.geo.DistrictSummary;
 import es.zaragoza.observatory.geo.Geo;
 import es.zaragoza.observatory.geo.GeoPoint;
@@ -53,6 +54,14 @@ public class GeoService implements Geo {
 	@Override
 	public List<DistrictSummary> districts() {
 		return districts.findAll().stream().map(this::summarize).toList();
+	}
+
+	@Override
+	public List<DistrictPopulation> populations() {
+		return population.findAll().stream()
+				.filter(record -> record.total() != null)
+				.map(record -> new DistrictPopulation(record.districtId(), record.year(), record.total()))
+				.toList();
 	}
 
 	private DistrictSummary summarize(District district) {

@@ -40,6 +40,12 @@ class JpaPopulationRepository implements PopulationRepository {
 
 	@Override
 	@Transactional(readOnly = true)
+	public List<PopulationRecord> findAll() {
+		return jpa.findAllByOrderByDistrictIdAscYearDesc().stream().map(PopulationRecordEntity::toDomain).toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public List<Integer> years() {
 		return jpa.years();
 	}

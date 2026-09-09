@@ -14,6 +14,9 @@ public interface PopulationRepository {
 	/** El año más reciente disponible para una junta; vacío si no hay padrón. */
 	Optional<PopulationRecord> findLatest(int districtId);
 
+	/** Toda la serie, ordenada por junta y por año descendente (orden explícito, regla 8). */
+	List<PopulationRecord> findAll();
+
 	/** Los años presentes en la serie, descendente. La serie no es continua: falta 2023 (S2.1). */
 	List<Integer> years();
 

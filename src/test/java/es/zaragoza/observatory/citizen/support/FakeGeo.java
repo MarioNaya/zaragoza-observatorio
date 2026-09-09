@@ -7,6 +7,7 @@ import java.util.Map;
 
 import es.zaragoza.observatory.geo.DistrictLocation;
 import es.zaragoza.observatory.geo.DistrictNames;
+import es.zaragoza.observatory.geo.DistrictPopulation;
 import es.zaragoza.observatory.geo.DistrictSummary;
 import es.zaragoza.observatory.geo.Geo;
 import es.zaragoza.observatory.geo.GeoPoint;
@@ -21,6 +22,7 @@ public final class FakeGeo implements Geo {
 	private final Map<GeoPoint, List<Integer>> containing = new LinkedHashMap<>();
 	private final Map<Integer, String> names = new LinkedHashMap<>();
 	private final Map<Integer, Integer> population = new LinkedHashMap<>();
+	private final List<DistrictPopulation> series = new ArrayList<>();
 
 	public FakeGeo district(int id, String name, GeoPoint point, Integer inhabitants) {
 		names.put(id, name);
@@ -30,6 +32,12 @@ public final class FakeGeo implements Geo {
 		if (inhabitants != null) {
 			population.put(id, inhabitants);
 		}
+		return this;
+	}
+
+	/** Padrón de una junta en un año concreto, para las agregaciones por junta y año. */
+	public FakeGeo population(int districtId, int year, int inhabitants) {
+		series.add(new DistrictPopulation(districtId, year, inhabitants));
 		return this;
 	}
 
@@ -63,6 +71,16 @@ public final class FakeGeo implements Geo {
 		return names.entrySet().stream()
 				.map(entry -> new DistrictSummary(entry.getKey(), entry.getValue(), entry.getValue(), null,
 						population.get(entry.getKey()), population.containsKey(entry.getKey()) ? 2024 : null))
+				.toList();
+	}
+
+	@Override
+	public List<DistrictPopulation> populations() {
+		if (!series.isEmpty()) {
+			return List.copyOf(series);
+		}
+		return population.entrySet().stream()
+				.map(entry -> new DistrictPopulation(entry.getKey(), 2024, entry.getValue()))
 				.toList();
 	}
 

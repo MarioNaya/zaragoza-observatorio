@@ -210,6 +210,77 @@ class CitizenIntegrationTests {
 		summary.extractingPath("$.item.byStatus.CLOSED").isNotNull();
 		summary.extractingPath("$.item.earliestRequestedAt").isNotNull();
 		summary.extractingPath("$.item.assignment.declaredUnmatched").isNotNull();
+
+		// --- ADR-015: los INTERNAL cuentan, se ven y se pueden quitar ---------------------------------------
+		// La página de S2.2 trae 11 servicios INTERNAL entre los 500, todos con service_code 2.
+		long internalRows = jdbc.sql("select count(*) from citizen_service_request where service_code = '2'")
+				.query(Long.class).single();
+		assertThat(internalRows).isEqualTo(11);
+		assertThat(jdbc.sql("""
+				select count(distinct service_name) from citizen_service_request where service_code = '2'
+				""").query(Long.class).single()).isEqualTo(1);
+
+		summary.extractingPath("$.item.internal").isEqualTo(11);
+
+		var withInternal = assertThat(mvc.get().uri("/api/v1/citizen/aggregations").param("by", "category"))
+				.hasStatusOk().bodyJson();
+		withInternal.extractingPath("$.item.matched").isEqualTo(500);
+		withInternal.extractingPath("$.item.internal").isEqualTo(11);
+
+		var withoutInternal = assertThat(mvc.get().uri("/api/v1/citizen/aggregations").param("by", "category")
+				.param("internal", "exclude")).hasStatusOk().bodyJson();
+		withoutInternal.extractingPath("$.item.matched").isEqualTo(489);
+		withoutInternal.extractingPath("$.item.internal").isEqualTo(0);
+
+		var onlyInternal = assertThat(mvc.get().uri("/api/v1/citizen/requests").param("internal", "only")
+				.param("size", "50")).hasStatusOk().bodyJson();
+		onlyInternal.extractingPath("$.total").isEqualTo(11);
+		onlyInternal.extractingPath("$.items[*].serviceName").asArray().containsOnly("INTERNAL");
+
+		assertThat(mvc.get().uri("/api/v1/citizen/requests").param("internal", "exclude"))
+				.hasStatusOk().bodyJson().extractingPath("$.total").isEqualTo(489);
+		assertThat(mvc.get().uri("/api/v1/citizen/requests").param("internal", "inventado"))
+				.hasStatus(HttpStatus.BAD_REQUEST);
+
+		// --- ADR-015: la serie por junta y año, con el padrón de su propio año -------------------------------
+		var byYear = assertThat(mvc.get().uri("/api/v1/citizen/aggregations").param("by", "district_year"))
+				.hasStatusOk().bodyJson();
+		byYear.extractingPath("$.item.by").isEqualTo("district_year");
+		byYear.extractingPath("$.item.buckets").asArray().isNotEmpty();
+		byYear.extractingPath("$.item.buckets[0].year").isEqualTo(2026);
+		byYear.extractingPath("$.item.buckets[0].pointCoverage").isNotNull();
+		// 2026 no tiene padrón publicado (la serie es 2020, 2021, 2022 y 2024): sin denominador y se ve.
+		byYear.extractingPath("$.item.buckets[0].population").isNull();
+		byYear.extractingPath("$.item.buckets[0].perThousandInhabitants").isNull();
+		// Y el caveat que lo explica viaja con la respuesta (regla 7).
+		byYear.extractingPath("$.caveats").asArray()
+				.anySatisfy(caveat -> assertThat(caveat.toString()).contains("padrón"));
+
+		// La página grabada es la más reciente, así que todo cae en un año. Se mueven a 2024 los registros de
+		// una junta para comprobar lo que hace la serie cuando el año sí tiene padrón. Es manipulación del
+		// fixture, declarada: la fuente real sí tiene ambos años (S2.2).
+		Integer districtWithRows = jdbc.sql("""
+				select district_id from citizen_service_request
+				where district_id is not null group by district_id order by count(*) desc limit 1
+				""").query(Integer.class).single();
+		int moved = jdbc.sql("""
+				update citizen_service_request set requested_at = requested_at - interval '2 years'
+				where district_id = ?
+				""").param(districtWithRows).update();
+		assertThat(moved).isPositive();
+
+		var twoYears = assertThat(mvc.get().uri("/api/v1/citizen/aggregations").param("by", "district_year"))
+				.hasStatusOk().bodyJson();
+		twoYears.extractingPath("$.item.buckets[?(@.year == 2024)]").asArray().isNotEmpty();
+		twoYears.extractingPath("$.item.buckets[?(@.year == 2024)].population").asArray()
+				.allSatisfy(population -> assertThat(population).isNotNull());
+		twoYears.extractingPath("$.item.buckets[?(@.year == 2024)].populationYear").asArray().containsOnly(2024);
+		twoYears.extractingPath("$.item.buckets[?(@.year == 2024)].perThousandInhabitants").asArray()
+				.allSatisfy(rate -> assertThat(rate).isNotNull());
+		// El total del cruce sigue siendo el de la agregación por junta: no se pierde ni se duplica nada.
+		long territorial = jdbc.sql("select count(*) from citizen_service_request where district_id is not null")
+				.query(Long.class).single();
+		twoYears.extractingPath("$.item.matched").isEqualTo((int) territorial);
 	}
 
 	// --- ayudas -------------------------------------------------------------------------------------------
