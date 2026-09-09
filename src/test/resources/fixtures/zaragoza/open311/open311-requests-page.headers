@@ -1,0 +1,5 @@
+HTTP/1.1 200
+access-control-allow-origin: *
+content-type: application/json; charset=UTF-8
+date: Wed, 09 Sep 2026 10:01:04 GMT
+etag: "0ac673e38882954bf08b9da33fb3d05dc"

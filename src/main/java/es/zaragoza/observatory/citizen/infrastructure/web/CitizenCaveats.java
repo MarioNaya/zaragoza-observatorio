@@ -14,11 +14,17 @@ final class CitizenCaveats {
 			"El listado abierto no son todas las quejas. Tiene 89.432 registros desde 2013-01-08, mientras que las "
 					+ "estadísticas municipales cuentan del orden de 40.000 incidencias cerradas al año: es un "
 					+ "subconjunto y no se conoce el criterio con el que se publica (S0.3, S2.2).",
+			"La otra API pública de estas mismas quejas, Open311, publica un subconjunto estricto de este listado: "
+					+ "en 2025 trae 11.643 de los 11.895 registros y no aporta ninguno que falte aquí (S2.3). Lo "
+					+ "que no está en este listado tampoco está allí, así que la diferencia con las estadísticas "
+					+ "municipales no es una diferencia entre las dos API.",
 			"El texto de la queja no está aquí ni se ha llegado a descargar: el origen lo publica sin anonimizar y "
 					+ "la ingesta no lo pide (ADR-012). Lo que se publica de cada registro es su identificador, "
 					+ "estado, categoría, fechas y junta.",
 			"La categoría es la del origen (unas 100 en services.json). Los servicios INTERNAL no son quejas "
-					+ "ciudadanas y siguen contando: se pueden filtrar por su código, no se excluyen en silencio.");
+					+ "ciudadanas y siguen contando: se pueden filtrar por su código, no se excluyen en silencio. "
+					+ "Del origen se sabe además que services.json no documenta esa categoría y que Open311 no "
+					+ "publica ninguno de esos registros, ni en su listado ni en su detalle (S2.3).");
 
 	/** Lo que hay que saber además para leer cualquier cifra por junta. */
 	static final List<String> TERRITORIAL = List.of(

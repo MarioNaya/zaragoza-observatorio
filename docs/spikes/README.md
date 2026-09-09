@@ -19,6 +19,7 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S1.3 | Federación en datos.gob.es: paginación real, enlace por `identifier`, qué fichas no están federadas y qué datasets federados faltan en el listado municipal | `S13FederationSpike` | [`S1.3-federacion.md`](S1.3-federacion.md) | hecho 2026-09-06 |
 | S2.1 | Resolución dirección/punto → junta: si la API la resuelve de verdad, qué numeración usa cada fuente y qué porcentaje de cada una queda sin asignar | `S21TerritoryResolutionSpike` | [`S2.1-resolucion-territorial.md`](S2.1-resolucion-territorial.md) | hecho 2026-09-08 |
 | S2.2 | Quejas y sugerencias: si `fl` permite no pedir el texto libre, cuántos registros tiene el listado, si el incremental puede capturar los cierres, qué cobertura territorial hay en el histórico y si el barrido completo trae de verdad todos los registros | `S22CitizenIngestionSpike` | [`S2.2-quejas-ingesta.md`](S2.2-quejas-ingesta.md) | hecho 2026-09-08 |
+| S2.3 | Contraste con Open311: si publica quejas que el listado de sede omite, si sitúa registros que la sede no sitúa y qué hace de verdad su ventana temporal | `S23Open311ContrastSpike` | [`S2.3-contraste-open311.md`](S2.3-contraste-open311.md) | hecho 2026-09-09 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
@@ -31,6 +32,8 @@ Fixtures de S1.3 (2026-09-06, `catalog/`): `datos-gob-es-page0.json` regrabado (
 Fixtures de S2.1 (2026-09-08, `geo/`): `distrito.json_srsname-wgs84_rows-100` regrabado (las 29 juntas con su polígono en WGS84), `portalero-direccion-alfonso-i-39.json` + `.headers` y `portalero-direccion-inexistente.json` (la búsqueda que devuelve otra calle), `locales-vacios-junta-punto-page0.json` (punto y junta oficial en la misma respuesta, la base de la comprobación de la resolución geométrica) y `quejas-district-geometria.json` (`fl` explícito sin `title` ni `description`, regla 22). Los usan `DistrictJsonTranslatorTest`, `DistrictProfileHttpReaderTest` y `GeoIntegrationTests` del módulo `geo`; el de `locales-vacios` es el que sostiene la comprobación de aceptación de ADR-011.
 
 Fixtures de S2.2 (2026-09-08, `open311/`): `services.json` regrabado (100 servicios) y `sede-list-ingest-page.json` + `.headers`, que es **la petición de ingesta tal cual la hará producción**: `rows=500&srsname=wgs84&sort=requested_datetime desc` con el `fl` de ocho campos de ADR-012. Ese fixture no contiene texto libre porque no se pidió, no porque se redactara después.
+
+Fixtures de S2.3 (2026-09-09, `open311/`): `open311-requests-page.json` + `.headers`, una página de 50 registros de `open311/requests.json` **redactada** (Open311 devuelve el texto libre igual que la sede). Documenta la forma de la respuesta, sus 13 campos y el `ETag` que la fuente sí emite. Ningún adaptador de producción lo usa: ADR-014 decide no ingerir esta fuente.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
@@ -59,6 +62,15 @@ Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1
 - **La cobertura de punto en el histórico va del 16 % al 45 % según el año** (S0.3 midió 50 % sobre los 500 más recientes): las series por junta y año no son comparables entre sí sin publicar la cobertura al lado.
 - **Cuatro sinónimos de nombre de junta con evidencia** (ADR-011 §5): `DISTRITO SUR` → 30, `SAN JUAN DE MOZARRIFAR` → 25, `TORRECILLA` → 26 y `CASCO HISTÓRICO` con un U+0093 intercalado → 3.
 - **Comprobado después con PostGIS** (módulo `geo`, 2026-09-08): `ST_Contains` reproduce el ray casting del spike registro a registro sobre la página grabada de `locales-vacios` (233 de 237, las 4 discrepancias en el borde Delicias/La Almozara). La prueba vive en `GeoIntegrationTests` y es la comprobación de aceptación de ADR-011.
+
+## Conclusiones de fase 2 (S2.3, 2026-09-09)
+
+- **Open311 es un subconjunto estricto del listado de sede.** En cuatro meses cerrados de 2017, 2025 y 2026 y en **2025 entero (11.895 registros)**, cero registros que Open311 publique y la sede omita. Lo que la sede tiene y Open311 no son las **`INTERNAL`** (247 de 11.895 en 2025) y **cinco registros** (0,04 %) que además responden 400 en el detalle de la sede.
+- **El hueco con las estadísticas municipales no está entre las dos API**: las dos publican lo mismo, así que la duda sobre el criterio de publicación no se cierra consultando otro endpoint (ADR-014).
+- **Open311 no aporta nada territorialmente**: en los 1.027 registros comunes de agosto de 2026, cero quejas que sitúe y la sede no, cero discrepancias de coordenadas y cero de junta declarada.
+- **La ventana temporal de Open311 se recorta a tres meses en silencio.** Una petición de un año responde 200 con un primer trimestre que parece completo; sin fechas, la respuesta son los últimos tres meses, no el histórico. Corrige de paso la prueba de S0.3: sus ventanas anuales de 2004–2016 solo miraban el primer trimestre de cada año (aquí se comprobaron los cuatro de 2015, 2016 y 2017: Open311 empieza en 2017).
+- **`rows` topa en 1.000** (la regla 18 decía «sin tope»), **`totalCount` vale siempre 0** y **`fl=…,lat,long` devuelve `lat` sin `long`**.
+- **Las dos fuentes fechan distinto el mismo registro**: el desfase es exactamente el doble del huso (4 h en verano, 2 h en invierno, sin excepciones en 1.892 registros), porque Open311 publica la hora local convertida dos veces y marcada con `Z`. Solo se pueden cruzar por identificador, nunca por fecha.
 
 ## Conclusiones de fase 1 (S1.1, 2026-09-06)
 
