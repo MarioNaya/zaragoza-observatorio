@@ -82,7 +82,7 @@ flowchart TB
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]
-    GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>API pública Geo: locate/locateAll, districtNames (sinónimos), districts (denominador)"]
+    GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>API pública Geo: locate/locateAll, districtNames (sinónimos), districts (denominador),<br/>populations (padrón por junta y año, para las series; ADR-015)"]
   end
   SH["shared · kernel mínimo<br/>DatasetRef, IngestionRun, UserId, eventos base<br/>todos pueden depender de él; él de nadie"]
 

@@ -36,9 +36,9 @@ Lectura pública, sin clave. Toda respuesta lleva `source` (dataset municipal y 
 | `GET /api/v1/catalog/datasets/{id}/freshness-history` | Histórico de instantáneas, la más reciente primero (`limit`) |
 | `GET /api/v1/catalog/summary` | Recuentos por categoría de frescura declarada, por periodicidad y por método de observación, fichas que ya no aparecen en el listado (`notListed`), inventario de endpoints y umbrales vigentes |
 | `GET /api/v1/catalog/api-tags` | Cruce catálogo ↔ Swagger: cada tag con sus operaciones documentadas y las fichas que lo declaran (0 operaciones = tag declarado que el Swagger no documenta; sin fichas = fuente sin ficha) |
-| `GET /api/v1/catalog/api-endpoints` | Inventario de operaciones del Swagger de la API (`tag`, `q`, `templated`; `sort=document|path|tag`) |
-| `GET /api/v1/catalog/federation` | Datasets del publicador municipal en datos.gob.es con `inCatalog` (`inCatalog`, `q`; `sort=id|title`); los que no tienen ficha en el listado municipal son partes de series y colecciones |
-| `GET /api/v1/geo/districts` | Las 29 juntas municipales y vecinales con sus **dos numeraciones** (`id` de la API y `padronId` de los datasets de población) y el padrón del último año (filtro `kind`; `sort=id|name|padronId`) |
+| `GET /api/v1/catalog/api-endpoints` | Inventario de operaciones del Swagger de la API (`tag`, `q`, `templated`; `sort=document\|path\|tag`) |
+| `GET /api/v1/catalog/federation` | Datasets del publicador municipal en datos.gob.es con `inCatalog` (`inCatalog`, `q`; `sort=id\|title`); los que no tienen ficha en el listado municipal son partes de series y colecciones |
+| `GET /api/v1/geo/districts` | Las 29 juntas municipales y vecinales con sus **dos numeraciones** (`id` de la API y `padronId` de los datasets de población) y el padrón del último año (filtro `kind`; `sort=id\|name\|padronId`) |
 | `GET /api/v1/geo/districts/{id}` | Una junta con su serie de padrón (2020, 2021, 2022 y 2024: la serie **no** es continua) |
 | `GET /api/v1/geo/locate?lon=&lat=` | La junta que contiene un punto WGS84: `RESOLVED`, `AMBIGUOUS` (los polígonos oficiales se solapan en el entorno de Juslibol) u `OUTSIDE` |
 | `GET /api/v1/citizen/requests` | Quejas y sugerencias paginadas y ordenadas (`sort=requestedAt\|updatedAt\|id`), con filtros `district` (la junta **resuelta**), `serviceCode`, `status`, `assignment`, `internal`, `from`, `to`. **Sin el texto de la queja**: no se pide al origen |
