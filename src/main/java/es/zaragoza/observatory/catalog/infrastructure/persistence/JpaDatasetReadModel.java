@@ -98,7 +98,8 @@ class JpaDatasetReadModel implements DatasetReadModel {
 		}
 		return new CatalogSummary(jpa.count(), byFreshness, byPeriodicity, jpa.countByHasApiTrue(),
 				jpa.countByOpenTrue(), jpa.countByExplorableTrue(), jpa.countByHasGeoTrue(), jpa.latestSnapshotOn(),
-				withoutSnapshot, byObservation, withoutObservation, jpa.countFederated());
+				withoutSnapshot, byObservation, withoutObservation, jpa.countFederated(),
+				jpa.countByDelistedAtIsNotNull());
 	}
 
 	static Specification<DatasetEntity> specification(DatasetFilter filter) {
@@ -126,6 +127,10 @@ class JpaDatasetReadModel implements DatasetReadModel {
 			}
 			if (filter.observation() != null) {
 				predicates.add(cb.equal(root.get("latestObservationMethod"), filter.observation()));
+			}
+			if (filter.listed() != null) {
+				predicates.add(filter.listed() ? cb.isNull(root.get("delistedAt"))
+						: cb.isNotNull(root.get("delistedAt")));
 			}
 			if (filter.federated() != null) {
 				Subquery<Integer> federatedIds = query.subquery(Integer.class);

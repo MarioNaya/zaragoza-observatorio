@@ -7,12 +7,25 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface DatasetJpaRepository extends JpaRepository<DatasetEntity, Integer>, JpaSpecificationExecutor<DatasetEntity> {
 
 	List<DatasetEntity> findAllByOrderBySourceIdAsc();
+
+	/** ADR-013: no vistas en la ejecución iniciada en {@code since} y aún sin marcar. */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("update DatasetEntity d set d.delistedAt = :since where d.lastSeenAt < :since and d.delistedAt is null")
+	int markNotSeenSince(@Param("since") Instant since);
+
+	/** ADR-013: marcadas que han vuelto a aparecer en la ejecución iniciada en {@code since}. */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("update DatasetEntity d set d.delistedAt = null where d.lastSeenAt >= :since and d.delistedAt is not null")
+	int clearDelistedSeenSince(@Param("since") Instant since);
+
+	long countByDelistedAtIsNotNull();
 
 	@Query("select d.latestFreshness, count(d) from DatasetEntity d group by d.latestFreshness")
 	List<Object[]> countByLatestFreshness();

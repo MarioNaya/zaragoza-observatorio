@@ -98,11 +98,11 @@ class CatalogController {
 			@RequestParam(required = false) Boolean open, @RequestParam(required = false) Boolean hasApi,
 			@RequestParam(required = false) DeclaredFreshness freshness, @RequestParam(required = false) String q,
 			@RequestParam(required = false) ObservationMethod observation,
-			@RequestParam(required = false) Boolean federated) {
+			@RequestParam(required = false) Boolean federated, @RequestParam(required = false) Boolean listed) {
 		DatasetSort datasetSort = parseSort(sort);
 		PageRequest pageRequest = pageRequest(page, size);
 		var filter = new DatasetFilter(periodicity, status, hasGeo, open, hasApi, freshness, q, observation,
-				federated);
+				federated, listed);
 		PageOf<DatasetListing> result = datasets.search(filter, datasetSort, pageRequest);
 		return new ApiPage<>(source, ingestedAt(), Caveats.CATALOG,
 				new PageMeta(result.page(), result.size(), result.totalElements(), result.totalPages(),
@@ -148,7 +148,7 @@ class CatalogController {
 		return new Summary(source, ingestedAt(), Caveats.CATALOG, summary.datasets(), summary.byDeclaredFreshness(),
 				summary.byPeriodicity(), summary.withApi(), summary.open(), summary.explorable(), summary.withGeo(),
 				summary.latestSnapshotOn(), summary.withoutSnapshot(), summary.byObservationMethod(),
-				summary.withoutObservation(),
+				summary.withoutObservation(), summary.notListed(),
 				new ApiInventorySummary(inventoryIngestedAt(), api.endpoints(), api.tags(), api.datasetsWithTag(),
 						api.datasetsWithDocumentedTag(), api.tagsWithoutDataset()),
 				new FederationSummary(lastIngestedAt(CatalogSources.FEDERATION), fed.federated(), fed.inCatalog(),

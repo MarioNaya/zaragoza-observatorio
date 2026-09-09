@@ -38,7 +38,7 @@ flowchart LR
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
     direction TB
-    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger),<br/>catalog_federated_dataset (V007 federación)"]
+    T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger),<br/>catalog_federated_dataset (V007 federación),<br/>catalog_dataset.delisted_at (V010 baja del listado, ADR-013)"]
     T_CIT["citizen: citizen_service_request (V009)<br/>lon/lat + district_id resuelto + district_declared<br/>sin columna de texto libre (ADR-012)"]
     T_GEO["geo: geo_district (geometry 4326 + GiST),<br/>geo_population_record (V008)<br/>census_section: pendiente"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
@@ -112,8 +112,8 @@ flowchart LR
       APP["application<br/>RegisterDatasets · TakeFreshnessSnapshots<br/>ObserveDatasets · RecordObservation<br/>@Transactional"]
       DOMN["domain<br/>Dataset, Distribution, FreshnessSnapshot, DeclaredFreshness<br/>Observation, ObservationMethod<br/>FreshnessPolicy (umbrales configurables), Periodicity<br/>puertos: DatasetRepository, FreshnessSnapshotRepository, DatasetReadModel, DistributionObserver<br/>sin Spring, sin JPA, sin Jackson, sin infrastructure"]
       ZGZ["infrastructure/zaragoza (ACL)<br/>CatalogJsonTranslator: JSON municipal → Dataset · CatalogIngestionJob<br/>SwaggerJsonTranslator: Swagger 2.0 → ApiEndpoint · ApiInventoryIngestionJob (S1.2)<br/>FederationJsonTranslator: datos.gob.es → FederatedDataset · FederationIngestionJob (S1.3)<br/>DistributionHttpObserver + ObservationUrls implementan DistributionObserver<br/>(RestClient común de la aplicación; scheduling/CatalogObservationScheduler)"]
-      EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)"]
-      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004, V005"]
+      EVT["infrastructure/events<br/>CatalogIngestedListener<br/>@ApplicationModuleListener(DatasetIngested)<br/>marca la baja del listado y toma las instantáneas"]
+      PER["infrastructure/persistence<br/>JpaDatasetRepository, JpaFreshnessSnapshotRepository,<br/>JpaDatasetReadModel (Specifications) · Flyway V004, V005, V010"]
       WEB -- "puerto de lectura" --> DOMN
       ZGZ -- "caso de uso" --> APP
       ZGZ -. "implementa DistributionObserver" .-> DOMN

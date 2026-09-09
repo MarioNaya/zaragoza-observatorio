@@ -9,8 +9,10 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
 import es.zaragoza.observatory.catalog.CatalogSources;
+import es.zaragoza.observatory.catalog.application.RegisterDatasets;
 import es.zaragoza.observatory.catalog.application.RegisterFederatedDatasets;
 import es.zaragoza.observatory.catalog.application.TakeFreshnessSnapshots;
+import es.zaragoza.observatory.catalog.domain.DatasetRepository.Delisting;
 import es.zaragoza.observatory.ingestion.Ingestion;
 import es.zaragoza.observatory.ingestion.IngestionRunSummary;
 import es.zaragoza.observatory.shared.DatasetIngested;
@@ -18,22 +20,28 @@ import es.zaragoza.observatory.shared.ZaragozaTime;
 
 /**
  * SPEC.md §4.5 paso 6: {@code catalog} escucha {@code DatasetIngested}. Tras cada ingesta del propio catálogo
- * recalcula las instantáneas de frescura del día (idempotente); tras cada ingesta de la federación da de baja
- * los datasets que datos.gob.es ya no lista (S1.3). Los eventos de otros datasets se ignoran.
+ * marca las fichas que ya no aparecen en el listado municipal (ADR-013) y recalcula las instantáneas de frescura
+ * del día (idempotente); tras cada ingesta de la federación da de baja los datasets que datos.gob.es ya no lista
+ * (S1.3). Los eventos de otros datasets se ignoran.
  */
 @Component
 class CatalogIngestedListener {
 
 	private static final Logger log = LoggerFactory.getLogger(CatalogIngestedListener.class);
 
+	/** Ejecuciones recientes en las que buscar la que publicó el evento; el listener corre justo después. */
+	private static final int RUN_LOOKBACK = 5;
+
 	private final TakeFreshnessSnapshots takeFreshnessSnapshots;
+	private final RegisterDatasets registerDatasets;
 	private final RegisterFederatedDatasets registerFederatedDatasets;
 	private final Ingestion ingestion;
 	private final Clock clock;
 
-	CatalogIngestedListener(TakeFreshnessSnapshots takeFreshnessSnapshots,
+	CatalogIngestedListener(TakeFreshnessSnapshots takeFreshnessSnapshots, RegisterDatasets registerDatasets,
 			RegisterFederatedDatasets registerFederatedDatasets, Ingestion ingestion, Clock clock) {
 		this.takeFreshnessSnapshots = takeFreshnessSnapshots;
+		this.registerDatasets = registerDatasets;
 		this.registerFederatedDatasets = registerFederatedDatasets;
 		this.ingestion = ingestion;
 		this.clock = clock;
@@ -61,10 +69,27 @@ class CatalogIngestedListener {
 			log.debug("ignoring DatasetIngested for {}", event.dataset());
 			return;
 		}
+		Delisting delisting = markNotListed(event);
 		LocalDate today = LocalDate.ofInstant(clock.instant(), ZaragozaTime.ZONE);
 		int taken = takeFreshnessSnapshots.take(today);
-		log.info("catalog run {} ingested {} records; {} freshness snapshots for {}", event.run(),
-				event.records(), taken, today);
+		log.info("catalog run {} ingested {} records; {} freshness snapshots for {}; {} datasets no longer listed, "
+				+ "{} back in the listing", event.run(), event.records(), taken, today, delisting.delisted(),
+				delisting.relisted());
+	}
+
+	/**
+	 * ADR-013: las fichas que no aparecieron en esta ejecución se marcan (no se borran) y las que han vuelto se
+	 * desmarcan. La frontera es el {@code startedAt} de la ejecución que publicó el evento, no la última
+	 * correcta. Una ejecución con 0 registros no marca nada: daría de baja el catálogo entero.
+	 */
+	private Delisting markNotListed(DatasetIngested event) {
+		if (event.records() == 0) {
+			log.warn("catalog run {} ingested 0 records; not marking any dataset as no longer listed", event.run());
+			return Delisting.NONE;
+		}
+		return ingestion.history(CatalogSources.CATALOG, RUN_LOOKBACK).stream()
+				.filter(run -> run.id().equals(event.run())).findFirst().map(IngestionRunSummary::startedAt)
+				.map(registerDatasets::markNotSeenSince).orElse(Delisting.NONE);
 	}
 
 }
