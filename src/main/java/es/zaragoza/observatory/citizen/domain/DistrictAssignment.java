@@ -1,5 +1,6 @@
 package es.zaragoza.observatory.citizen.domain;
 
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.geo.DistrictLocation;
 
 /**
@@ -36,12 +37,8 @@ public record DistrictAssignment(Assignment status, Integer districtId, String d
 
 	/** Traduce el resultado de {@code geo} conservando lo declarado. */
 	public static DistrictAssignment of(DistrictLocation location, String declaredName, Integer declaredDistrictId) {
-		Assignment status = switch (location.status()) {
-			case RESOLVED -> Assignment.RESOLVED;
-			case AMBIGUOUS -> Assignment.AMBIGUOUS;
-			case OUTSIDE -> Assignment.OUTSIDE;
-		};
-		return new DistrictAssignment(status, location.districtId(), declaredName, declaredDistrictId);
+		return new DistrictAssignment(Assignment.of(location), location.districtId(), declaredName,
+				declaredDistrictId);
 	}
 
 	/** Las dos vías dan la misma junta. */

@@ -15,6 +15,7 @@ flowchart LR
     FED["Federación datos.gob.es<br/>apidata/catalog/dataset/publisher/L01502973.json<br/>369 datasets · _page/_pageSize ≤ 200 (S1.3)"]
     QYS["Quejas y sugerencias<br/>sede/…/quejas-sugerencias/list.json (+ Open311)<br/>~40.000/año · 50 % con punto"]
     DIS["Juntas y padrón<br/>sede/servicio/distrito*.json<br/>29 polígonos · indicadores por año"]
+    LIC["Locales con licencia<br/>sede/servicio/registro-licencia.json<br/>42.342 locales · 69.631 licencias · 89 % con punto (S2.4)"]
     OCDS["Contratación OCDS<br/>…/ocds/contracting-process.json<br/>5.720 ocids · sin localización"]
     PRE["Presupuesto y subvenciones<br/>presupuesto/*.json · ayuda-subvencion.json<br/>140 snapshots · sin territorio"]
   end
@@ -33,6 +34,7 @@ flowchart LR
     A_CAT["catalog<br/>catalogo.json (fl) → Dataset<br/>CatalogJsonTranslator · CatalogIngestionJob<br/>api.json → ApiEndpoint (SwaggerJsonTranslator · ApiInventoryIngestionJob, S1.2)<br/>datos.gob.es → FederatedDataset (FederationJsonTranslator · FederationIngestionJob, S1.3)<br/>DatasetIngested → FreshnessSnapshot diaria (eje declarado) · baja de federados no vistos<br/>DistributionHttpObserver: HEAD · rows=1+sort desc · WFS hits (eje observado, S1.1)"]
     A_CIT["citizen<br/>quejas-sugerencias/list.json con fl de 8 campos, SIN texto libre (ADR-012)<br/>ServiceRequestJsonTranslator · dos jobs con marca de agua:<br/>altas por requested_datetime · cierres por updated_datetime (S2.2)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
     A_GEO["geo<br/>distrito.json?srsname=wgs84 → District + Boundary<br/>DistrictJsonTranslator · DistrictsIngestionJob<br/>DatasetIngested → DistrictProfileHttpReader: 29 detalles → idpadron + PopulationRecord<br/>PostgisDistrictLocator: ST_Contains → junta (ADR-011)"]
+    A_URB["urban<br/>registro-licencia.json COMPLETO, sin fl (la proyección rompe los anidados, S2.4)<br/>LicensedPremisesJsonTranslator · un job: q=lastUpdated=ge= + sort=id asc<br/>el texto libre no se lee y la página cruda no se guarda (ADR-016)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
     A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
   end
 
@@ -41,6 +43,7 @@ flowchart LR
     T_CAT["catalog: catalog_dataset, catalog_distribution,<br/>catalog_freshness_snapshot (V004, V005 eje observado),<br/>catalog_api_endpoint (V006 inventario del Swagger),<br/>catalog_federated_dataset (V007 federación),<br/>catalog_dataset.delisted_at (V010 baja del listado, ADR-013)"]
     T_CIT["citizen: citizen_service_request (V009)<br/>lon/lat + district_id resuelto + district_declared<br/>sin columna de texto libre (ADR-012)"]
     T_GEO["geo: geo_district (geometry 4326 + GiST),<br/>geo_population_record (V008)<br/>census_section: pendiente"]
+    T_URB["urban: urban_premises, urban_premises_licence (V011)<br/>lon/lat + district_id resuelto · epígrafe IAE codificado<br/>sin columna de texto libre y sin district_declared (ADR-016)"]
     T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
     T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
   end
@@ -48,21 +51,24 @@ flowchart LR
   API["API REST /api/v1 (+ OpenAPI en /v3/api-docs)<br/>lectura pública · paginación · sort explícito<br/>source · ingestedAt · caveats"]
   CONS["Consumidores<br/>frontend Angular (fase 4) · otros reutilizadores<br/>workspace / identity (fase 5)"]
 
-  CAT & SWG & FED & QYS & DIS & OCDS & PRE -- "GET .json" --> HTTP
-  RAW -- "payload crudo + metadatos del run" --> A_CAT & A_CIT & A_GEO & A_SPE
+  CAT & SWG & FED & QYS & DIS & LIC & OCDS & PRE -- "GET .json" --> HTTP
+  RAW -- "payload crudo + metadatos del run" --> A_CAT & A_CIT & A_GEO & A_URB & A_SPE
   RAW -. "DatasetIngested" .-> A_CAT
   A_CAT -- "upsert idempotente" --> T_CAT
   A_CIT -- "upsert idempotente" --> T_CIT
   A_GEO -- "upsert idempotente" --> T_GEO
+  A_URB -- "upsert idempotente" --> T_URB
   A_SPE -- "upsert idempotente" --> T_SPE
   RUN --> T_ING
-  T_CAT & T_CIT & T_GEO & T_SPE -- "read models" --> API
+  T_CAT & T_CIT & T_GEO & T_URB & T_SPE -- "read models" --> API
   API -- "JSON" --> CONS
 ```
 
 Flujo de una ingesta (SPEC.md §4.5, implementado en fase 1): (1) el scheduler recorre los beans `IngestionJob` que declara cada módulo y ejecuta los vencidos según su `interval()`; (2) `RunIngestion` abre un `IngestionRun` y pide páginas a `ZaragozaHttpClient` con la estrategia del `SourceDescriptor` (`OFFSET` por `start` hasta agotar `totalCount` o recibir página corta; `NONE` una sola petición; `DOCUMENT` un documento único sin parámetros de paginación, el Swagger de la API, S1.2; `PAGE` por número de página con nombres propios, datos.gob.es, S1.3; `If-Modified-Since` no sirve, S0.5); (3) cada página se guarda en `raw_payload` y se entrega al `handle()` del job; (4) el job traduce con su adaptador anti-corrupción y persiste con upsert idempotente por identificador de origen; (5) el cierre del run y la publicación de `DatasetIngested` van en una sola transacción (`CompleteIngestionRun`), y Modulith registra el evento en `event_publication`; (6) los módulos escuchan `DatasetIngested` con `@ApplicationModuleListener`: `catalog`, tras cada ingesta del catálogo, toma la instantánea diaria de frescura de todas las fichas, y `geo`, tras la de las juntas, lee el detalle de cada una para completar el `idpadron` y el padrón (29 peticiones; ADR-011).
 
 Una variante del paso 2 la estrena `citizen` (S2.2): su `SourceDescriptor` **se construye en cada ejecución** con una marca de agua leída de su propia tabla, de modo que la primera ejecución barre el histórico completo y las siguientes piden solo lo nuevo. Son dos jobs sobre el mismo endpoint —uno por eje de fecha— porque un `DatasetRef` es una ejecución periódica con su propio registro, y sin el eje de `updated_datetime` no se vería nunca el cierre de un expediente antiguo.
+
+`urban` (S2.4) usa esa misma variante con **un solo job**, y la diferencia enseña por qué `citizen` necesitaba dos: aquí el filtro de fecha va en `q` y el orden en `id`, que no empata, así que la ventana y la paginación son exactas a la vez. Con filtro y orden en el mismo campo —el caso de las quejas— la paginación por offset se salta registros en cuanto hay empates de fecha. Este job además **no guarda su página cruda** (`keepsRawPayload()` a `false`): la respuesta trae texto libre con datos personales que la fuente no deja de enviar, así que la única forma de no tenerlo es no escribirlo.
 
 ## 2. Módulos Modulith y dependencias permitidas
 
@@ -78,6 +84,7 @@ flowchart TB
   subgraph DOM["dominios"]
     CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint, FederatedDataset"]
     CIT["citizen (fase 2, implementado)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
+    URB["urban (fase 2, implementado)<br/>LicensedPremises + Licence, sin texto libre (ADR-016)<br/>no depende de citizen ni al revés"]
     SPE["spending (fase 3)<br/>OCDS, presupuesto, subvenciones<br/>sin dependencia de geo (ADR-003)"]
   end
   subgraph INFRA["infraestructura y kernels"]
@@ -93,11 +100,13 @@ flowchart TB
   CATM -- "puertos" --> INGM
   CIT -- "puertos" --> INGM
   SPE -- "puertos" --> INGM
+  URB -- "puertos" --> INGM
   CIT -- "API pública" --> GEO
-  CATM & CIT & SPE & INGM & GEO & ID & WS --> SH
+  URB -- "API pública" --> GEO
+  CATM & CIT & URB & SPE & INGM & GEO & ID & WS --> SH
 ```
 
-Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003).
+Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003). `urban` y `citizen` **no se conocen**: comparten `geo` y nada más, porque compartir el eje territorial no es compartir lenguaje (ADR-016 §1).
 
 ## 3. Dentro de un módulo (hexagonal), con `catalog` como ejemplo
 

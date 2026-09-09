@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import es.zaragoza.observatory.citizen.domain.AggregationAxis;
 import es.zaragoza.observatory.citizen.domain.AggregationBucket;
-import es.zaragoza.observatory.citizen.domain.Assignment;
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
 import es.zaragoza.observatory.citizen.domain.DistrictAssignment;
 import es.zaragoza.observatory.citizen.domain.InternalServices;

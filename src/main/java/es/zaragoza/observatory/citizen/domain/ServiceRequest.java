@@ -3,6 +3,7 @@ package es.zaragoza.observatory.citizen.domain;
 import java.time.Duration;
 import java.time.Instant;
 
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.geo.GeoPoint;
 
 /**

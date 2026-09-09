@@ -2,6 +2,8 @@ package es.zaragoza.observatory.citizen.domain;
 
 import java.util.Map;
 
+import es.zaragoza.observatory.geo.Assignment;
+
 /**
  * Cuántos registros hay en cada estado de asignación territorial. Acompaña obligatoriamente a toda agregación
  * territorial (regla 7, ADR-011 §7): un mapa que no diga que la mitad de las quejas no tienen punto es una

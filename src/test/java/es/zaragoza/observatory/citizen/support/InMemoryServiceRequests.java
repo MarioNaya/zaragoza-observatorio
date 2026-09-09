@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import es.zaragoza.observatory.citizen.domain.AggregationAxis;
 import es.zaragoza.observatory.citizen.domain.AggregationBucket;
-import es.zaragoza.observatory.citizen.domain.Assignment;
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
 import es.zaragoza.observatory.citizen.domain.ServiceRequest;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestPage;

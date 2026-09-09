@@ -2,6 +2,8 @@ package es.zaragoza.observatory.citizen.domain;
 
 import java.time.Instant;
 
+import es.zaragoza.observatory.geo.Assignment;
+
 /**
  * Criterios de consulta de quejas (regla 8: el backend ordena, filtra y pagina). Todos los filtros son
  * opcionales; los nulos no filtran.

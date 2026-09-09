@@ -25,7 +25,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import es.zaragoza.observatory.TestcontainersConfiguration;
-import es.zaragoza.observatory.citizen.domain.Assignment;
+import es.zaragoza.observatory.geo.Assignment;
 import es.zaragoza.observatory.citizen.domain.AssignmentCounts;
 import es.zaragoza.observatory.citizen.domain.ServiceRequest;
 import es.zaragoza.observatory.citizen.domain.ServiceRequestQuery;
@@ -313,7 +313,13 @@ class CitizenIntegrationTests {
 					return withSuccess(body, JSON_UTF8).createResponse(request);
 				});
 		assertThat(ingestion.run(job(GeoSources.DISTRICTS)).status()).isEqualTo(RunStatus.SUCCEEDED);
-		// El padrón lo trae el listener de geo; las agregaciones necesitan el denominador (regla 7).
+		// El padrón lo trae el listener de geo, que es asíncrono, y las agregaciones necesitan el denominador
+		// (regla 7). Hacen falta las dos esperas y en este orden: `verify` garantiza que ya no llegarán más
+		// peticiones al servidor simulado —sin eso, el `reset` de abajo pilla al listener a media faena—, y el
+		// recuento garantiza que la escritura ha terminado. Ninguna sirve sola: el recuento puede estar ya en
+		// 116 porque lo dejó otro test (la base de datos es la misma), y `verify` se satisface cuando se hizo
+		// la última petición, no cuando se guardó su respuesta.
+		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> server.verify());
 		await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(jdbc
 				.sql("select count(*) from geo_population_record").query(Long.class).single()).isEqualTo(29L * 4));
 		server.reset();

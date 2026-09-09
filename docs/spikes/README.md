@@ -20,6 +20,7 @@ Ejecución: `.\mvnw.cmd test -Pspikes` (todos) o `.\mvnw.cmd test -Pspikes "-Dte
 | S2.1 | Resolución dirección/punto → junta: si la API la resuelve de verdad, qué numeración usa cada fuente y qué porcentaje de cada una queda sin asignar | `S21TerritoryResolutionSpike` | [`S2.1-resolucion-territorial.md`](S2.1-resolucion-territorial.md) | hecho 2026-09-08 |
 | S2.2 | Quejas y sugerencias: si `fl` permite no pedir el texto libre, cuántos registros tiene el listado, si el incremental puede capturar los cierres, qué cobertura territorial hay en el histórico y si el barrido completo trae de verdad todos los registros | `S22CitizenIngestionSpike` | [`S2.2-quejas-ingesta.md`](S2.2-quejas-ingesta.md) | hecho 2026-09-08 |
 | S2.3 | Contraste con Open311: si publica quejas que el listado de sede omite, si sitúa registros que la sede no sitúa y qué hace de verdad su ventana temporal | `S23Open311ContrastSpike` | [`S2.3-contraste-open311.md`](S2.3-contraste-open311.md) | hecho 2026-09-09 |
+| S2.4 | Licencias de locales: cobertura de punto sobre el registro entero, por qué eje se puede barrer sin perder registros, qué texto libre trae y si se puede no descargar, y cuál es el modelo real | `S24LicensedPremisesSpike` | [`S2.4-registro-licencia.md`](S2.4-registro-licencia.md) | hecho 2026-09-09 |
 
 **Datos personales en los fixtures**: las fuentes de quejas y sugerencias devuelven texto ciudadano sin anonimizar (nombres, firmas y DNI; S0.3 adenda). Los fixtures con ese texto se guardan redactados con `SpikeFixtures.saveRedacted` y las cabeceras grabadas no llevan `Set-Cookie` (CLAUDE.md regla 22). El historial se limpió el 2026-09-06.
 
@@ -34,6 +35,8 @@ Fixtures de S2.1 (2026-09-08, `geo/`): `distrito.json_srsname-wgs84_rows-100` re
 Fixtures de S2.2 (2026-09-08, `open311/`): `services.json` regrabado (100 servicios) y `sede-list-ingest-page.json` + `.headers`, que es **la petición de ingesta tal cual la hará producción**: `rows=500&srsname=wgs84&sort=requested_datetime desc` con el `fl` de ocho campos de ADR-012. Ese fixture no contiene texto libre porque no se pidió, no porque se redactara después.
 
 Fixtures de S2.3 (2026-09-09, `open311/`): `open311-requests-page.json` + `.headers`, una página de 50 registros de `open311/requests.json` **redactada** (Open311 devuelve el texto libre igual que la sede). Documenta la forma de la respuesta, sus 13 campos y el `ETag` que la fuente sí emite. Ningún adaptador de producción lo usa: ADR-014 decide no ingerir esta fuente.
+
+Fixtures de S2.4 (2026-09-09, `urban/`): `registro-licencia_rows-2.json` + `.headers`, `registro-licencia_page0_rows-500.json` (**la petición de ingesta tal cual la hará producción**: registros completos, `sort=id asc&srsname=wgs84`), `registro-licencia-portal_rows-2.json` (el recurso de portales, sin `junta`), `registro-licencia-iae_page0.json` (la taxonomía de 965 epígrafes) y `registro-licencia-zona-saturada.json` (las 15 zonas con su polígono). Los dos primeros van **redactados** en `comments`: aquí el texto libre no se puede dejar de descargar (`fl` rompe los objetos anidados y `removeproperties` no hace nada), así que la redacción es la única forma de que no entre en el repositorio. Los usan `LicensedPremisesJsonTranslatorTest` y `UrbanIntegrationTests`.
 
 Fixtures de fase 1 (2026-09-06, grabados con `curl` con cuerpo y cabeceras, S0.1 adenda): `catalog/catalogo-rows2-fl.json`, `catalog/catalogo-rows500-fl.json` (la petición real de `CatalogIngestionJob`) y `catalog/catalogo-999999-notfound.json`. Los usan `ZaragozaHttpClientTest`, `CatalogJsonTranslatorTest`, `CatalogDataQualityTest` y los tests de integración vía `support/Fixtures`.
 
@@ -115,3 +118,13 @@ Comprobados con `curl` durante la planificación; los spikes deben confirmarlos 
 ## Impacto en SPEC.md (secciones a actualizar)
 ## Riesgos y dudas abiertas
 ```
+
+## Conclusiones de fase 2 (S2.4, 2026-09-09)
+
+- **La cobertura de punto real de `registro-licencia` es del 89,4 %, no del 99 %**: aquel 99,0 % de S2.1 estaba medido sobre el primer lote de 500. Sobre los 42.342 locales, 37.843 traen punto, 37.827 caen dentro de una junta, 16 fuera y 0 en zona de solape. Sigue siendo tres veces la cobertura de las quejas.
+- **El barrido solo es exacto por `id asc`**: 85 páginas, 42.342 filas y 42.342 ids distintos. Por `lastUpdated asc`, las mismas filas dan **39.414 ids** —2.928 registros que no se verían—, porque **22.044 locales comparten un mismo instante de carga**. De ahí el diseño de ADR-016 §4: filtrar por fecha en `q` y ordenar por `id`, que no empata.
+- **El texto libre no se puede dejar de descargar.** `fl` recorta los campos planos pero **vacía los objetos anidados** (una licencia proyectada llega sin año, sin expediente y sin tipo), y `removeproperties`, documentado en el Swagger, **se acepta y no hace nada**. Contiene **15 DNI con letra de control válida** en los comentarios de las licencias y 2 dentro del nombre de la actividad. La decisión (ADR-016 §3) es no guardarlo en ninguna parte, ni siquiera en `raw_payload`.
+- **La fuente no declara junta** por ninguna vía: ni el local ni el recurso de portales del que cuelga, al contrario que `locales-vacios`. No hay contraste declarado/resuelto que publicar, y no se fabrica uno cruzando el código de portal contra el callejero.
+- **El modelo**: 42.342 locales y 69.631 licencias (media 1,64, máximo 12). La licencia se identifica por **`(año, expediente)`** dentro de su local, sin una sola colisión; el campo `orden` colisiona 950 veces en 788 locales y no vale como clave.
+- **Códigos sin taxonomía**: `estado` toma cuatro valores y no hay endpoint ni ficha que los describa; las zonas saturadas publican 15 códigos y los locales usan 17 (`O` y `P` no están en el catálogo). Se guardan como códigos y no se les pone nombre (regla 6).
+- **`Last-Modified` describe la página, no el recurso**: cambia con `sort` y vale el `lastUpdated` del registro devuelto. Observar esta ficha por cabeceras mediría el orden de la petición, no la frescura del dato.
