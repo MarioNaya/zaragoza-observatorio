@@ -139,7 +139,7 @@ La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **
 >
 > La alternativa sigue siendo **una tercera fuente territorial en `urban`**, que tampoco necesita ADR: `licencia-obra` (2.042 parcelas, 100 % con punto) es la más barata, `via-publica/incidencia` la más viva y `locales-vacios` la única con junta declarada, que serviría de contraste. En los dos casos el orden es el de siempre: spike, fixtures, ADR si toca, traductor, migración y tests.
 >
-> **Lo del presupuesto que queda no es trabajo, es despliegue**: `V013` no se ha aplicado todavía en producción y la carga real allí son 396 peticiones repartidas en unas dos horas y media con los valores por defecto. Y **medir la memoria** con la tabla de 154.508 filas dentro: la línea base vigente son 425 MB con cinco módulos, y desde el 2026-09-10 hay un sexto (`spending`) cuya lectura seguía pendiente de que terminara la carga de la contratación.
+> **Del presupuesto no queda trabajo, queda tiempo**: está desplegado y cargando (§5), y lo que hay que hacer al día siguiente es mirar que las 140 instantáneas terminan en 154.508 partidas y **medir la memoria** con la tabla llena. La línea base vigente son 425 MB con cinco módulos; la del sexto (`spending`) sigue sin tomarse porque hasta hoy no había terminado la carga de la contratación, y ahora hay además 154.508 filas más.
 
 Lo de la fase 1 se vigila, no se trabaja: el punto 6, que era el único trabajo pendiente, quedó hecho el 2026-09-09 (ADR-013) y está comprobado en la instancia (§5).
 
@@ -182,7 +182,7 @@ La **fase 2** tiene hechos sus tres pasos y su orden fue el correcto: primero sa
 3. **La cadencia de reintento no se ha visto funcionar.** Los 2.379 procesos sin release empiezan con espera de un día y la duplican; lo que hay que comprobar al cabo de una semana es que el planificador no está gastando el lote entero en reintentos y que alguno de esos 404 se ha convertido en release.
 4. **Los 1.560 contratos vacíos y los 2.271 procesos escondidos** son preguntas para el ayuntamiento (§6), no trabajo. Mientras tanto se publican como hechos: `emptyShell` y `inDocumentedList`. El primer lote real añade un matiz que el spike no había desglosado: **las cáscaras se concentran en los expedientes antiguos** (186 de los 197 primeros, todos de 2008–2009, frente al 31 % del conjunto). Conviene mirar el reparto por año cuando la carga termine, porque cambia la pregunta: no es «por qué hay contratos vacíos» sino «por qué los de aquellos años».
 5. **Un proceso que tenía release y deja de tenerlo** conserva su contenido y solo cambia de estado, con un aviso en el log. No se ha observado ninguno; si aparece, hay que mirarlo antes de decidir nada.
-6. **El presupuesto no está desplegado.** `V013` no se ha aplicado en producción y la carga real allí son 396 peticiones en unas dos horas y media. En local está comprobado con la ingesta de verdad y las cifras cuadran al registro con el spike (§5), así que lo que falta es el redespliegue y mirarlo al día siguiente.
+6. ~~El presupuesto no está desplegado~~ → **desplegado el 2026-09-10** (§5): `V013` aplicada, censo de 140 fechas y primer lote de 10 instantáneas con 11.902 partidas, empezando por la más reciente. **Lo que queda es esperar** a que terminen las 130 restantes —unas dos horas— y comprobar al día siguiente que el total cuadra con las 154.508 partidas de local.
 7. **La congelación no se ha visto sobrevivir a un mes.** Cada instantánea cargada queda con `next_attempt_at` a `NULL` y solo se relee la más reciente; lo que hay que comprobar cuando la fuente publique la foto de septiembre es que **la de agosto se congela sola** al dejar de ser la última, y que la nueva entra sin tocar nada.
 8. **Que una instantánea publicada no se reescriba** está comprobado a cinco días sobre tres partidas, y no más. La aplicación lo trata como probable, no como cierto: relee la más reciente cada siete días. Si alguna vez cambian los importes de una foto ya cargada, el reemplazo es limpio (se sustituyen sus partidas enteras) pero conviene enterarse, porque cambiaría lo que significa la serie.
 9. **Los meses que faltan en la cadencia** (2016 sin enero ni febrero, 2018 sin noviembre, 2019 sin enero) y **qué distingue `partida` de `epigrafe`** son preguntas para el ayuntamiento (§6), no trabajo.
@@ -194,7 +194,15 @@ Los dos caminos posibles a partir de aquí están en el recuadro del principio d
 
 Y, con spike propio, la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45 y 19:30 del 2026-09-10)
+## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45, 19:30 y 20:05 del 2026-09-10)
+
+**20:00–20:05 CEST del 2026-09-10 (decimotercera sesión, el presupuesto en producción).** Integrado en `main`, redesplegado solo y comprobado contra la instancia:
+
+- **Flyway aplicó `V013`** sin incidencias; es la segunda migración que entra en producción sobre datos ya cargados y tampoco hubo que tocar nada.
+- **El censo trajo las 140 fechas**, de 2006-12-31 a 2026-08-31, las mismas que en local.
+- **El primer lote cargó 10 instantáneas y 11.902 partidas**, y lo hizo **empezando por la más reciente**, que es lo que pide el diseño: la primera foto que existe es justo la que contestan por defecto el listado y las agregaciones. Cero ausentes y cero vacías.
+- **La API de producción da las mismas cuatro cifras que el spike** para la instantánea de agosto de 2026: 1.094.649.651,04 € de crédito definitivo y 819.958.431,57 € comprometidos. Y `by=year` devuelve **solo 2025 y 2026** mientras el resto está en `PENDING`, que es la lectura honesta de una carga a medias: no aparece un año hasta que su foto está entera.
+- **Lo que queda es tiempo**: 130 instantáneas por leer a 10 cada 10 minutos, unas dos horas. Conviene mirar al día siguiente que el reparto acaba en 140 `LOADED` y **154.508 partidas**, y aprovechar para tomar la medida de memoria con seis módulos y la tabla llena, que sigue pendiente (§6).
 
 **19:22–19:30 CEST del 2026-09-10 (decimotercera sesión, el presupuesto con la ingesta real).** El spike S3.2 se ejecutó **dos veces** contra la API y dio las mismas cifras las dos. Después se ejecutó la ingesta de producción de verdad, contra la fuente real y sobre la base de desarrollo:
 
