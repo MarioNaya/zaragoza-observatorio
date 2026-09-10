@@ -15,6 +15,19 @@ public final class SpendingSources {
 	 */
 	public static final DatasetRef PROCESSES = DatasetRef.of(Sources.OCDS, "contracting-process");
 
+	/**
+	 * Censo de instantáneas del presupuesto de gastos:
+	 * {@code sede/servicio/presupuesto/gasto-corriente/fecha.json} (S3.2).
+	 * <p>
+	 * <b>Una sola referencia para el censo y para las instantáneas</b>, por lo mismo que en la contratación: son
+	 * la misma fuente vista de dos formas y su frescura es una sola. Las 140 instantáneas no son un
+	 * {@code IngestionJob} —son 396 peticiones— y las lee el planificador propio del módulo.
+	 * <p>
+	 * El identificador es {@code presupuesto/gasto-corriente} y no {@code presupuesto} a secas porque el mismo
+	 * servicio publica el presupuesto de <b>ingresos</b>, que es otra cosa y no se ingiere (ADR-003).
+	 */
+	public static final DatasetRef BUDGET = DatasetRef.of(Sources.SEDE, "presupuesto/gasto-corriente");
+
 	private SpendingSources() {
 	}
 
