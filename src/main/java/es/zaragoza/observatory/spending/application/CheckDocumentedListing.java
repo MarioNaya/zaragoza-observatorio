@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 
 import es.zaragoza.observatory.spending.domain.ContractingProcessRepository;
 import es.zaragoza.observatory.spending.domain.ReleaseSource;
@@ -42,7 +41,13 @@ public class CheckDocumentedListing {
 		this.source = Objects.requireNonNull(source);
 	}
 
-	@Transactional
+	/**
+	 * <b>Sin {@code @Transactional} a propósito.</b> Este método hace una petición HTTP, y envolverlo en una
+	 * transacción dejaría una conexión de la base de datos retenida mientras la fuente responde —hasta 60 s si
+	 * agota el tiempo de lectura—. Las dos escrituras que necesita ya son transaccionales cada una en el
+	 * adaptador, y no hacen falta juntas: si entre las dos apareciera un ocid nuevo, se marcaría en la ingesta
+	 * siguiente.
+	 */
 	public Summary check() {
 		Optional<List<String>> documented = source.documentedOcids();
 		if (documented.isEmpty()) {
