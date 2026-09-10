@@ -35,7 +35,7 @@ flowchart LR
     A_CIT["citizen<br/>quejas-sugerencias/list.json con fl de 8 campos, SIN texto libre (ADR-012)<br/>ServiceRequestJsonTranslator · dos jobs con marca de agua:<br/>altas por requested_datetime · cierres por updated_datetime (S2.2)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
     A_GEO["geo<br/>distrito.json?srsname=wgs84 → District + Boundary<br/>DistrictJsonTranslator · DistrictsIngestionJob<br/>DatasetIngested → DistrictProfileHttpReader: 29 detalles → idpadron + PopulationRecord<br/>PostgisDistrictLocator: ST_Contains → junta (ADR-011)"]
     A_URB["urban<br/>registro-licencia.json COMPLETO, sin fl (la proyección rompe los anidados, S2.4)<br/>LicensedPremisesJsonTranslator · un job: q=lastUpdated=ge= + sort=id asc<br/>el texto libre no se lee y la página cruda no se guarda (ADR-016)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
-    A_SPE["spending<br/>release → ContractingProcess, Award, Contract<br/>gasto-corriente → BudgetLine<br/>ayuda-subvencion → Grant"]
+    A_SPE["spending<br/>contracting-process.json?after=INTERRUPTOR → censo de 8.001 ocids<br/>OcdsListJsonTranslator (acepta array y envoltorio vacío)<br/>detalle por planificador propio: 8.001 peticiones, cadencia decreciente<br/>parties[].id lleva el NIF dentro → PartyIdentity (ADR-017)<br/>gasto-corriente → BudgetLine · ayuda-subvencion → Grant (pendientes)"]
   end
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
@@ -44,7 +44,7 @@ flowchart LR
     T_CIT["citizen: citizen_service_request (V009)<br/>lon/lat + district_id resuelto + district_declared<br/>sin columna de texto libre (ADR-012)"]
     T_GEO["geo: geo_district (geometry 4326 + GiST),<br/>geo_population_record (V008)<br/>census_section: pendiente"]
     T_URB["urban: urban_premises, urban_premises_licence (V011)<br/>lon/lat + district_id resuelto · epígrafe IAE codificado<br/>sin columna de texto libre y sin district_declared (ADR-016)"]
-    T_SPE["spending: contracting_process, award,<br/>contract, supplier, budget_snapshot,<br/>budget_line, grant (sin geometría)"]
+    T_SPE["spending: spending_process, spending_award,<br/>spending_award_party, spending_contract,<br/>spending_process_cpv (V012) · sin geometría<br/>sin columna para parties[].id, y CHECK que impide<br/>guardar identidad de persona física (ADR-017)<br/>budget_snapshot, budget_line, grant (pendientes)"]
     T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
   end
 
@@ -70,6 +70,8 @@ Una variante del paso 2 la estrena `citizen` (S2.2): su `SourceDescriptor` **se 
 
 `urban` (S2.4) usa esa misma variante con **un solo job**, y la diferencia enseña por qué `citizen` necesitaba dos: aquí el filtro de fecha va en `q` y el orden en `id`, que no empata, así que la ventana y la paginación son exactas a la vez. Con filtro y orden en el mismo campo —el caso de las quejas— la paginación por offset se salta registros en cuanto hay empates de fecha. Este job además **no guarda su página cruda** (`keepsRawPayload()` a `false`): la respuesta trae texto libre con datos personales que la fuente no deja de enviar, así que la única forma de no tenerlo es no escribirlo.
 
+`spending` (S3.1, ADR-017) estrena una tercera forma, y es la que más se aparta del paso 2 porque la fuente **no publica los registros en su listado**: `contracting-process.json` devuelve solo `ocid` e `id`. El job de ingesta hace por tanto un **censo** —una sola petición, sin `start` porque la fuente lo ignora, y con `after=2030-01-01T00:00:00Z`, que **no es una fecha sino el interruptor** que abre los 2.271 procesos que el listado documentado esconde—; el contenido lo trae después un planificador propio del módulo, que pide el detalle de cada proceso por lotes con **cadencia decreciente** según lo que respondió la última vez. Es el patrón del muestreo observado de `catalog` (ADR-005), y por lo mismo: el contrato de `ingestion` describe una URL y aquí hacen falta 8.001. En el paso 6, el listener de `spending` pide el listado **sin filtro** para marcar qué procesos esconde y para comprobar que sigue siendo subconjunto del ampliado; si deja de serlo, falla.
+
 ## 2. Módulos Modulith y dependencias permitidas
 
 ```mermaid
@@ -85,7 +87,7 @@ flowchart TB
     CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint, FederatedDataset"]
     CIT["citizen (fase 2, implementado)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
     URB["urban (fase 2, implementado)<br/>LicensedPremises + Licence, sin texto libre (ADR-016)<br/>no depende de citizen ni al revés"]
-    SPE["spending (fase 3)<br/>OCDS, presupuesto, subvenciones<br/>sin dependencia de geo (ADR-003)"]
+    SPE["spending (fase 3, OCDS implementado)<br/>ContractingProcess + Award + Contract + Cpv (ADR-017)<br/>presupuesto y subvenciones pendientes<br/>sin dependencia de geo (ADR-003)"]
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]
