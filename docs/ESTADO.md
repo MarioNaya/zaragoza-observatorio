@@ -131,7 +131,7 @@ La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **
 
 > **Se eligió el camino (b), la fase 3, y su primera fuente está hecha**: la contratación OCDS, con S3.1 y ADR-017. El otro pilar de `SPEC.md` deja de estar vacío. **Lo inmediato de la fase 3 es terminarla**: quedan **presupuesto** (`presupuesto/gasto-corriente`, con crédito inicial, definitivo, comprometido, obligación neta y pago neto en 140 instantáneas datadas) y **subvenciones** (`ayuda-subvencion`), que son las dos únicas fuentes de **gasto ejecutado** —OCDS publica licitado y adjudicado, nunca pagado (0 `planning`, 0 `implementation`)—. Las dos van sin territorio (ADR-003) y **caben en `spending` sin ADR nueva**, cada una con su spike. La alternativa sigue siendo **(a) una tercera fuente territorial en `urban`**, que tampoco necesita ADR: `licencia-obra` (2.042 parcelas, 100 % con punto) es la más barata, `via-publica/incidencia` la más viva y `locales-vacios` la que menos aporta (48,8 % con punto), aunque es la única con junta declarada y serviría de contraste. En los dos casos el orden es el de siempre: spike, fixtures, ADR si toca, traductor, migración y tests.
 >
-> **Lo que queda abierto de `spending`, y es lo primero que hay que mirar**: la contratación **no se ha desplegado todavía**, así que el histórico de 8.001 procesos no está cargado en la instancia y la memoria con seis módulos no está medida (la línea base vigente son 425 MB, ADR-009). El detalle son 8.001 peticiones a ~7 h con los valores por defecto; conviene lanzar el primer barrido con `zaragoza.spending.releases.*` subido y volver a los valores normales después. Y comprobar dos cosas que solo se ven con datos reales: que la comprobación de subconjunto **no salta** (si salta, el interruptor ha cambiado y hay que mirarlo antes de seguir) y que el reparto por `release_status` se parece al de S3.1 (5.622 con release, 2.379 sin él, 16 vacíos).
+> **Está desplegado y el censo está cargado** (§5): 8.002 procesos —uno más que los 8.001 del spike, la fuente crece— y **2.271 marcados como ausentes del listado documentado**, exactamente la cifra que midió S3.1, lo que confirma de paso que la comprobación de subconjunto pasó. **Lo que queda por ver es el detalle**: son 8.002 peticiones a ~7 h con los valores por defecto, así que el reparto por `release_status` tarda en cuadrar; conviene mirarlo al día siguiente y compararlo con S3.1 (5.622 con release, 2.379 sin él, 16 vacíos). Y **medir la memoria con seis módulos**: la línea base vigente son 425 MB con cinco (ADR-009), y esta es la primera fuente que añade cinco tablas y un planificador propio.
 
 Lo de la fase 1 se vigila, no se trabaja: el punto 6, que era el único trabajo pendiente, quedó hecho el 2026-09-09 (ADR-013) y está comprobado en la instancia (§5).
 
@@ -169,8 +169,8 @@ La **fase 2** tiene hechos sus tres pasos y su orden fue el correcto: primero sa
 
 **Lo que queda abierto de `spending`** (todo lo demás es trabajo de las dos fuentes que faltan):
 
-1. **No está desplegado.** Es el punto 1, y arrastra los otros: sin la instancia cargada no hay reparto real por `release_status`, ni memoria medida con seis módulos, ni forma de saber cuánto tarda de verdad el barrido de 8.001 detalles.
-2. **La comprobación de subconjunto no se ha visto pasar contra la fuente real** dentro de la aplicación (sí en el spike). Es la defensa entera contra que el interruptor `after` cambie de sentido, y está pensada para **fallar**, así que la primera ejecución en producción dirá si el umbral sigue donde estaba.
+1. ~~No está desplegado~~ → **desplegado y con el censo cargado el 2026-09-10** (§5): 8.002 procesos y 2.271 fuera del listado documentado. **Lo que queda es el detalle**, que tarda ~7 h, y **la memoria con seis módulos**, que no se puede medir hasta que la carga termine.
+2. ~~La comprobación de subconjunto no se ha visto pasar contra la fuente real~~ → **pasó en la primera ejecución en producción**, y con la cifra exacta del spike. Sigue siendo la defensa entera contra que el interruptor `after` cambie de sentido, así que conviene mirar que no salte en las siguientes.
 3. **La cadencia de reintento no se ha visto funcionar.** Los 2.379 procesos sin release empiezan con espera de un día y la duplican; lo que hay que comprobar al cabo de una semana es que el planificador no está gastando el lote entero en reintentos y que alguno de esos 404 se ha convertido en release.
 4. **Los 1.560 contratos vacíos y los 2.271 procesos escondidos** son preguntas para el ayuntamiento (§6), no trabajo. Mientras tanto se publican como hechos: `emptyShell` y `inDocumentedList`.
 5. **Un proceso que tenía release y deja de tenerlo** conserva su contenido y solo cambia de estado, con un aviso en el log. No se ha observado ninguno; si aparece, hay que mirarlo antes de decidir nada.
@@ -181,7 +181,14 @@ Los dos caminos posibles a partir de aquí están en el recuadro del principio d
 
 Y, con spike propio, la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51 y 13:16 del 2026-09-09)
+## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45 del 2026-09-10)
+
+**12:45 CEST del 2026-09-10 (duodécima sesión, `spending` en producción).** Integrado en `main`, redesplegado solo y comprobado contra la fuente real:
+
+- **Flyway aplicó `V012`** sin incidencias y la aplicación arrancó con seis módulos.
+- **El censo trajo 8.002 procesos**, uno más que los 8.001 que midió S3.1 el día anterior: la fuente crece, y el censo lo recoge sin tocar nada.
+- **2.271 procesos quedaron marcados como ausentes del listado documentado**, que es **exactamente** la cifra del spike. Es la comprobación más importante de la sesión, porque significa dos cosas: que el interruptor `after` sigue haciendo lo mismo y que la comprobación de subconjunto **pasó** (si el listado documentado hubiera dejado de estar contenido en el ampliado, la ingesta habría fallado a propósito).
+- El resto del universo empieza en `PENDING`: el detalle lo lee el planificador propio por lotes, y el histórico entero son unas 7 h con los valores por defecto.
 
 **21:30–21:45 CEST del 2026-09-09 (undécima sesión, `urban` con la ingesta real).** El spike S2.4 se ejecutó **tres veces** contra la API y dio las mismas cifras las tres. Después se ejecutó la ingesta de producción de verdad, contra la fuente real y sobre la base de desarrollo, que es la comprobación que la décima sesión enseñó a no saltarse:
 
