@@ -124,7 +124,7 @@ Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada po
 
 | Concepto | Consumo | Coste aproximado |
 |---|---|---|
-| `observatorio` (JVM acotada) | ~425 MB con los cinco módulos | ~4,25 $/mes |
+| `observatorio` (JVM acotada) | ~425 MB con cinco módulos (**sin medir con seis**, ver abajo) | ~4,25 $/mes |
 | `postgis` | ~125 MB de media | ~1,25 $/mes |
 | Volumen | 5 GB | 0,75 $/mes |
 | Egress | medido: 0 MB | ~0 |
@@ -133,6 +133,8 @@ Railway factura **RAM residente a 10 $/GB/mes** y CPU a 20 $/vCPU/mes, **nada po
 Sobre ese consumo va el plan. El workspace está en **Pro: 20 $/mes con 20 $ de uso incluido**, y se paga por las copias de seguridad del volumen, que Hobby (5 $/mes con 5 $ incluidos) no ofrece (ADR-010, §7). Con el consumo actual la factura es plana: 20 $/mes, con el uso dentro del crédito. **El crédito es de la cuenta, no del proyecto**, y en esta cuenta hay otra aplicación.
 
 Comprobarlo con `railway metrics --service observatorio`. **Lo que se vigila es un salto respecto de la línea base de 425 MB** (cinco módulos, medida el 2026-09-09; eran 416 MB con cuatro), no el umbral de 400 MB de la primera versión de ADR-009: se fijó para una aplicación de dos módulos y hoy solo daría falsos positivos. Ante un salto, mirar si alguien tocó `JAVA_TOOL_OPTIONS` en el `Dockerfile`.
+
+**Con seis módulos la línea base está sin medir** (2026-09-10, `spending`). No es un descuido: la carga inicial de la contratación son ~8.000 peticiones de detalle repartidas en unas 7 h por su propio planificador, así que una medida tomada antes de que termine describe la carga, no el estado de reposo. Se mide cuando `GET /api/v1/spending/summary` deje de tener procesos en `PENDING`, y a partir de ahí la cifra nueva sustituye a los 425 MB como referencia.
 
 Dos cosas que **no** reducen esta factura, por si tienta:
 
