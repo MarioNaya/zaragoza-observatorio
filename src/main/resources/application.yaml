@@ -120,6 +120,27 @@ zaragoza:
     rows: 500
     interval: P1D
     watermark-margin: PT6H
+  # Módulo spending (docs/spikes/S3.1-ocds-ingesta.md, ADR-003, ADR-017). El censo es una sola petición: OCDS
+  # ignora `start`, así que no hay paginación por desplazamiento y no rige el tope de 500 de la sede. El censo va
+  # siempre con el interruptor `after=2030-01-01T00:00:00Z` (OcdsListing), que **no es una fecha**: es lo que abre
+  # los 2.271 procesos que el listado documentado esconde. El detalle no cabe en el ciclo de una página —son 8.001
+  # peticiones— y lo lee el planificador de abajo, con cadencia decreciente para los que aún no tienen release.
+  spending:
+    ocds-base-url: https://www.zaragoza.es/sede/servicio/contratacion-publica/ocds
+    rows: 20000
+    interval: P1D
+    releases:
+      enabled: true
+      tick: PT10M
+      initial-delay: PT3M
+      batch-size: 200
+      request-delay: PT0.2S
+      # Reintento de los procesos sin release: 1, 2, 4, 8, 16 días con tope de 30.
+      missing-initial-backoff: P1D
+      missing-max-backoff: P30D
+      # La fuente no publica ETag ni Last-Modified: para saber si un proceso cambió hay que releerlo.
+      active-refresh: P7D
+      published-refresh: P30D
 
 ---
 # Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara
