@@ -8,11 +8,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 import es.zaragoza.observatory.spending.application.CheckDocumentedListing;
+import es.zaragoza.observatory.spending.application.ReadBudgetSnapshots;
 import es.zaragoza.observatory.spending.application.ReadReleases;
+import es.zaragoza.observatory.spending.application.RegisterBudgetSnapshots;
 import es.zaragoza.observatory.spending.application.RegisterProcesses;
+import es.zaragoza.observatory.spending.domain.BudgetRepository;
+import es.zaragoza.observatory.spending.domain.BudgetSource;
 import es.zaragoza.observatory.spending.domain.ContractingProcessRepository;
 import es.zaragoza.observatory.spending.domain.ReleaseSource;
 import es.zaragoza.observatory.spending.domain.RetrySchedule;
+import es.zaragoza.observatory.spending.domain.SnapshotSchedule;
+import es.zaragoza.observatory.spending.infrastructure.zaragoza.BudgetHttpSource;
+import es.zaragoza.observatory.spending.infrastructure.zaragoza.BudgetLineJsonTranslator;
 import es.zaragoza.observatory.spending.infrastructure.zaragoza.OcdsHttpReleaseSource;
 import es.zaragoza.observatory.spending.infrastructure.zaragoza.OcdsListJsonTranslator;
 import es.zaragoza.observatory.spending.infrastructure.zaragoza.OcdsReleaseJsonTranslator;
@@ -53,6 +60,31 @@ class SpendingConfiguration {
 	ReadReleases readReleases(ContractingProcessRepository processes, ReleaseSource source, RetrySchedule schedule,
 			Clock clock) {
 		return new ReadReleases(processes, source, schedule, clock);
+	}
+
+	// --- presupuesto de gastos (S3.2) --------------------------------------------------------------------
+
+	@Bean
+	BudgetSource budgetSource(RestClient rest, BudgetLineJsonTranslator translator, SpendingProperties properties) {
+		return new BudgetHttpSource(rest, translator, properties);
+	}
+
+	@Bean
+	SnapshotSchedule budgetSnapshotSchedule(SpendingProperties properties) {
+		var budget = properties.budget();
+		return new SnapshotSchedule(budget.missingInitialBackoff(), budget.missingMaxBackoff(),
+				budget.latestRefresh());
+	}
+
+	@Bean
+	RegisterBudgetSnapshots registerBudgetSnapshots(BudgetRepository budget) {
+		return new RegisterBudgetSnapshots(budget);
+	}
+
+	@Bean
+	ReadBudgetSnapshots readBudgetSnapshots(BudgetRepository budget, BudgetSource source, SnapshotSchedule schedule,
+			Clock clock) {
+		return new ReadBudgetSnapshots(budget, source, schedule, clock);
 	}
 
 }

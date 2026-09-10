@@ -141,6 +141,27 @@ zaragoza:
       # La fuente no publica ETag ni Last-Modified: para saber si un proceso cambió hay que releerlo.
       active-refresh: P7D
       published-refresh: P30D
+    # Presupuesto de gastos (docs/spikes/S3.2-presupuesto-ingesta.md). La segunda fuente del módulo y la única
+    # del producto con dinero PAGADO. El censo `gasto-corriente/fecha.json` es una petición y trae 140 URL; las
+    # partidas de cada instantánea las lee el planificador de abajo, siempre con `sort=id asc` (el orden por
+    # defecto de este endpoint sirve dos ordenaciones distintas a la misma URL). Aquí sí rige el tope de 500.
+    # El histórico entero son 396 peticiones y 2,3 minutos, y una instantánea publicada no se reescribe: se lee
+    # una vez y se congela, así que solo se relee la más reciente. Para cargarlo de una vez en desarrollo:
+    # --zaragoza.spending.budget.batch-size=200 --zaragoza.spending.budget.tick=PT1M
+    budget:
+      base-url: https://www.zaragoza.es/sede/servicio/presupuesto
+      rows: 500
+      interval: P1D
+      enabled: true
+      tick: PT10M
+      initial-delay: PT5M
+      batch-size: 10
+      request-delay: PT0.2S
+      # Reintento de las instantáneas que el censo publica y no responden: 1, 2, 4, 8 días con tope de 30.
+      missing-initial-backoff: P1D
+      missing-max-backoff: P30D
+      # La única que se vuelve a pedir: la foto del último mes publicado.
+      latest-refresh: P7D
 
 ---
 # Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara
