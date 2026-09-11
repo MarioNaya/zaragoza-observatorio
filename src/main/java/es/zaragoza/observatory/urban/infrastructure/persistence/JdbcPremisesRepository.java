@@ -329,6 +329,23 @@ class JdbcPremisesRepository implements PremisesRepository {
 
 	@Override
 	@Transactional(readOnly = true)
+	public Map<Assignment, Long> licenceAssignmentCounts(PremisesQuery filters) {
+		var where = new Where(filters);
+		var counts = new EnumMap<Assignment, Long>(Assignment.class);
+		for (Assignment assignment : Assignment.values()) {
+			counts.put(assignment, 0L);
+		}
+		// INNER JOIN: la unidad es la licencia, así que un local sin ninguna no aporta nada a este recuento.
+		jdbc.query("SELECT p.assignment, count(*) AS n FROM urban_premises p"
+				+ " JOIN urban_premises_licence l ON l.premises_id = p.source_id" + where.clause()
+				+ " GROUP BY p.assignment",
+				(rs, row) -> Map.entry(Assignment.valueOf(rs.getString("assignment")), rs.getLong("n")),
+				where.args()).forEach(entry -> counts.put(entry.getKey(), entry.getValue()));
+		return counts;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Map<Integer, Long> statusCounts(PremisesQuery filters) {
 		var where = new Where(filters);
 		Map<Integer, Long> counts = new TreeMap<>();

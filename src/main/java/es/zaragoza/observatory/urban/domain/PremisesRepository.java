@@ -49,6 +49,16 @@ public interface PremisesRepository {
 	/** Reparto por estado de asignación territorial, con todos los estados presentes aunque valgan 0 (regla 7). */
 	Map<Assignment, Long> assignmentCounts(PremisesQuery filters);
 
+	/**
+	 * Reparto de <b>licencias</b> por el estado de asignación del local que las tiene, con todos los estados
+	 * presentes aunque valgan 0.
+	 * <p>
+	 * No es {@link #assignmentCounts} con otro nombre: aquel cuenta locales. Una licencia no tiene punto propio
+	 * —lo hereda del local—, pero los locales sin punto no tienen por qué repartirse las licencias igual que los
+	 * demás, así que la cobertura de una columna de licencias hay que medirla en licencias (ADR-019 §6).
+	 */
+	Map<Assignment, Long> licenceAssignmentCounts(PremisesQuery filters);
+
 	/** Recuento por {@code estado} del origen, publicado como código (ADR-016 §6). */
 	Map<Integer, Long> statusCounts(PremisesQuery filters);
 

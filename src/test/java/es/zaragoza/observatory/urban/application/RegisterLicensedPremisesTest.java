@@ -148,6 +148,11 @@ class RegisterLicensedPremisesTest {
 		}
 
 		@Override
+		public Map<Assignment, Long> licenceAssignmentCounts(PremisesQuery filters) {
+			return Map.of();
+		}
+
+		@Override
 		public Map<Integer, Long> statusCounts(PremisesQuery filters) {
 			return Map.of();
 		}
