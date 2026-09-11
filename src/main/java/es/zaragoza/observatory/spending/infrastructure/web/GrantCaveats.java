@@ -26,7 +26,7 @@ final class GrantCaveats {
 			"De los beneficiarios que son personas físicas no se publica ni el nombre ni el identificador "
 					+ "fiscal: solo el identificador opaco que ya publica el ayuntamiento, que permite contar "
 					+ "cuántas subvenciones recibió el mismo beneficiario y por cuánto sin saber quién es. Son el "
-					+ "57 % de las concesiones y naturalPerson lo dice en cada una.",
+					+ "56 % de las concesiones y naturalPerson lo dice en cada una.",
 			"Persona física significa aquí que lo dice la clasificación del origen o que el identificador "
 					+ "fiscal llega enmascarado. Las dos señales discrepan en el 1,5 % de los casos y se toma la "
 					+ "unión: ante la duda no se publica identidad.",
@@ -39,7 +39,7 @@ final class GrantCaveats {
 
 	/** La redacción del título, con su recuento, como pide la regla 6. */
 	static final List<String> REDACTION = List.of(
-			"El título de una concesión dice para qué era la ayuda y se publica. En 2.759 de ellas el origen "
+			"El título de una concesión dice para qué era la ayuda y se publica. En 2.758 de ellas el origen "
 					+ "mete dentro el DNI o el NIE del beneficiario: ahí el identificador se sustituye por "
 					+ "[identificador omitido], la concesión sale con titleRedacted a true y el resto del texto "
 					+ "está completo.");

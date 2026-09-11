@@ -150,14 +150,6 @@ Comprobados con `curl` durante la planificación; los spikes deben confirmarlos 
 - **El histórico cuesta 8.001 peticiones y 25,2 MB**, 30,6 min con pausa de 40 ms. El incremental no depende de ningún filtro: los ocids nuevos aparecen al final del listado, así que una pasada diaria es una petición de listado más un detalle por proceso nuevo, más los reintentos de los 2.379 sin release.
 - **`sort=id desc` se acepta y no se aplica** en el listado, la misma familia que `q=junta.id==N` (S2.1), `status=rejected` (S2.2) y `removeproperties` (S2.4).
 
-## Conclusiones de fase 3 (S3.3, 2026-09-11)
-
-- **El censo completo de subvenciones es la versión vieja.** `ayuda-subvencion/resolucion` publica 46.925 concesiones de 2013 a 2026 y `ayuda-subvencion-v2/concesion` es un **subconjunto estricto** (44.316, cero registros propios) que esconde 2013 y 2014. Es la tercera vez que esta API publica un listado que parece completo y no lo es, y la primera en la que **el recurso más nuevo es el más incompleto**.
-- **La fuente se contradice en datos personales**: enmascara el NIF de la persona física, anonimiza su directorio de entidades hasta dejarlo sin un solo dato de contacto… y publica el **nombre y apellidos de 6.333 beneficiarios** en un campo estructural y **2.378 DNI y 381 NIE con letra de control válida** dentro del texto del título. Es, junto con el texto de las quejas (S2.2), el hallazgo más serio del proyecto.
-- **Aquí sí se puede no pedir el nombre**: `fl` recorta de verdad en la v1. Pero recorta **por subárbol y a dos niveles**, y la salida para el tercero es la **ruta con punto**, que el Swagger no documenta. Sobre la v2, `fl` devuelve `{}`.
-- **Mezclar `rows` con `page` solapa páginas en silencio**: el desplazamiento lo calcula `pageSize` (50 por defecto) aunque el tamaño lo fije `rows`. Y `rows` topa en 500 mientras `pageSize` no topa en nada.
-- Decisión en [ADR-018](../decisions/ADR-018-subvenciones-y-beneficiario.md): el beneficiario entra como **seudónimo** y su identidad solo si no es una persona física; el título se guarda con el identificador **redactado por forma**; y dos CHECK lo imponen desde la base de datos.
-
 ## Conclusiones de fase 3 (S3.2, 2026-09-10)
 
 - **El gasto ejecutado existe y sale de aquí.** `presupuesto/gasto-corriente` publica por partida los ocho importes del ciclo presupuestario, y las tres identidades contables cuadran al céntimo: crédito definitivo = inicial + modificaciones, remanente = definitivo − obligación neta, pendiente de pago = obligación neta − pago neto. Las cuatro cifras que importan (definitivo, comprometido, obligación neta, pago neto) **no son intercambiables** y se publican las cuatro.
@@ -168,3 +160,11 @@ Comprobados con `curl` durante la planificación; los spikes deben confirmarlos 
 - **El nombre del endpoint engaña**: `gasto-corriente` incluye inversiones reales (305 partidas del capítulo 6 en la última instantánea) y los capítulos financieros. Es el presupuesto de gastos entero.
 - **El esquema cambia con los años**: `programa` no existe en 2010-2014 y llega incompleto en otros seis ejercicios (121.890 de 154.508 filas lo traen). No es un fallo del traductor y se dice en `caveats`.
 - **Dato personal: cero identificadores y una partida que nombra a una persona.** Cero DNI, NIE, correos y teléfonos en las 154.508 filas, pero **4 filas** de los cierres de 2006-2009 son una pensión «a la viuda de D. …». Se guarda el texto de la partida —sin él es un importe sin concepto— redactando la lista cerrada de fórmulas de persona, con el recuento en `caveats`.
+
+## Conclusiones de fase 3 (S3.3, 2026-09-11)
+
+- **El censo completo de subvenciones es la versión vieja.** `ayuda-subvencion/resolucion` publica 46.925 concesiones de 2013 a 2026 y `ayuda-subvencion-v2/concesion` es un **subconjunto estricto** (44.316, cero registros propios) que esconde 2013 y 2014. Es la tercera vez que esta API publica un listado que parece completo y no lo es, y la primera en la que **el recurso más nuevo es el más incompleto**.
+- **La fuente se contradice en datos personales**: enmascara el NIF de la persona física, anonimiza su directorio de entidades hasta dejarlo sin un solo dato de contacto… y publica el **nombre y apellidos de 6.333 beneficiarios** en un campo estructural y **2.378 DNI y 381 NIE con letra de control válida** dentro del texto del título. Es, junto con el texto de las quejas (S2.2), el hallazgo más serio del proyecto.
+- **Aquí sí se puede no pedir el nombre**: `fl` recorta de verdad en la v1. Pero recorta **por subárbol y a dos niveles**, y la salida para el tercero es la **ruta con punto**, que el Swagger no documenta. Sobre la v2, `fl` devuelve `{}`.
+- **Mezclar `rows` con `page` solapa páginas en silencio**: el desplazamiento lo calcula `pageSize` (50 por defecto) aunque el tamaño lo fije `rows`. Y `rows` topa en 500 mientras `pageSize` no topa en nada.
+- Decisión en [ADR-018](../decisions/ADR-018-subvenciones-y-beneficiario.md): el beneficiario entra como **seudónimo** y su identidad solo si no es una persona física; el título se guarda con el identificador **redactado por forma**; y dos CHECK lo imponen desde la base de datos.

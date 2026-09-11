@@ -26,7 +26,7 @@ Y lo que S3.3 encontró tampoco estaba previsto: **la fuente se contradice consi
 | hecho medido | valor |
 |---|---|
 | Concesiones en el censo completo (`ayuda-subvencion/resolucion`, 2013–2026) | **46.925** |
-| Concesiones cuyo beneficiario es persona física (por cualquiera de las dos señales) | **25.421 (57,4 %)** |
+| Concesiones cuyo beneficiario es persona física (por cualquiera de las dos señales) | **25.421 (57,4 %)**, contadas por concesión; **26.186 (55,8 %)** contadas como corresponde, ver adenda |
 | Fichas del directorio clasificadas `personas-fisicas` | 16.450 |
 | …con título distinto de «Datos de caracter personal» | **0** |
 | …con dirección, teléfono o correo | **0** |
@@ -114,8 +114,8 @@ Es la misma figura que `spending_award_party_no_natural_identity` (V012) y
 
 ### 5. El título se guarda con el identificador redactado
 
-El título de una concesión dice para qué era la ayuda y se guarda. Cuando lleva dentro un DNI o un NIE —2.759 de
-46.925, el 5,9 %— **se sustituye el identificador por un marcador** y se marca la fila con `title_redacted`. El
+El título de una concesión dice para qué era la ayuda y se guarda. Cuando lleva dentro un DNI o un NIE —2.758 de
+46.925, el 5,9 %; son 2.759 coincidencias, porque una fila lleva los dos— **se sustituye el identificador por un marcador** y se marca la fila con `title_redacted`. El
 recuento se publica en `caveats`.
 
 La redacción es **por forma, no por validez**: se sustituye cualquier coincidencia con la forma de DNI o NIE,
@@ -170,7 +170,7 @@ no lo que se repartió.
   copias, en los volcados y en la memoria del proceso. La regla 22 habla de que no entre, no de que no se vea.
 - **No guardar ningún título** (la figura de ADR-012). Costaría el objeto de las 46.925 ayudas para evitar un
   problema que afecta al 5,9 % y que se reconoce sin ambigüedad.
-- **No guardar el título de las 2.759 afectadas** (la figura de S3.2). Más conservador y más caro: esas ayudas
+- **No guardar el título de las 2.758 afectadas** (la figura de S3.2). Más conservador y más caro: esas ayudas
   perderían su objeto sin que la redacción del identificador deje nada identificable.
 - **Guardar el `nifcif` enmascarado.** No aporta nada analítico —el seudónimo ya distingue beneficiarios— y es un
   identificador parcial de una persona.
