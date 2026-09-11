@@ -35,7 +35,7 @@ flowchart LR
     A_CIT["citizen<br/>quejas-sugerencias/list.json con fl de 8 campos, SIN texto libre (ADR-012)<br/>ServiceRequestJsonTranslator · dos jobs con marca de agua:<br/>altas por requested_datetime · cierres por updated_datetime (S2.2)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
     A_GEO["geo<br/>distrito.json?srsname=wgs84 → District + Boundary<br/>DistrictJsonTranslator · DistrictsIngestionJob<br/>DatasetIngested → DistrictProfileHttpReader: 29 detalles → idpadron + PopulationRecord<br/>PostgisDistrictLocator: ST_Contains → junta (ADR-011)"]
     A_URB["urban<br/>registro-licencia.json COMPLETO, sin fl (la proyección rompe los anidados, S2.4)<br/>LicensedPremisesJsonTranslator · un job: q=lastUpdated=ge= + sort=id asc<br/>el texto libre no se lee y la página cruda no se guarda (ADR-016)<br/>geometry → punto WGS84 → Geo.locateAll (una consulta por página)"]
-    A_SPE["spending<br/>contracting-process.json?after=INTERRUPTOR → censo de 8.001 ocids<br/>OcdsListJsonTranslator (acepta array y envoltorio vacío)<br/>detalle por planificador propio: 8.001 peticiones, cadencia decreciente<br/>parties[].id lleva el NIF dentro → PartyIdentity (ADR-017)<br/>gasto-corriente/fecha.json → censo de 140 instantáneas (S3.2)<br/>cada foto por planificador propio: sort=id asc, y al cargarla se congela<br/>BudgetHeading omite el nombre que nombra a una persona<br/>ayuda-subvencion → Grant (pendiente)"]
+    A_SPE["spending<br/>contracting-process.json?after=INTERRUPTOR → censo de 8.001 ocids<br/>OcdsListJsonTranslator (acepta array y envoltorio vacío)<br/>detalle por planificador propio: 8.001 peticiones, cadencia decreciente<br/>parties[].id lleva el NIF dentro → PartyIdentity (ADR-017)<br/>gasto-corriente/fecha.json → censo de 140 instantáneas (S3.2)<br/>cada foto por planificador propio: sort=id asc, y al cargarla se congela<br/>BudgetHeading omite el nombre que nombra a una persona<br/>ayuda-subvencion/resolucion → censo de 46.925 concesiones (S3.3)<br/>fl sin `adjudicatario`: el nombre no se descarga (ADR-018)<br/>GrantTitle redacta el DNI que el título lleva dentro<br/>el enlace con el beneficiario sale de la v2, y su NIF enmascarado solo marca"]
   end
 
   subgraph DB["PostgreSQL + PostGIS · tablas por módulo"]
@@ -89,7 +89,7 @@ flowchart TB
     CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint, FederatedDataset"]
     CIT["citizen (fase 2, implementado)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
     URB["urban (fase 2, implementado)<br/>LicensedPremises + Licence, sin texto libre (ADR-016)<br/>no depende de citizen ni al revés"]
-    SPE["spending (fase 3, OCDS y presupuesto implementados)<br/>ContractingProcess + Award + Contract + Cpv (ADR-017)<br/>BudgetSnapshot + BudgetLine: el gasto ejecutado (S3.2)<br/>subvenciones pendientes<br/>sin dependencia de geo (ADR-003)"]
+    SPE["spending (fase 3, las tres fuentes dentro)<br/>ContractingProcess + Award + Contract + Cpv (ADR-017)<br/>BudgetSnapshot + BudgetLine: el gasto ejecutado (S3.2)<br/>Grant + GrantCall + GrantBeneficiary: el beneficiario contado y no nombrado (ADR-018)<br/>sin dependencia de geo (ADR-003)"]
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]

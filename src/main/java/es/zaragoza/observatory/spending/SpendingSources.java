@@ -28,6 +28,30 @@ public final class SpendingSources {
 	 */
 	public static final DatasetRef BUDGET = DatasetRef.of(Sources.SEDE, "presupuesto/gasto-corriente");
 
+	/**
+	 * Concesiones de subvenciones: {@code sede/servicio/ayuda-subvencion/resolucion.json} (S3.3, ADR-018).
+	 * <p>
+	 * Aquí <b>sí</b> hay una referencia por recurso, al revés que en la contratación y el presupuesto, y por una
+	 * razón concreta: no son la misma fuente vista de varias formas, sino cuatro recursos con censos, tamaños y
+	 * frescuras distintos, que se ingieren por separado y sin esperarse.
+	 */
+	public static final DatasetRef GRANTS = DatasetRef.of(Sources.SEDE, "ayuda-subvencion/resolucion");
+
+	/** Convocatorias: {@code sede/servicio/ayuda-subvencion/convocatoria.json}. */
+	public static final DatasetRef GRANT_CALLS = DatasetRef.of(Sources.SEDE, "ayuda-subvencion/convocatoria");
+
+	/** Directorio de beneficiarios: {@code sede/servicio/ayuda-subvencion-v2/organization.json}. */
+	public static final DatasetRef GRANT_BENEFICIARIES = DatasetRef.of(Sources.SEDE,
+			"ayuda-subvencion-v2/organization");
+
+	/**
+	 * Enlace concesión → beneficiario: {@code sede/servicio/ayuda-subvencion-v2/concesion.json}.
+	 * <p>
+	 * De este recurso <b>solo</b> se leen tres campos. Es un subconjunto estricto del censo de la v1 (S3.3 §4) y
+	 * no aporta ninguna concesión propia: lo único que tiene y la v1 no es el identificador del beneficiario.
+	 */
+	public static final DatasetRef GRANT_LINKS = DatasetRef.of(Sources.SEDE, "ayuda-subvencion-v2/concesion");
+
 	private SpendingSources() {
 	}
 
