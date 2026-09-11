@@ -162,6 +162,31 @@ zaragoza:
       missing-max-backoff: P30D
       # La única que se vuelve a pedir: la foto del último mes publicado.
       latest-refresh: P7D
+    # Subvenciones (docs/spikes/S3.3-subvenciones-ingesta.md, ADR-018). La tercera y última fuente del módulo, y
+    # la primera en la que el dato personal es el contenido. Cuatro recursos: el censo completo de concesiones y
+    # las convocatorias salen de la v1, y el directorio de beneficiarios y el enlace concesión->beneficiario, de
+    # la v2, que es un subconjunto estricto y no aporta ninguna concesión propia.
+    #
+    # `grant-fields` es la garantía de ADR-018 §3: no incluye `adjudicatario`, así que el nombre y apellidos de
+    # 6.333 beneficiarios no se descarga. Añadirlo hace fallar el arranque a propósito, igual que en
+    # `zaragoza.citizen.fields`. Y `call-fields` excluye `resolucion`, que sin él trae dentro el conjunto entero
+    # de concesiones —con los nombres y los DNI— en 21 MB.
+    #
+    # La ingesta diaria va por marca de agua (`q=id=gt=`), que es una petición en vez de 94. Para cargar el
+    # histórico entero la primera vez: --zaragoza.spending.grants.full-sweep=true
+    grants:
+      base-url: https://www.zaragoza.es/sede/servicio/ayuda-subvencion
+      v2-base-url: https://www.zaragoza.es/sede/servicio/ayuda-subvencion-v2
+      grant-fields: id,title,expediente,importeSolicitado,importeConcedido,importeAnual,numAnualidades,fechaSolicitud,fechaConcesion,fechaAcuerdo,convocatoria
+      # La ruta con punto no está documentada en el Swagger y es lo único que trae el tercer nivel entero: sin
+      # ella, la línea de financiación llega vacía (S3.3 §3).
+      call-fields: id,title,ejercicioClave,esPlurianual,fechaInicioVigencia,fechaFinVigencia,fechaInicioPresentacion,fechaFinPresentacion,presupuesto,porcentajeAnticipado,gestor,funciones,objetos,tipo,lineaEstrategica.lineaAuxiliar,lineaAmbito.ambito
+      rows: 500
+      # La v2 no usa `rows` sino `pageSize`, y nunca se manda `page`: el desplazamiento lo calcula `pageSize`
+      # aunque el tamaño lo fije `rows`, así que mezclarlos solapa páginas en silencio (S3.3 §2).
+      page-size: 500
+      interval: P1D
+      full-sweep: false
 
 ---
 # Perfil prod (ADR-008: despliegue en Railway). Todo lo que aquí depende del entorno se declara

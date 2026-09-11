@@ -192,6 +192,16 @@ public class ZaragozaHttpClient implements SourceGateway {
 			}
 			recordCount = items.size();
 		}
+		else if (source.shape() == ResponseShape.PAGED_RECORDS) {
+			if (!root.isObject()) {
+				throw new SourceAccessException(Kind.MALFORMED, status,
+						describe(uri, status, "expected a paged envelope object but got " + root.getNodeType()));
+			}
+			JsonNode records = root.path("records");
+			recordCount = records.isArray() ? records.size() : 0;
+			JsonNode total = root.path("totalRecords");
+			totalCount = total.isNumber() ? total.asInt() : null;
+		}
 		else if (source.shape() == ResponseShape.ENVELOPE) {
 			if (!root.isObject()) {
 				throw new SourceAccessException(Kind.MALFORMED, status,

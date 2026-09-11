@@ -20,12 +20,13 @@ import es.zaragoza.observatory.spending.infrastructure.zaragoza.BudgetListing;
  * @param interval intervalo mínimo entre censos
  * @param releases parámetros del planificador que lee el detalle proceso a proceso
  * @param budget parámetros de la segunda fuente del módulo, el presupuesto de gastos (S3.2)
+ * @param grants parámetros de la tercera, las subvenciones (S3.3, ADR-018)
  */
 @ConfigurationProperties(prefix = "zaragoza.spending")
 public record SpendingProperties(
 		@DefaultValue("https://www.zaragoza.es/sede/servicio/contratacion-publica/ocds") String ocdsBaseUrl,
 		@DefaultValue("20000") int rows, @DefaultValue("P1D") Duration interval,
-		@DefaultValue Releases releases, @DefaultValue Budget budget) {
+		@DefaultValue Releases releases, @DefaultValue Budget budget, @DefaultValue Grants grants) {
 
 	/** Un ocid solo puede llevar estos caracteres; con cualquier otro no se construye una URL (S3.1 §1). */
 	private static final Pattern SAFE_OCID = Pattern.compile("[A-Za-z0-9._-]{1,120}");
@@ -131,6 +132,93 @@ public record SpendingProperties(
 		/** Una instantánea: {@code …/presupuesto/gasto-corriente/fecha/{yyyyMMdd}.json}. */
 		public URI snapshotUrl(LocalDate date) {
 			return URI.create(baseUrl + "/gasto-corriente/fecha/" + BudgetListing.DATE.format(date) + ".json");
+		}
+	}
+
+	/**
+	 * Las subvenciones (S3.3, ADR-018). Cuatro recursos y un solo parámetro crítico: la <b>proyección</b>.
+	 *
+	 * @param baseUrl raíz de la familia v1 de la sede, sin barra final
+	 * @param v2BaseUrl raíz de la familia v2, de la que solo se usa el enlace con el beneficiario
+	 * @param grantFields proyección de las concesiones. <b>Es la garantía de ADR-018 §3</b>: no incluye
+	 * {@code adjudicatario}, así que el nombre de la persona física no se descarga. Cambiarla para añadirlo
+	 * rompe el arranque a propósito
+	 * @param callFields proyección de las convocatorias. Excluye {@code resolucion[]}, que sin ella trae el
+	 * conjunto entero de concesiones dentro —con los nombres y los DNI— en 21 MB (S3.3 §8)
+	 * @param rows tamaño de página de la v1; el tope de la sede son 500 (regla 18)
+	 * @param pageSize tamaño de página de la v2, que no usa {@code rows}
+	 * @param interval intervalo mínimo entre ingestas de cada recurso
+	 * @param fullSweep si el barrido de concesiones ignora la marca de agua y recorre el censo entero. La carga
+	 * inicial lo necesita; después basta con {@code id=gt=}, porque el identificador es creciente (S3.3 §9)
+	 */
+	public record Grants(@DefaultValue("https://www.zaragoza.es/sede/servicio/ayuda-subvencion") String baseUrl,
+			@DefaultValue("https://www.zaragoza.es/sede/servicio/ayuda-subvencion-v2") String v2BaseUrl,
+			@DefaultValue("id,title,expediente,importeSolicitado,importeConcedido,importeAnual,numAnualidades,"
+					+ "fechaSolicitud,fechaConcesion,fechaAcuerdo,convocatoria") String grantFields,
+			@DefaultValue("id,title,ejercicioClave,esPlurianual,fechaInicioVigencia,fechaFinVigencia,"
+					+ "fechaInicioPresentacion,fechaFinPresentacion,presupuesto,porcentajeAnticipado,gestor,"
+					+ "funciones,objetos,tipo,lineaEstrategica.lineaAuxiliar,lineaAmbito.ambito") String callFields,
+			@DefaultValue("500") int rows, @DefaultValue("500") int pageSize,
+			@DefaultValue("P1D") Duration interval, @DefaultValue("false") boolean fullSweep) {
+
+		/**
+		 * Campos que la proyección de concesiones no puede contener nunca (ADR-018 §3). {@code adjudicatario} es
+		 * el objeto que lleva dentro el nombre y apellidos de 6.333 beneficiarios.
+		 */
+		static final String[] FORBIDDEN_GRANT_FIELDS = { "adjudicatario", "adjudicatario.nombre",
+				"adjudicatario.beneficiario" };
+
+		/**
+		 * Y los que no puede contener la de convocatorias: {@code resolucion} trae dentro el conjunto entero de
+		 * concesiones sin proyectar, con los nombres y los documentos de identidad.
+		 */
+		static final String[] FORBIDDEN_CALL_FIELDS = { "resolucion", "resolucion.adjudicatario" };
+
+		public Grants {
+			reject(grantFields, FORBIDDEN_GRANT_FIELDS, "grant-fields");
+			reject(callFields, FORBIDDEN_CALL_FIELDS, "call-fields");
+			if (rows <= 0 || rows > SourceDescriptor.SEDE_MAX_ROWS) {
+				throw new IllegalArgumentException(
+						"grants.rows must be between 1 and " + SourceDescriptor.SEDE_MAX_ROWS + " (S0.5)");
+			}
+			if (pageSize <= 0 || pageSize > SourceDescriptor.SEDE_MAX_ROWS) {
+				throw new IllegalArgumentException("grants.page-size must be between 1 and "
+						+ SourceDescriptor.SEDE_MAX_ROWS + " (ADR-018 §2: se pagina, no se pide el todo)");
+			}
+			baseUrl = baseUrl == null ? null : baseUrl.replaceAll("/+$", "");
+			v2BaseUrl = v2BaseUrl == null ? null : v2BaseUrl.replaceAll("/+$", "");
+		}
+
+		private static void reject(String fields, String[] forbidden, String property) {
+			for (String declared : fields.split(",")) {
+				for (String banned : forbidden) {
+					if (declared.strip().equalsIgnoreCase(banned)) {
+						throw new IllegalArgumentException("zaragoza.spending.grants." + property
+								+ " must not request the identity of a grant beneficiary (ADR-018): found '"
+								+ banned + "'");
+					}
+				}
+			}
+		}
+
+		/** Las concesiones, que son el censo completo: {@code …/ayuda-subvencion/resolucion.json}. */
+		public URI grantsUrl() {
+			return URI.create(baseUrl + "/resolucion.json");
+		}
+
+		/** Las convocatorias: {@code …/ayuda-subvencion/convocatoria.json}. */
+		public URI callsUrl() {
+			return URI.create(baseUrl + "/convocatoria.json");
+		}
+
+		/** El directorio de beneficiarios: {@code …/ayuda-subvencion-v2/organization.json}. */
+		public URI beneficiariesUrl() {
+			return URI.create(v2BaseUrl + "/organization.json");
+		}
+
+		/** El enlace concesión → beneficiario: {@code …/ayuda-subvencion-v2/concesion.json}. */
+		public URI linksUrl() {
+			return URI.create(v2BaseUrl + "/concesion.json");
 		}
 	}
 

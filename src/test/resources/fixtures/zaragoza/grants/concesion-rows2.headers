@@ -1,0 +1,10 @@
+HTTP/1.1 200
+access-control-allow-headers: Content-Type,Accept,X-password,clientId,HmacSHA1,Cache-Control,Pragma
+access-control-allow-methods: PATCH,OPTIONS,GET,HEAD,POST,PUT,DELETE
+access-control-allow-origin: *
+allow: PATCH,OPTIONS,GET,HEAD,POST,PUT,DELETE
+content-type: application/json;charset=UTF-8
+date: Fri, 11 Sep 2026 12:24:16 GMT
+server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips mod_fcgid/2.3.9
+x-robots-tag: noindex
+x-ua-compatible: IE=edge

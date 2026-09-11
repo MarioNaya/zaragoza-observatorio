@@ -88,7 +88,17 @@ public record SourceDescriptor(DatasetRef dataset, URI url, Map<String, String> 
 		 * Linked Data API de datos.gob.es (S1.3): {@code {"format":…,"result":{"items":[...],"next":…}}}; sin
 		 * recuento total, así que se avanza mientras la página venga llena.
 		 */
-		RESULT_ITEMS
+		RESULT_ITEMS,
+		/**
+		 * Envoltorio de páginas de la familia de subvenciones (S3.3 §1):
+		 * {@code {"page":…,"pageSize":…,"totalRecords":N,"records":[...]}}. Es el mismo servicio que el
+		 * {@link #ENVELOPE} y sirve los dos: la v1 usa {@code result} en sus subrecursos y la v2 usa
+		 * {@code records} en todos, así que un adaptador para ese tag tiene que aceptar las dos formas.
+		 * <p>
+		 * El tamaño de página se manda en {@code pageSize} y no en {@code rows}, y el desplazamiento en
+		 * {@code start}: mezclar {@code rows} con {@code page} solapa páginas en silencio (S3.3 §2).
+		 */
+		PAGED_RECORDS
 	}
 
 	/**
