@@ -83,23 +83,24 @@ flowchart TB
     ID["identity<br/>User · OAuth2 GitHub/Google<br/>Spring Security vive aquí"]
   end
   subgraph F4["fase 4"]
-    TER["territory<br/>ficha por junta · sin tablas<br/>compone citizen + geo"]
+    TER["territory (fase 4, implementado)<br/>matriz y ficha por junta · <b>sin tablas, sin caché, sin ingesta</b><br/>catálogo cerrado de 3 medidas y 2 denominadores (ADR-019)<br/>compone geo + citizen + urban"]
   end
   subgraph DOM["dominios"]
     CATM["catalog (fase 1)<br/>Dataset, FreshnessSnapshot, Observation, ApiEndpoint, FederatedDataset"]
-    CIT["citizen (fase 2, implementado)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
-    URB["urban (fase 2, implementado)<br/>LicensedPremises + Licence, sin texto libre (ADR-016)<br/>no depende de citizen ni al revés"]
+    CIT["citizen (fase 2, implementado)<br/>API pública Citizen: requestsByDistrict, ingestedAt (ADR-019)<br/>ServiceRequest sin texto (ADR-012)<br/>DistrictAssignment: RESOLVED / AMBIGUOUS / OUTSIDE / NO_POINT"]
+    URB["urban (fase 2, implementado)<br/>API pública Urban: premisesByDistrict, licencesByDistrict, ingestedAt (ADR-019)<br/>LicensedPremises + Licence, sin texto libre (ADR-016)<br/>no depende de citizen ni al revés"]
     SPE["spending (fase 3, las tres fuentes dentro)<br/>ContractingProcess + Award + Contract + Cpv (ADR-017)<br/>BudgetSnapshot + BudgetLine: el gasto ejecutado (S3.2)<br/>Grant + GrantCall + GrantBeneficiary: el beneficiario contado y no nombrado (ADR-018)<br/>sin dependencia de geo (ADR-003)"]
   end
   subgraph INFRA["infraestructura y kernels"]
     INGM["ingestion (fase 1)<br/>jobs, cliente HTTP, runs<br/>no conoce dominios"]
     GEO["geo (fase 2, implementado) · shared kernel<br/>District (id + padronId), Boundary, PopulationRecord<br/>API pública Geo: locate/locateAll, districtNames (sinónimos), districts (denominador),<br/>populations (padrón por junta y año, para las series; ADR-015)"]
   end
-  SH["shared · kernel mínimo<br/>DatasetRef, IngestionRun, UserId, eventos base<br/>todos pueden depender de él; él de nadie"]
+  SH["shared · kernel mínimo<br/>DatasetRef, IngestionRun, UserId, eventos base<br/>DateWindow y TerritorialTally: el vocabulario del cruce (ADR-019)<br/>todos pueden depender de él; él de nadie"]
 
   WS -- "usuario autenticado" --> ID
-  TER -- "API pública" --> CIT
-  TER -- "API pública" --> GEO
+  TER -- "API pública Citizen" --> CIT
+  TER -- "API pública Urban" --> URB
+  TER -- "API pública Geo" --> GEO
   TER -. "solo si hubiera gasto territorial" .-> SPE
   CATM -- "puertos" --> INGM
   CIT -- "puertos" --> INGM
@@ -110,7 +111,7 @@ flowchart TB
   CATM & CIT & URB & SPE & INGM & GEO & ID & WS --> SH
 ```
 
-Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003). `urban` y `citizen` **no se conocen**: comparten `geo` y nada más, porque compartir el eje territorial no es compartir lenguaje (ADR-016 §1).
+Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él —**verificado**: entró sin una sola migración, el primer módulo del proyecto que lo hace—; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003). `urban` y `citizen` **no se conocen**: comparten `geo` y nada más, porque compartir el eje territorial no es compartir lenguaje (ADR-016 §1).
 
 ## 3. Dentro de un módulo (hexagonal), con `catalog` como ejemplo
 
