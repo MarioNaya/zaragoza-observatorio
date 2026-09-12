@@ -1,0 +1,103 @@
+:host {
+  display: block;
+  margin-top: 3rem;
+}
+
+/* El colofón de un impreso: filete grueso arriba, cuerpo pequeño, dos columnas. */
+.colophon {
+  border-top: 2px solid var(--rule-strong);
+  padding-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  gap: 1.4rem 3rem;
+}
+
+@media (max-width: 52rem) {
+  .colophon {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.4rem;
+  }
+}
+
+h2 {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.count {
+  background: var(--paper-sunken);
+  border-radius: 2px;
+  padding: 0 0.32rem;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+
+.provenance p {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin-bottom: 0.45rem;
+}
+
+.provenance strong {
+  color: var(--ink);
+  font-variation-settings: 'wght' 600;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--paper-sunken);
+  padding: 0.05em 0.3em;
+  border-radius: 2px;
+}
+
+/* Las advertencias numeradas, como notas al margen de un informe. */
+.caveats ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: caveat;
+  columns: 2;
+  column-gap: 2.4rem;
+}
+
+@media (max-width: 60rem) {
+  .caveats ol {
+    columns: 1;
+  }
+}
+
+.caveats li {
+  counter-increment: caveat;
+  break-inside: avoid;
+  position: relative;
+  padding-left: 1.7rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.caveats li::before {
+  content: counter(caveat);
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  min-width: 1.15rem;
+  text-align: center;
+  line-height: 1.3;
+}

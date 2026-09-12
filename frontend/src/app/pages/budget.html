@@ -1,0 +1,115 @@
+<header class="page-head">
+  <p class="eyebrow">Dinero · 01</p>
+  <h1>El presupuesto de gastos</h1>
+  <p class="lede">
+    Veinte ejercicios en <strong>140 instantáneas datadas</strong>, y la única fuente del observatorio que dice
+    lo que el ayuntamiento <em>pagó</em>. La contratación dice lo que se licitó y lo que se adjudicó; lo
+    reconocido y lo pagado solo salen de aquí.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<obs-stats [data]="stats()" />
+
+<section class="panel">
+  <header>
+    <h2>Las cuatro cifras del ciclo, ejercicio a ejercicio</h2>
+    <p class="aside">
+      No son cuatro maneras de decir lo mismo: van de lo presupuestado a lo pagado y la distancia entre ellas es
+      la noticia. Por eso se enseñan juntas y ninguna se llama «gasto» a secas.
+    </p>
+  </header>
+
+  @if (series().length > 0) {
+    <obs-line-chart
+      [series]="series()"
+      title="Crédito definitivo, comprometido, obligación neta y pago neto por ejercicio"
+      [format]="euroShort"
+      hint="Cada ejercicio toma su última instantánea. Pasa el ratón para leer los cuatro importes de un año."
+    />
+  } @else {
+    <p class="loading">Leyendo la serie…</p>
+  }
+
+  <p class="note">
+    La serie toma <strong>la última foto de cada ejercicio</strong>. Cada instantánea es acumulada desde enero,
+    así que sumar las doce de un año contaría el mismo euro doce veces.
+  </p>
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Dónde va el dinero</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (axis() !== 'year') {
+    <div class="switch figures">
+      @for (option of figures; track option.key) {
+        <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    <p class="note">
+      Ordenado por <strong>{{ figureLabel() }}</strong>. Cambiar de cifra cambia el orden, y eso es lo que hay
+      que ver: un capítulo puede tener mucho crédito y poco ejecutado.
+    </p>
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+    @if (aggregation()?.snapshotDate; as snapshot) {
+      <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
+    }
+  } @else {
+    <p class="note">
+      El eje por ejercicio ya está arriba, con sus cuatro cifras. Elige otro eje para ver el reparto dentro de
+      una instantánea.
+    </p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar las partidas</h2>
+    <p class="aside">
+      @if (snapshotDate(); as snapshot) {
+        Partidas de la instantánea del <strong>{{ snapshot }}</strong>, que es la más reciente cargada.
+      }
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs()"
+    [values]="filters()"
+    (changed)="setFilter($event)"
+    (cleared)="clearFilters()"
+  />
+
+  <obs-data-table
+    [rows]="lines()"
+    [columns]="columns()"
+    [total]="lineTotal()"
+    [page]="page()"
+    [size]="size"
+    [sort]="sort()"
+    unit="partidas"
+    caption="Partidas del presupuesto de gastos"
+    (sortChanged)="setSort($event)"
+    (pageChanged)="setPage($event)"
+  />
+</section>
+
+<obs-colophon
+  [source]="source()"
+  [ingestedAt]="ingestedAt()"
+  [caveats]="caveats()"
+  extra="El endpoint de origen se llama «gasto corriente» y es el presupuesto de gastos entero: trae inversiones reales y los capítulos financieros."
+/>

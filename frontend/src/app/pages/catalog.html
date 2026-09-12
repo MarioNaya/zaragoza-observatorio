@@ -1,0 +1,76 @@
+<header class="page-head">
+  <p class="eyebrow">Calidad del dato · 01</p>
+  <h1>El monitor de frescura</h1>
+  <p class="lede">
+    Lo más original que hace este observatorio: preguntar <strong>a diario</strong> a cada ficha del catálogo
+    municipal y guardar la respuesta. No mide si un dato es bueno; mide si sigue vivo, y nadie más guarda esa
+    serie.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<obs-stats [data]="stats()" />
+
+<div class="cols-2">
+  <section class="panel">
+    <header>
+      <h2>Lo que el publicador declara</h2>
+      <p class="aside">Compara la fecha que dice la ficha con la periodicidad que promete.</p>
+    </header>
+    <obs-ranking [data]="byFreshness()" [format]="integer" />
+    <p class="note">
+      «No evaluable» es el grupo mayor y ese <strong>es el hallazgo</strong>: la mayoría del catálogo no declara
+      una periodicidad con la que se pueda juzgar nada.
+    </p>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>Lo que se puede observar</h2>
+      <p class="aside">Qué método permite medir algo en cada ficha, preguntando de verdad al servicio.</p>
+    </header>
+    <obs-ranking [data]="byMethod()" [format]="integer" />
+    <p class="note">
+      Los dos ejes <strong>no se cruzan ni se mezclan en una nota</strong>. Hacerlo exigiría una serie larga y
+      una decisión escrita, y de momento hay medidas, no categorías.
+    </p>
+  </section>
+</div>
+
+<section class="panel">
+  <header>
+    <h2>Explorar las fichas</h2>
+    <p class="aside">
+      Las dos columnas de fecha son cosas distintas: una es lo que el ayuntamiento dice que cambió, la otra lo
+      que nosotros vimos cambiar.
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs"
+    [values]="filters()"
+    (changed)="setFilter($event)"
+    (cleared)="clearFilters()"
+  />
+
+  <obs-data-table
+    [rows]="datasets()"
+    [columns]="columns"
+    [total]="total()"
+    [page]="page()"
+    [size]="size"
+    [sort]="sort()"
+    unit="fichas"
+    caption="Fichas del catálogo municipal"
+    (sortChanged)="setSort($event)"
+    (pageChanged)="setPage($event)"
+  />
+</section>
+
+<obs-colophon
+  [caveats]="caveats()"
+  extra="El catálogo publica servicios que no existen o no son públicos: ocho endpoints con 404, veintitrés distribuciones de intranet y alguna URL mal escrita. El monitor los enseña como error de observación en vez de esconderlos."
+/>

@@ -1,4 +1,4 @@
-import { DistrictFeature, GeoJsonPolygon } from '../api/types';
+import { DistrictFeature, GeoJsonPolygon } from '../core/types';
 
 /**
  * Proyección de los contornos a coordenadas de SVG (ADR-020 §4).

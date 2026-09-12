@@ -1,0 +1,155 @@
+:host {
+  display: block;
+}
+
+/* La tabla ancha desplaza dentro de su caja; el cuerpo de la página nunca se desplaza en horizontal. */
+.scroll {
+  overflow-x: auto;
+  border-top: 2px solid var(--rule-strong);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.42rem 0.7rem 0.42rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+th:last-child,
+td:last-child {
+  padding-right: 0;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-top: 0.5rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.7rem;
+  font-variation-settings: 'wght' 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+thead button {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+thead button:hover {
+  color: var(--ink);
+}
+
+thead button.on {
+  color: var(--accent);
+}
+
+.arrow {
+  font-size: 0.75em;
+}
+
+.numeric {
+  text-align: right;
+}
+
+/* La columna ancha (títulos de contrato, nombres de partida) sí parte línea y se lleva el espacio sobrante. */
+.wide {
+  white-space: normal;
+  min-width: 18rem;
+  max-width: 34rem;
+  width: 100%;
+}
+
+.cell {
+  display: block;
+}
+
+.sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  white-space: normal;
+}
+
+tbody tr.pickable {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: var(--paper-sunken);
+}
+
+tbody tr.empty td {
+  padding: 1.4rem 0;
+  color: var(--ink-faint);
+  font-style: italic;
+  white-space: normal;
+}
+
+/* --- paginación ------------------------------------------------------------------------------------ */
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding-top: 0.6rem;
+}
+
+.count,
+.of {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.buttons button {
+  appearance: none;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.24rem 0.6rem;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.buttons button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.buttons button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.of {
+  padding: 0 0.4rem;
+  white-space: nowrap;
+}

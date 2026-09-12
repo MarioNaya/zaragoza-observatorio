@@ -1,0 +1,118 @@
+<header class="page-head">
+  <p class="eyebrow">Ciudadanía · 01</p>
+  <h1>Quejas y sugerencias</h1>
+  <p class="lede">
+    Trece años de reclamaciones vecinales. <strong>El texto de la queja no está aquí y no por descuido</strong>:
+    el ayuntamiento lo publica sin anonimizar, con nombres y firmas dentro, así que este observatorio
+    directamente no lo pide.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<obs-stats [data]="stats()" />
+
+<section class="panel">
+  <header>
+    <h2>Cómo se reparten</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (axis() === 'month') {
+    @if (series().length > 0) {
+      <obs-line-chart
+        [series]="series()"
+        title="Quejas presentadas por mes"
+        [format]="integer"
+        hint="Pasa el ratón por el gráfico para leer cualquier mes de la serie."
+      />
+    } @else {
+      <p class="loading">Leyendo la serie…</p>
+    }
+  } @else {
+    <obs-ranking [data]="ranking()" [format]="integer" />
+    @if (axis() === 'district') {
+      <p class="note">
+        Este reparto solo contiene las quejas que se pudieron situar. Una junta con pocas quejas puede tener
+        pocas quejas o poca cobertura, y desde aquí no se distingue: mira la cobertura por año debajo.
+      </p>
+    }
+  }
+</section>
+
+@if (coverageByYear().length > 0 && axis() === 'district') {
+  <section class="panel">
+    <header>
+      <h2>Cuántas se pudieron situar, año a año</h2>
+      <p class="aside">
+        Esta es la cifra que permite comparar dos años. Dentro de una junta la cobertura vale siempre 1 por
+        construcción, así que mirarla por junta no dice nada.
+      </p>
+    </header>
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th scope="col">Año</th>
+          <th scope="col" class="numeric">Quejas</th>
+          <th scope="col" class="numeric">Con punto</th>
+          <th scope="col" class="numeric">Cobertura</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (year of coverageByYear(); track year.year) {
+          <tr>
+            <th scope="row" class="num">{{ year.year }}</th>
+            <td class="numeric num">{{ integer(year.total) }}</td>
+            <td class="numeric num">{{ integer(year.withPoint) }}</td>
+            <td class="numeric num">{{ year.pointCoverage !== null ? (year.pointCoverage * 100).toFixed(1) + ' %' : '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+<section class="panel">
+  <header>
+    <h2>Explorar los registros</h2>
+    <p class="aside">
+      Cada fila es una queja real, sin su texto. Lo que se publica es qué, cuándo, en qué estado, cuánto tardó
+      la respuesta y —si trae coordenadas— en qué junta cayó.
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs"
+    [values]="filters()"
+    (changed)="setFilter($event)"
+    (cleared)="clearFilters()"
+  />
+
+  <obs-data-table
+    [rows]="requests()"
+    [columns]="columns"
+    [total]="total()"
+    [page]="page()"
+    [size]="size"
+    [sort]="sort()"
+    unit="quejas"
+    caption="Quejas y sugerencias"
+    (sortChanged)="setSort($event)"
+    (pageChanged)="setPage($event)"
+  />
+</section>
+
+<obs-colophon
+  [source]="source()"
+  [ingestedAt]="ingestedAt()"
+  [caveats]="caveats()"
+  extra="Se descartó redactar el texto con expresiones regulares porque los números lo desaconsejaban: en una muestra de 7.000 registros había 2 DNI y 3.353 fórmulas de firma, que ninguna expresión regular reconoce."
+/>

@@ -1,0 +1,90 @@
+<header class="page-head">
+  <p class="eyebrow">Dinero · 03</p>
+  <h1>Las subvenciones</h1>
+  <p class="lede">
+    Casi cuarenta y siete mil concesiones desde 2013. Es la fuente en la que
+    <strong>el dato personal es el contenido</strong>: una subvención sin beneficiario es un importe sin
+    destinatario. Aquí el beneficiario entra <strong>contado y no nombrado</strong>.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<obs-stats [data]="stats()" />
+
+<section class="panel">
+  <header>
+    <h2>Importe concedido por año</h2>
+    <p class="aside">
+      El {{ naturalShare() }} de las concesiones va a personas físicas. Se cuentan en la serie como cualquier
+      otra: excluirlas sería decidir qué subvención cuenta.
+    </p>
+  </header>
+
+  @if (bars().length > 0) {
+    <obs-bar-chart [data]="bars()" title="Importe concedido por año" [format]="euroShort" />
+  } @else {
+    <p class="loading">Leyendo la serie…</p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>A dónde va</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (axis() !== 'year') {
+    @if (axis() === 'beneficiary') {
+      <p class="note">
+        El identificador que se ve es el <strong>seudónimo que publica el propio ayuntamiento</strong>. Permite
+        sumar cuánto recibe el mismo beneficiario a lo largo de los años sin saber quién es, que es exactamente
+        lo que hace falta para ver concentración.
+      </p>
+    }
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+  } @else {
+    <p class="note">El eje por año está arriba. Elige otro para ver el reparto.</p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar las concesiones</h2>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs()"
+    [values]="filters()"
+    (changed)="setFilter($event)"
+    (cleared)="clearFilters()"
+  />
+
+  <obs-data-table
+    [rows]="grants()"
+    [columns]="columns"
+    [total]="total()"
+    [page]="page()"
+    [size]="size"
+    [sort]="sort()"
+    unit="concesiones"
+    caption="Concesiones de subvención"
+    (sortChanged)="setSort($event)"
+    (pageChanged)="setPage($event)"
+  />
+</section>
+
+<obs-colophon
+  [source]="source()"
+  [ingestedAt]="ingestedAt()"
+  [caveats]="caveats()"
+  extra="La fuente municipal se contradice: enmascara el identificador fiscal de la persona física y a la vez publica su nombre y su DNI. Aquí no entra ninguno de los dos."
+/>

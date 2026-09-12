@@ -1,0 +1,230 @@
+/*
+ * Estilo común de los gráficos. Las tres primeras variables son la paleta categórica validada (la del sistema);
+ * aquí solo se consumen. El texto lleva tinta, nunca el color de la serie.
+ */
+:host {
+  display: block;
+  --s0: var(--cat-1);
+  --s1: var(--cat-2);
+  --s2: var(--cat-3);
+}
+
+.chart {
+  margin: 0;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 240px;
+  overflow: visible;
+}
+
+/* --- rejilla y ejes: recesivos, nunca compiten con el dato ----------------------------------------- */
+
+.grid line {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.grid text {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--ink-faint);
+  text-anchor: end;
+}
+
+.axis {
+  stroke: var(--ink-soft);
+  stroke-width: 1;
+}
+
+.tick {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--ink-faint);
+  text-anchor: middle;
+}
+
+/* --- barras ---------------------------------------------------------------------------------------- */
+
+.hit {
+  fill: transparent;
+}
+
+.bar {
+  cursor: default;
+  transition: opacity 120ms ease;
+}
+
+.bar.dim {
+  opacity: 0.32;
+}
+
+.mark.s0 { fill: var(--s0); }
+.mark.s1 { fill: var(--s1); }
+.mark.s2 { fill: var(--s2); }
+
+/* --- líneas ---------------------------------------------------------------------------------------- */
+
+.line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.line.s0 { stroke: var(--s0); }
+.line.s1 { stroke: var(--s1); }
+.line.s2 { stroke: var(--s2); }
+.line.s3 { stroke: var(--seq-4); }
+
+.crosshair {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+/* Anillo de 2 px del color del papel: separa el punto de la línea al solaparse. */
+.dot {
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+
+.dot.s0 { fill: var(--s0); }
+.dot.s1 { fill: var(--s1); }
+.dot.s2 { fill: var(--s2); }
+.dot.s3 { fill: var(--seq-4); }
+
+/* --- leyenda y tooltip ------------------------------------------------------------------------------ */
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.key {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  flex: none;
+  display: inline-block;
+}
+
+.key.s0 { background: var(--s0); }
+.key.s1 { background: var(--s1); }
+.key.s2 { background: var(--s2); }
+.key.s3 { background: var(--seq-4); }
+
+.tooltip,
+.hint {
+  margin-top: 0.5rem;
+  min-height: 1.35rem;
+  font-size: 0.78rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+}
+
+.tooltip strong {
+  font-variation-settings: 'wght' 650;
+}
+
+.tooltip .v {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+}
+
+.hint {
+  color: var(--ink-faint);
+  font-size: 0.73rem;
+}
+
+/* --- ranking ---------------------------------------------------------------------------------------- */
+
+.ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.ranking li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(6rem, 15rem) minmax(3rem, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.82rem;
+}
+
+.ranking li.pickable {
+  cursor: pointer;
+}
+
+.ranking li.pickable:hover {
+  background: var(--paper-sunken);
+}
+
+.rank {
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  background: var(--paper-sunken);
+  height: 0.6rem;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--s0);
+  border-radius: 0 2px 2px 0;
+}
+
+.ranking .value {
+  font-size: 0.78rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ranking .note {
+  grid-column: 2 / -1;
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+}
+
+.empty {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  padding: 1rem 0;
+}

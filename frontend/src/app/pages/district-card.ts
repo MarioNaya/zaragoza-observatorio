@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { DistrictCard as Card, MEASURE_LABELS, UNIT_LABELS } from '../api/types';
+import { DistrictCard as Card, MEASURE_LABELS, UNIT_LABELS } from '../core/types';
 
 /**
  * La ficha de una junta (ADR-019 §1): la misma fila del cruce con la **serie de padrón entera** al lado.

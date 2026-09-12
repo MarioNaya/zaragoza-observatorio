@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { DistrictFeature, DistrictRow, MeasureColumn } from '../api/types';
+import { DistrictFeature, DistrictRow, MeasureColumn } from '../core/types';
 import { Classification, classOf, CLASS_COUNT } from './classification';
 import { boundsOf, labelPointOf, pathOf, projectionFor } from './projection';
 

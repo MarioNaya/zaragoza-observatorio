@@ -1,0 +1,98 @@
+<header class="page-head">
+  <p class="eyebrow">Dinero · 02</p>
+  <h1>La contratación pública</h1>
+  <p class="lede">
+    Ocho mil procesos desde 2007 en formato OCDS. <strong>Ninguna cifra de aquí es dinero pagado</strong>: esta
+    fuente publica lo licitado y lo adjudicado, y la ejecución solo está en el presupuesto.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+<obs-stats [data]="stats()" />
+
+<section class="panel">
+  <header>
+    <h2>Licitado y adjudicado, año a año</h2>
+    <p class="aside">
+      Dos columnas, no una: entre lo que sale a concurso y lo que se acaba adjudicando hay una distancia que el
+      producto no promedia ni interpreta.
+    </p>
+  </header>
+
+  @if (bars().length > 0) {
+    <obs-bar-chart
+      [data]="bars()"
+      title="Importe licitado y adjudicado por año"
+      [format]="euroShort"
+      [legend]="['Licitado', 'Adjudicado']"
+      hint="Pasa el ratón por un año para leer los dos importes."
+    />
+  } @else {
+    <p class="loading">Leyendo la serie…</p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Quién contrata y quién cobra</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (axis() !== 'year') {
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+    @if (overlapping()) {
+      <p class="note">
+        En este eje <strong>un proceso puede caer en varios grupos</strong>, así que la suma de los grupos no es
+        el total. Lo dice la propia respuesta de la API, no lo deducimos aquí.
+      </p>
+    }
+  } @else {
+    <p class="note">El eje por año está arriba, con sus dos importes. Elige otro para ver el reparto.</p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar los procesos</h2>
+    <p class="aside">
+      El filtro «en el listado documentado» es el que enseña el hallazgo: pon «no» y verás los expedientes que
+      la API del ayuntamiento no publica en su listado.
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs"
+    [values]="filters()"
+    (changed)="setFilter($event)"
+    (cleared)="clearFilters()"
+  />
+
+  <obs-data-table
+    [rows]="processes()"
+    [columns]="columns"
+    [total]="total()"
+    [page]="page()"
+    [size]="size"
+    [sort]="sort()"
+    unit="procesos"
+    caption="Procesos de contratación"
+    (sortChanged)="setSort($event)"
+    (pageChanged)="setPage($event)"
+  />
+</section>
+
+<obs-colophon
+  [source]="source()"
+  [ingestedAt]="ingestedAt()"
+  [caveats]="caveats()"
+  extra="Del adjudicatario se guarda el NIF de las empresas y nada de las personas físicas: la adjudicación sigue contando con su importe y lo que desaparece es quién."
+/>

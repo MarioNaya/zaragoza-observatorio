@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../api/types';
+import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../core/types';
 
 /**
  * La matriz: una fila por junta y una columna por medida (ADR-019 §1).
