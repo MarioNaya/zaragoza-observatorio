@@ -1,0 +1,263 @@
+:host {
+  display: block;
+}
+
+/* --- controles -------------------------------------------------------------------------------------- */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.1rem 1.6rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  margin-bottom: 1.4rem;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+legend {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0;
+  margin-bottom: 0.45rem;
+}
+
+.hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.73rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.options label.on {
+  border-color: var(--accent);
+  background: var(--tint);
+  color: var(--accent-ink);
+}
+
+.options input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.dates label,
+.year {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
+.year {
+  margin-top: 0.55rem;
+}
+
+input[type='date'],
+select {
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.28rem 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  color-scheme: light dark;
+}
+
+.link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.28rem 0;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* --- disposición ------------------------------------------------------------------------------------ */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card-panel {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 60rem) {
+  .card-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.painted {
+  max-width: 22rem;
+}
+
+.painted label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
+.methods {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.9rem;
+}
+
+.methods button {
+  appearance: none;
+  background: var(--paper);
+  border: 0;
+  border-right: 1px solid var(--rule);
+  padding: 0.34rem 0.7rem;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.methods button:last-child {
+  border-right: 0;
+}
+
+.methods button.on {
+  background: var(--tint);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.table-panel {
+  min-width: 0;
+}
+
+/* --- avisos de la propia pantalla --------------------------------------------------------------------- */
+
+.gap,
+.waiting {
+  margin: 0.8rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.error {
+  margin: 0 0 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--warn);
+  background: var(--tint);
+  font-size: 0.85rem;
+  border-radius: 0 4px 4px 0;
+}
+
+/* --- procedencia y advertencias ----------------------------------------------------------------------- */
+
+.provenance,
+.caveats {
+  margin-top: 2.2rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.provenance h2,
+.caveats h2 {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.provenance ul,
+.caveats ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  max-width: 62rem;
+}
+
+.caveats li {
+  color: var(--muted);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--tint);
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+}

@@ -1,0 +1,152 @@
+/*
+ * Paleta secuencial de un solo tono (ADR-020 §7). No hay divergente: ninguna medida tiene un punto medio que
+ * el dato defina, y fijarlo convertiría el mapa en «juntas por encima» y «juntas por debajo».
+ */
+:host {
+  --c0: #e8eef6;
+  --c1: #c2d4e8;
+  --c2: #8fb2d6;
+  --c3: #5a89bd;
+  --c4: #2f5d96;
+  --no-data: #f1f1f0;
+  --stroke: color-mix(in srgb, var(--ink) 25%, transparent);
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --c0: #1e2a38;
+    --c1: #27455f;
+    --c2: #336288;
+    --c3: #4183b4;
+    --c4: #64a8dc;
+    --no-data: #26262a;
+  }
+}
+
+.map {
+  margin: 0;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.district {
+  stroke: var(--stroke);
+  stroke-width: 0.75;
+  cursor: pointer;
+  transition: fill-opacity 120ms ease;
+}
+
+.district:hover,
+.district:focus-visible {
+  fill-opacity: 0.78;
+  outline: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.district.selected {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.district.c0 { fill: var(--c0); }
+.district.c1 { fill: var(--c1); }
+.district.c2 { fill: var(--c2); }
+.district.c3 { fill: var(--c3); }
+.district.c4 { fill: var(--c4); }
+
+/* Sin dato no es cero: se pinta aparte y la leyenda lo dice. */
+.district.no-data {
+  fill: var(--no-data);
+}
+
+.label {
+  font-size: 9px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+  text-anchor: middle;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.legend {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.legend .title {
+  font-weight: 650;
+  font-size: 0.86rem;
+}
+
+.swatches {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.1rem;
+}
+
+.swatches li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  border: 1px solid var(--stroke);
+  flex: none;
+  transform: translateY(1px);
+}
+
+.swatch.c0 { background: var(--c0); }
+.swatch.c1 { background: var(--c1); }
+.swatch.c2 { background: var(--c2); }
+.swatch.c3 { background: var(--c3); }
+.swatch.c4 { background: var(--c4); }
+
+.range {
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  color: var(--muted);
+}
+
+.method {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/*
+ * La cobertura. Tiene peso visual a propósito: es lo que impide leer el mapa como si estuviera completo
+ * (ADR-020 §9).
+ */
+.coverage {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  background: var(--tint);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.coverage.poor {
+  border-left-color: var(--warn);
+}

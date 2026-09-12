@@ -95,7 +95,7 @@ class GeoController {
 	 * sin simplificar, y con las mismas propiedades que el listado para poder casarlo con cualquier respuesta
 	 * del cruce por {@code id}.
 	 * <p>
-	 * Se publica como {@code FeatureCollection} y no como un campo más de {@code /districts} porque son ~400 KB
+	 * Se publica como {@code FeatureCollection} y no como un campo más de {@code /districts} porque son 373 KB
 	 * de coordenadas que no cambian nunca: separarlo deja que el navegador lo pida una vez y lo cachee, mientras
 	 * las cifras se repiten tantas veces como haga falta.
 	 */

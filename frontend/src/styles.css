@@ -1,1 +1,70 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Estilos globales. Tipografías del sistema y ninguna fuente remota (ADR-020 §13): el navegador de quien
+ * visita no hace una sola petición a un tercero.
+ */
+
+:root {
+  --paper: #fdfdfc;
+  --ink: #1b1b1a;
+  --muted: #6b6b68;
+  --rule: #e0dfdb;
+  --tint: #eef3f9;
+  --accent: #2f5d96;
+  --accent-ink: #24486f;
+  --warn: #a8571f;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141416;
+    --ink: #e8e7e4;
+    --muted: #9a9996;
+    --rule: #2d2d31;
+    --tint: #1c2632;
+    --accent: #64a8dc;
+    --accent-ink: #8dc3e9;
+    --warn: #d99a5f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.wrap {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 40rem) {
+  .wrap {
+    padding: 0 1rem;
+  }
+}

@@ -1,0 +1,53 @@
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding: 2.2rem 0 1.8rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.lede {
+  margin: 0;
+  max-width: 46rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.lede strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+main {
+  padding-bottom: 3rem;
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.2rem;
+  padding-bottom: 3rem;
+}
+
+footer p {
+  margin: 0;
+  max-width: 52rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.6;
+}

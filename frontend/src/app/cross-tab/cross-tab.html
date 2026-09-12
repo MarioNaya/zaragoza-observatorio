@@ -1,0 +1,205 @@
+<!--
+  ADR-020: cada valor por defecto de esta pantalla está escrito, nombrado y a un clic de cambiarse. Lo que no
+  está aquí tampoco está escondido: no hay ningún ajuste silencioso, ninguna división entre columnas y ningún
+  caveat propio. Los que se leen abajo vienen de la API tal cual (§10).
+-->
+<form class="controls" (submit)="$event.preventDefault()">
+  <fieldset class="measures">
+    <legend>Medidas</legend>
+    <p class="hint">Al entrar están las tres: no es elegir un cruce, es no elegir ninguno.</p>
+    <div class="options">
+      @for (id of allMeasures; track id) {
+        <label [class.on]="measures().includes(id)">
+          <input
+            type="checkbox"
+            [checked]="measures().includes(id)"
+            (change)="toggleMeasure(id)"
+          />
+          {{ measureLabels[id] }}
+        </label>
+      }
+    </div>
+    <p class="hint">
+      El gasto público no está y no es un olvido: ninguna de sus tres fuentes tiene junta en el dato publicado.
+    </p>
+  </fieldset>
+
+  <fieldset class="window">
+    <legend>Ventana</legend>
+    <p class="hint">Cada medida la aplica sobre la fecha que declara, y no es la misma en todas.</p>
+    <div class="dates">
+      <label>
+        Desde
+        <input type="date" [value]="dateValue(from())" (change)="setWindow('from', $any($event.target).value)" />
+      </label>
+      <label>
+        Hasta
+        <input type="date" [value]="dateValue(to())" (change)="setWindow('to', $any($event.target).value)" />
+      </label>
+      @if (from() || to()) {
+        <button type="button" class="link" (click)="clearWindow()">Todo el histórico</button>
+      }
+    </div>
+  </fieldset>
+
+  <fieldset class="denominator">
+    <legend>Denominador</legend>
+    <p class="hint">Con padrón salen las dos cifras; sin él, solo el recuento.</p>
+    <div class="options">
+      <label [class.on]="denominator() === 'population'">
+        <input
+          type="radio"
+          name="denominator"
+          [checked]="denominator() === 'population'"
+          (change)="setDenominator('population')"
+        />
+        Padrón por junta
+      </label>
+      <label [class.on]="denominator() === 'none'">
+        <input
+          type="radio"
+          name="denominator"
+          [checked]="denominator() === 'none'"
+          (change)="setDenominator('none')"
+        />
+        Cifras absolutas
+      </label>
+    </div>
+    @if (denominator() === 'population' && populationYears().length > 0) {
+      <label class="year">
+        Año del padrón
+        <select (change)="setPopulationYear($any($event.target).value)">
+          <option value="" [selected]="populationYear() === null">El más reciente</option>
+          @for (year of populationYears(); track year) {
+            <option [value]="year" [selected]="populationYear() === year">{{ year }}</option>
+          }
+        </select>
+      </label>
+      <p class="hint">
+        El padrón por junta tiene 2020, 2021, 2022 y 2024. Pedir 2023 devuelve las 29 juntas sin denominador, y
+        eso es el hueco de la serie a la vista.
+      </p>
+    }
+  </fieldset>
+</form>
+
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}
+
+@if (tab(); as crossTab) {
+  <div class="layout">
+    <section class="map-panel">
+      <header class="panel-head">
+        <h2>Mapa</h2>
+        <div class="painted">
+          <label>
+            Columna pintada
+            <select (change)="painted.set($any($event.target).value)">
+              @for (measure of crossTab.measures; track measure.id) {
+                <option [value]="measure.id" [selected]="paintedMeasure()?.id === measure.id">
+                  {{ measureLabels[measure.id] }}
+                </option>
+              }
+            </select>
+          </label>
+          @if (paintedByRule()) {
+            <p class="hint">
+              Entra por la medida <strong>mejor cubierta</strong>, que hoy es esa. Es una regla, no una
+              preferencia.
+            </p>
+          }
+        </div>
+      </header>
+
+      <div class="methods" role="group" aria-label="Clasificación del mapa">
+        @for (option of methods; track option) {
+          <button
+            type="button"
+            [class.on]="method() === option"
+            [title]="methodHints[option]"
+            (click)="method.set(option)"
+          >
+            {{ methodLabels[option] }}
+          </button>
+        }
+      </div>
+
+      @if (boundaries(); as geo) {
+        @if (paintedMeasure(); as measure) {
+          <obs-choropleth
+            [features]="geo.features"
+            [rows]="crossTab.items"
+            [measure]="measure"
+            [classification]="classification()"
+            [methodLabel]="methodLabels[method()]"
+            [title]="paintedTitle()"
+            [perThousand]="perThousand()"
+            [selected]="selected()"
+            (districtPicked)="pickDistrict($event)"
+          />
+        }
+      } @else {
+        <p class="waiting">Leyendo los contornos de las 29 juntas…</p>
+      }
+
+      @if (withoutDenominator() > 0) {
+        <p class="gap">
+          {{ withoutDenominator() }} de {{ crossTab.districts }} juntas salen sin denominador para el año
+          pedido. Su polígono va en gris: sin dato no es cero.
+        </p>
+      }
+    </section>
+
+    <section class="table-panel">
+      <header class="panel-head">
+        <h2>La matriz</h2>
+        <p class="hint">Pulsa una cabecera para ordenar: la ordenación la hace el backend, no el navegador.</p>
+      </header>
+      <obs-matrix
+        [tab]="crossTab"
+        [selected]="selected()"
+        [showRates]="perThousand()"
+        (sortBy)="sortByField($event)"
+        (districtPicked)="pickDistrict($event)"
+      />
+    </section>
+
+    @if (card(); as open) {
+      <section class="card-panel">
+        <obs-district-card [card]="open" (closed)="closeCard()" />
+      </section>
+    }
+  </div>
+
+  <section class="provenance">
+    <h2>De dónde sale cada columna</h2>
+    <ul>
+      @for (measure of crossTab.measures; track measure.id) {
+        <li>
+          <strong>{{ measureLabels[measure.id] }}</strong>
+          cuenta {{ measure.unit }} del módulo <code>{{ measure.module }}</code>.
+          La ventana cae sobre <code>{{ measure.dateField }}</code> ({{ measure.dateFieldMeaning }}).
+          Cobertura: {{ measure.coverage.assigned.toLocaleString('es-ES') }} de
+          {{ measure.coverage.total.toLocaleString('es-ES') }}.
+        </li>
+      }
+    </ul>
+    <p class="hint">
+      Lo que viaja es <em>cuándo leímos el origen</em>, no cuándo cambió. Lo segundo lo mide el eje observado del
+      catálogo y todavía no va pegado al cruce.
+    </p>
+  </section>
+
+  <!-- Los caveats se pintan tal como llegan: la pantalla no tiene ninguno suyo (ADR-020 §10). -->
+  <section class="caveats">
+    <h2>Advertencias de esta respuesta</h2>
+    <ol>
+      @for (caveat of caveats(); track $index) {
+        <li>{{ caveat }}</li>
+      }
+    </ol>
+  </section>
+} @else if (loading()) {
+  <p class="waiting">Componiendo el cruce…</p>
+}
