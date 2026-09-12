@@ -1,0 +1,157 @@
+:host {
+  display: block;
+}
+
+aside {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.ids {
+  margin: 0.15rem 0 0;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.close {
+  appearance: none;
+  background: none;
+  border: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.close:hover {
+  color: var(--ink);
+}
+
+.measures {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.measures div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+dt {
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.value {
+  font-size: 1.3rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.unit {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rate {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Cuándo leímos el origen, no cuándo cambió: la distinción es de ADR-019 §10 y se escribe. */
+.read {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.series {
+  margin-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.85rem;
+}
+
+h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.series ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.series li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.4rem;
+  isolation: isolate;
+}
+
+.bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--tint);
+  border-radius: 3px;
+  z-index: -1;
+}
+
+.series .year {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  width: 2.6rem;
+}
+
+.people {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.gap {
+  margin: 0.6rem 0 0;
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.45;
+}

@@ -1,0 +1,130 @@
+:host {
+  display: block;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+caption {
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: baseline;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  border-bottom: 1.5px solid var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.2;
+  z-index: 1;
+}
+
+thead button {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+thead button:hover {
+  color: var(--accent);
+}
+
+thead button.active {
+  color: var(--accent);
+}
+
+.arrow {
+  font-size: 0.7rem;
+}
+
+.unit {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  display: block;
+}
+
+/* La tasa va debajo del recuento y más apagada: acompaña la cifra, no la sustituye (ADR-020 §8). */
+.rate {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.missing {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.year {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: var(--tint);
+}
+
+tbody tr.selected {
+  background: var(--tint);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.district {
+  font-weight: 500;
+}
+
+tfoot th,
+tfoot td {
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 0;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.note {
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
