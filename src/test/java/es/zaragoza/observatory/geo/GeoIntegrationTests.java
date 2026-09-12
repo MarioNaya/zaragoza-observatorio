@@ -227,6 +227,35 @@ class GeoIntegrationTests {
 		overlapping.extractingPath("$.item.candidates").asArray().containsExactly(14, 18);
 		assertThat(mvc.get().uri("/api/v1/geo/locate").param("lon", "999").param("lat", "0"))
 				.hasStatus(HttpStatus.BAD_REQUEST);
+
+		assertBoundariesAreDrawableAndMatchTheRows();
+	}
+
+	/**
+	 * Los contornos que pinta el mapa (ADR-020 §4). Lo que se comprueba no es que la respuesta exista sino que
+	 * es GeoJSON de verdad —geometría como objeto y no como texto escapado— y que su {@code id} es el mismo con
+	 * el que vienen las filas del cruce: si no lo fuera, el mapa pintaría bien y casaría mal, que es peor.
+	 */
+	private void assertBoundariesAreDrawableAndMatchTheRows() {
+		var geojson = assertThat(mvc.get().uri("/api/v1/geo/boundaries")).hasStatusOk()
+				.hasContentTypeCompatibleWith(MediaType.parseMediaType("application/geo+json")).bodyJson();
+		geojson.extractingPath("$.type").isEqualTo("FeatureCollection");
+		geojson.extractingPath("$.count").isEqualTo(29);
+		geojson.extractingPath("$.source.dataset").isEqualTo("sede:distrito");
+		geojson.extractingPath("$.features[0].type").isEqualTo("Feature");
+		geojson.extractingPath("$.features[0].id").isEqualTo(1);
+		geojson.extractingPath("$.features[0].properties.shortName").isNotNull();
+		// La geometría es un objeto GeoJSON, no una cadena: @JsonRawValue la inserta sin escapar.
+		geojson.extractingPath("$.features[0].geometry.type").isEqualTo("Polygon");
+		geojson.extractingPath("$.features[0].geometry.coordinates[0][0]").asArray().hasSize(2);
+
+		// Las 29 juntas del listado están todas, y con el mismo id: el mapa casa con el cruce por esa clave.
+		JsonNode body = JsonMapper.shared()
+				.readTree(mvc.get().uri("/api/v1/geo/boundaries").exchange().getResponse().getContentAsByteArray());
+		var drawn = new ArrayList<Integer>();
+		body.path("features").forEach(feature -> drawn.add(feature.path("id").asInt()));
+		assertThat(drawn).as("un contorno por junta, por el id con el que se cruzan las filas")
+				.containsExactlyElementsOf(districts.findAll().stream().map(District::id).toList());
 	}
 
 	// --- ayudas -------------------------------------------------------------------------------------------
