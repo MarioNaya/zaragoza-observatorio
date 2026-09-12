@@ -178,7 +178,61 @@ Las copias manuales **no caducan** (`expiresAt: null`); las programadas sí, seg
 
 **El PITR no está disponible aquí**, y no por el plan: `railway postgres pitr status --service postgis` responde que corre sobre las imágenes de base de datos de Railway y que `postgis/postgis:17-3.5` no es una de ellas. Cambiar de imagen rompería `V001` (ADR-008). Las copias del volumen son el único mecanismo de recuperación.
 
-## 8. Notas
+## 8. El frontend, que se despliega en otro sitio
+
+La pantalla **no se sirve desde esta aplicación** (ADR-020 §2): es un sitio estático en el alojamiento propio.
+Eso significa que **un despliegue de Railway no publica pantalla y una publicación de pantalla no reinicia la
+aplicación**, que es justamente lo que se buscaba.
+
+### Construir
+
+```powershell
+cd frontend
+npm ci            # instala exactamente el lockfile versionado (regla 15)
+npm run build     # salida en frontend/dist/observatorio/browser
+```
+
+Son **cinco ficheros y ~73 KB transferidos**: `index.html`, `main-<huella>.js`, `styles-<huella>.css`,
+`favicon.ico` y `.htaccess`. Se sube **el contenido** de esa carpeta a la raíz del dominio, no la carpeta.
+
+### Las dos trampas
+
+1. **El `.htaccess` empieza por punto**, así que la mayoría de clientes de FTP y de gestores de archivos web lo
+   ocultan por defecto. Sin él, recargar una ruta profunda da un 404 del servidor y no se aplica la
+   `Content-Security-Policy`. Hay que activar «mostrar ficheros ocultos» antes de subir y comprobar después que
+   está.
+2. **`index.html` no se puede cachear** y los ficheros con huella sí. El `.htaccess` ya lo declara; si el
+   alojamiento impone su propia política de caché por encima, una publicación puede quedar invisible hasta que
+   caduque. Se comprueba mirando que el `main-<huella>.js` que pide la página es el que se acaba de subir.
+
+### La URL de la API
+
+Va **dentro del bundle**, en `frontend/src/environments/environment.ts`, y apunta a la instancia de Railway.
+Cambiarla es cambiar ese fichero y volver a construir; no hay configuración en tiempo de ejecución a propósito.
+Si cambia, hay que cambiarla **también** en `connect-src` de la `Content-Security-Policy` del `.htaccess`, o el
+navegador bloqueará las peticiones sin decir nada útil.
+
+### Permitir (o restringir) el origen
+
+La API acepta peticiones desde cualquier origen en `/api/v1/**` y `/v3/api-docs`, solo `GET`/`HEAD`/`OPTIONS` y
+**sin credenciales**. No hay que configurar nada para publicar. Si alguna vez se quiere restringir al dominio
+propio:
+
+```powershell
+railway variables --service observatorio --set "ZARAGOZA_WEB_CORS_ALLOWED_ORIGINS=https://el-dominio-real"
+```
+
+Restringirlo **no aumenta la seguridad de los datos** —son públicos y `curl` los sirve igual— y sí rompe a
+cualquier otro reutilizador que esté consumiendo la API desde un navegador, que es lo que `SPEC.md` §6 quiere
+que sea posible. Se restringe solo si hay una razón concreta.
+
+### Comprobar
+
+Con la página abierta, la consola del navegador no debe tener errores de CORS ni de `Content-Security-Policy`,
+y la pestaña de red debe enseñar exactamente tres llamadas a la API: `geo/boundaries` (una vez, 373 KB, después
+desde caché) y `territory/districts` cada vez que se cambia un parámetro.
+
+## 9. Notas
 
 - **Config as Code de Railway (`railway.json`, `railway.toml`) está deprecado**: cerrado a servicios nuevos y sin lectura a partir del 2026-12-01. Por eso el repositorio no lleva ninguno y la infraestructura se declara en `.railway/railway.ts`, que es su sustituto soportado (§2).
 - **Migraciones**: Flyway corre al arrancar y `ddl-auto=validate` comprueba que las entidades casan. Un despliegue con una entidad nueva sin su migración falla al arrancar, no en caliente (ADR-004).

@@ -48,8 +48,9 @@ flowchart LR
     T_ING["ingestion: ingestion_run, raw_payload (V003)<br/>modulith: event_publication (V002, JDBC)"]
   end
 
-  API["API REST /api/v1 (+ OpenAPI en /v3/api-docs)<br/>lectura pública · paginación · sort explícito<br/>source · ingestedAt · caveats"]
-  CONS["Consumidores<br/>frontend Angular (fase 4) · otros reutilizadores<br/>workspace / identity (fase 5)"]
+  API["API REST /api/v1 (+ OpenAPI en /v3/api-docs)<br/>lectura pública · paginación · sort explícito<br/>source · ingestedAt · caveats<br/><b>CORS de solo lectura, sin credenciales</b> (ADR-020)"]
+  FRONT["<b>frontend/</b> — la pantalla (ADR-020)<br/>Angular 21 zoneless · sitio estático en <b>otro dominio</b><br/>matriz + mapa SVG (sin teselas) + ficha de junta<br/>clasificación nombrada · paleta secuencial · cobertura en la leyenda<br/>ordena el backend, pinta el navegador"]
+  CONS["Otros consumidores<br/>reutilizadores de la API · workspace / identity (fase 5)"]
 
   CAT & SWG & FED & QYS & DIS & LIC & OCDS & PRE -- "GET .json" --> HTTP
   RAW -- "payload crudo + metadatos del run" --> A_CAT & A_CIT & A_GEO & A_URB & A_SPE
@@ -61,6 +62,7 @@ flowchart LR
   A_SPE -- "upsert idempotente" --> T_SPE
   RUN --> T_ING
   T_CAT & T_CIT & T_GEO & T_URB & T_SPE -- "read models" --> API
+  API -- "JSON desde otro origen" --> FRONT
   API -- "JSON" --> CONS
 ```
 
@@ -111,7 +113,7 @@ flowchart TB
   CATM & CIT & URB & SPE & INGM & GEO & ID & WS --> SH
 ```
 
-Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él —**verificado**: entró sin una sola migración, el primer módulo del proyecto que lo hace—; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003). `urban` y `citizen` **no se conocen**: comparten `geo` y nada más, porque compartir el eje territorial no es compartir lenguaje (ADR-016 §1).
+Reglas (SPEC.md §4.3, verificadas con `ApplicationModules.verify()`): ningún módulo accede a tablas ni clases internas de otro; la comunicación entre dominios es por eventos; `workspace` no depende de ningún dominio; `territory` no tiene tablas y nadie depende de él —**verificado**: entró sin una sola migración, el primer módulo del proyecto que lo hace—; `spending` no depende de `geo` porque ninguna fuente de gasto tiene territorio (ADR-003). `urban` y `citizen` **no se conocen**: comparten `geo` y nada más, porque compartir el eje territorial no es compartir lenguaje (ADR-016 §1). El **frontend no es un módulo**: vive fuera del monolito, en `frontend/`, y solo ve la API pública —ni tablas, ni clases, ni el modelo interno de nadie—, que es la frontera más limpia que tiene el proyecto (ADR-020).
 
 ## 3. Dentro de un módulo (hexagonal), con `catalog` como ejemplo
 
