@@ -8,8 +8,8 @@
   align-items: flex-end;
   gap: 0.7rem 1rem;
   padding: 0.8rem 0 0.9rem;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 label {
@@ -28,12 +28,12 @@ label.wide {
   font-size: 0.66rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--text-3);
 }
 
 .hint {
   font-size: 0.68rem;
-  color: var(--ink-faint);
+  color: var(--text-3);
 }
 
 .clear {
@@ -44,7 +44,7 @@ label.wide {
   padding: 0 0 1px;
   margin-bottom: 0.35rem;
   font-size: 0.76rem;
-  color: var(--accent);
+  color: var(--primary);
   cursor: pointer;
 }
 

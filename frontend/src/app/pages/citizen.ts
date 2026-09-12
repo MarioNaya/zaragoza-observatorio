@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { Observatory, Query } from '../core/api';
-import { date, dateTime, hours, integer, month, percent } from '../core/format';
+import { byKey, date, hours, integer, keyOf, labelOf, month, percent } from '../core/format';
 import { CitizenAggregation, CitizenSummary, ServiceRequest, Source } from '../core/types';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
@@ -119,13 +119,13 @@ export class CitizenPage {
     if (!aggregation || aggregation.by !== 'month') {
       return [];
     }
-    const ordered = [...aggregation.buckets].sort((a, b) => a.key.localeCompare(b.key));
+    const ordered = [...aggregation.buckets].sort(byKey);
     return [
       {
         name: 'Quejas presentadas',
         points: ordered.map((bucket) => ({
-          key: bucket.key,
-          label: month(bucket.key),
+          key: keyOf(bucket),
+          label: month(keyOf(bucket)),
           value: bucket.total,
         })),
       },
@@ -139,8 +139,8 @@ export class CitizenPage {
     }
     return [...aggregation.buckets]
       .map((bucket) => ({
-        key: bucket.key,
-        label: bucket.label ?? bucket.key,
+        key: keyOf(bucket),
+        label: labelOf(bucket),
         value: bucket.total,
         note:
           aggregation.by === 'district'

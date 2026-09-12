@@ -9,6 +9,8 @@ interface Shape {
   name: string;
   path: string;
   label: { x: number; y: number };
+  /** Ancho del recuadro de la junta en píxeles: decide si el nombre cabe dentro sin pisar al vecino. */
+  span: number;
   /** La clase de color, o `null` cuando la junta no tiene valor que pintar. */
   klass: number | null;
   value: number | null;
@@ -46,7 +48,12 @@ interface Shape {
             <title>{{ shape.name }} — {{ shape.formatted }}</title>
           </path>
         }
-        @for (shape of shapes(); track shape.districtId) {
+        <!--
+          Solo se rotula la junta cuyo nombre cabe dentro de su propio recuadro. En el centro hay ocho juntas
+          pequeñas y pegadas: rotularlas todas amontonaba los nombres unos encima de otros y no se leía ninguno.
+          Las que no caben se leen al pasar el ratón y están todas en la tabla de al lado.
+        -->
+        @for (shape of labelled(); track shape.districtId) {
           <text class="label" [attr.x]="shape.label.x" [attr.y]="shape.label.y">{{ shape.name }}</text>
         }
       </svg>
@@ -107,17 +114,24 @@ export class Choropleth {
     return this.features().map((feature) => {
       const row = byDistrict.get(feature.id);
       const value = this.valueOf(row);
+      const anchor = labelPointOf(feature.geometry, projection);
       return {
         districtId: feature.id,
         name: feature.properties.shortName,
         path: pathOf(feature.geometry, projection),
-        label: labelPointOf(feature.geometry, projection),
+        label: anchor.point,
+        span: anchor.span,
         klass: value === null ? null : classOf(value, classification),
         value,
         formatted: value === null ? 'sin denominador para el año pedido' : this.format(value),
       };
     });
   });
+
+  /** Las que se rotulan: el nombre a 9 px necesita unos 5 px por letra y un margen dentro del recuadro. */
+  readonly labelled = computed(() =>
+    this.shapes().filter((shape) => shape.span > shape.name.length * 5.1 + 6),
+  );
 
   readonly bins = computed(() => {
     const { breaks, min, counts } = this.classification();

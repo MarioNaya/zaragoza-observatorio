@@ -9,8 +9,8 @@
   --c2: var(--seq-2);
   --c3: var(--seq-3);
   --c4: var(--seq-4);
-  --no-data: var(--paper-sunken);
-  --stroke: color-mix(in srgb, var(--ink) 22%, transparent);
+  --no-data: var(--surface-2);
+  --stroke: color-mix(in srgb, var(--text) 22%, transparent);
   display: block;
 }
 
@@ -35,12 +35,12 @@ svg {
 .district:focus-visible {
   fill-opacity: 0.78;
   outline: none;
-  stroke: var(--ink);
+  stroke: var(--text);
   stroke-width: 1.5;
 }
 
 .district.selected {
-  stroke: var(--accent);
+  stroke: var(--primary);
   stroke-width: 2.5;
 }
 
@@ -57,9 +57,9 @@ svg {
 
 .label {
   font-size: 9px;
-  fill: var(--ink);
+  fill: var(--text);
   paint-order: stroke;
-  stroke: var(--paper);
+  stroke: var(--surface);
   stroke-width: 2.5px;
   stroke-linejoin: round;
   text-anchor: middle;
@@ -130,8 +130,8 @@ svg {
 .coverage {
   margin: 0;
   padding: 0.6rem 0.75rem;
-  border-left: 3px solid var(--accent);
-  background: var(--tint);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
   border-radius: 0 4px 4px 0;
   font-size: 0.82rem;
   line-height: 1.45;

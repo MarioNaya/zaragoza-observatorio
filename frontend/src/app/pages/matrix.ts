@@ -14,7 +14,8 @@ import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../core/ty
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './matrix.css',
   template: `
-    <table>
+    <div class="scroll">
+      <table>
       <caption class="sr-only">
         Las {{ tab().districts }} juntas municipales y vecinales por las medidas pedidas
       </caption>
@@ -77,7 +78,8 @@ import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../core/ty
           <td class="numeric denominator"></td>
         </tr>
       </tfoot>
-    </table>
+      </table>
+    </div>
 
     <!-- El pie no es decorativo: es la diferencia entre lo que suma la tabla y lo que hay (ADR-019 §6). -->
     <p class="note">

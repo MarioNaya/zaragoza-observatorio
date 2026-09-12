@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 
+import { niceCeiling } from './bar-chart';
+
 export interface Series {
   name: string;
   points: { key: string; label: string; value: number }[];
@@ -19,7 +21,7 @@ export interface Series {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chart.css',
   template: `
-    <figure class="chart">
+    <figure class="chart ordered">
       @if (series().length > 1) {
         <ul class="legend">
           @for (one of series(); track one.name) {
@@ -30,7 +32,6 @@ export interface Series {
 
       <svg
         [attr.viewBox]="'0 0 ' + W + ' ' + H"
-        preserveAspectRatio="none"
         role="img"
         [attr.aria-label]="title()"
         (pointermove)="track($event)"
@@ -51,6 +52,16 @@ export interface Series {
           <path class="line" [class]="'line s' + $index" [attr.d]="path.d" />
           @if (index() !== null) {
             <circle class="dot" [class]="'dot s' + $index" [attr.cx]="crosshairX()" [attr.cy]="path.dotY" r="4" />
+          }
+        }
+
+        <!--
+          Etiquetas directas al final de cada línea. Con cuatro series o menos la guía las pide: son lo que hace
+          que la identidad no dependa solo del color, que aquí además es una rampa de un solo tono.
+        -->
+        @if (labelled()) {
+          @for (label of endLabels(); track label.name) {
+            <text class="end-label" [attr.x]="endX() + 7" [attr.y]="label.y">{{ label.name }}</text>
           }
         }
 
@@ -81,9 +92,11 @@ export class LineChart {
   readonly hint = input('Pasa el ratón por el gráfico para leer cualquier punto de la serie.');
 
   protected readonly W = 760;
-  protected readonly H = 240;
+  protected readonly H = 270;
   protected readonly PAD_L = 64;
   protected readonly PAD_R = 8;
+  /** Margen extra a la derecha cuando hay etiqueta directa: el rótulo tiene que caber fuera del trazo. */
+  protected readonly LABEL_ROOM = 92;
   protected readonly PAD_T = 12;
   protected readonly PAD_B = 24;
   protected readonly plotH = this.H - this.PAD_T - this.PAD_B;
@@ -94,11 +107,16 @@ export class LineChart {
   private readonly length = computed(() => Math.max(1, this.series()[0]?.points.length ?? 1));
 
   private readonly max = computed(() =>
-    niceCeilingOf(Math.max(1, ...this.series().flatMap((one) => one.points.map((p) => p.value)))),
+    niceCeiling(Math.max(1, ...this.series().flatMap((one) => one.points.map((p) => p.value)))),
   );
 
+  /** Cuatro series o menos se rotulan al final; con más, el rótulo sería otro amontonamiento. */
+  readonly labelled = computed(() => this.series().length > 1 && this.series().length <= 4);
+
+  readonly endX = computed(() => this.x(this.length() - 1));
+
   private x(index: number): number {
-    const span = this.W - this.PAD_L - this.PAD_R;
+    const span = this.W - this.PAD_L - (this.labelled() ? this.LABEL_ROOM : this.PAD_R);
     return this.PAD_L + (this.length() === 1 ? span / 2 : (index / (this.length() - 1)) * span);
   }
 
@@ -113,8 +131,30 @@ export class LineChart {
       name: one.name,
       d: one.points.map((point, i) => `${i === 0 ? 'M' : 'L'}${this.x(i)} ${this.y(point.value)}`).join(''),
       dotY: this.y(one.points[this.index() ?? 0]?.value ?? 0),
+      endY: this.y(one.points[one.points.length - 1]?.value ?? 0),
     })),
   );
+
+  /**
+   * Las etiquetas del final, separadas para que no se pisen.
+   *
+   * Hace falta porque las series convergen: en 2026 la obligación neta y el pago neto acaban casi en el mismo
+   * punto y sus dos rótulos se superponían hasta no leerse ninguno. Se empujan hacia abajo lo justo para
+   * guardar una línea de separación, conservando el orden vertical de las líneas.
+   */
+  readonly endLabels = computed(() => {
+    const gap = 13;
+    const ordered = this.paths()
+      .map((path, index) => ({ name: path.name, series: index, y: path.endY }))
+      .sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ordered.length; i++) {
+      const minimum = ordered[i - 1].y + gap;
+      if (ordered[i].y < minimum) {
+        ordered[i].y = minimum;
+      }
+    }
+    return ordered;
+  });
 
   readonly gridLines = computed(() => {
     const max = this.max();
@@ -159,19 +199,10 @@ export class LineChart {
     const target = event.currentTarget as SVGSVGElement;
     const box = target.getBoundingClientRect();
     const ratio = (event.clientX - box.left) / box.width;
-    const span = this.W - this.PAD_L - this.PAD_R;
+    const span = this.W - this.PAD_L - (this.labelled() ? this.LABEL_ROOM : this.PAD_R);
     const position = (ratio * this.W - this.PAD_L) / span;
     const at = Math.round(position * (this.length() - 1));
     this.index.set(Math.min(this.length() - 1, Math.max(0, at)));
   }
 }
 
-function niceCeilingOf(value: number): number {
-  if (value <= 0) {
-    return 1;
-  }
-  const magnitude = 10 ** Math.floor(Math.log10(value));
-  const normalised = value / magnitude;
-  const step = normalised <= 1 ? 1 : normalised <= 2 ? 2 : normalised <= 2.5 ? 2.5 : normalised <= 5 ? 5 : 10;
-  return step * magnitude;
-}

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { Observatory, Query } from '../core/api';
-import { euro, euroCents, euroShort, integer } from '../core/format';
+import { byKey, euro, euroCents, euroShort, integer, keyOf, labelOf } from '../core/format';
 import { BudgetAggregation, BudgetLine, BudgetSummary, Source } from '../core/types';
 
 import { Colophon } from '../ui/colophon';
@@ -14,7 +14,6 @@ import { Stat, Stats } from '../ui/stats';
 type Axis = 'year' | 'chapter' | 'area' | 'programme' | 'organ';
 
 const AXES: { key: Axis; label: string }[] = [
-  { key: 'year', label: 'Ejercicio' },
   { key: 'chapter', label: 'Capítulo' },
   { key: 'area', label: 'Área de gasto' },
   { key: 'programme', label: 'Programa' },
@@ -50,6 +49,12 @@ export class BudgetPage {
 
   readonly summary = signal<BudgetSummary | null>(null);
   readonly aggregation = signal<BudgetAggregation | null>(null);
+  /**
+   * La serie por ejercicio va **aparte** del eje que elige quien lee: el gráfico de arriba enseña siempre los
+   * veinte ejercicios y el selector de abajo cambia el reparto dentro de una instantánea. Son dos preguntas
+   * distintas y antes compartían una sola petición, así que elegir «Capítulo» dejaba el gráfico vacío.
+   */
+  readonly years = signal<BudgetAggregation | null>(null);
   readonly lines = signal<BudgetLine[]>([]);
   readonly lineTotal = signal(0);
   readonly snapshotDate = signal<string | null>(null);
@@ -59,7 +64,7 @@ export class BudgetPage {
   readonly error = signal<string | null>(null);
   readonly loading = signal(true);
 
-  readonly axis = signal<Axis>('year');
+  readonly axis = signal<Axis>('chapter');
   readonly figure = signal<FigureKey>('obligations');
   readonly page = signal(0);
   readonly sort = signal('obligations,desc');
@@ -117,16 +122,16 @@ export class BudgetPage {
 
   /** Las cuatro etapas a lo largo de los ejercicios. Una sola escala: son todas euros. */
   readonly series = computed<Series[]>(() => {
-    const aggregation = this.aggregation();
-    if (!aggregation || aggregation.by !== 'year') {
+    const aggregation = this.years();
+    if (!aggregation) {
       return [];
     }
-    const ordered = [...aggregation.items].sort((a, b) => a.key.localeCompare(b.key));
+    const ordered = [...aggregation.items].sort(byKey);
     return FIGURES.map((figure) => ({
       name: figure.label,
       points: ordered.map((bucket) => ({
-        key: bucket.key,
-        label: bucket.key,
+        key: keyOf(bucket),
+        label: keyOf(bucket),
         value: bucket.amounts[figure.key],
       })),
     }));
@@ -134,13 +139,13 @@ export class BudgetPage {
 
   readonly ranking = computed<RankRow[]>(() => {
     const aggregation = this.aggregation();
-    if (!aggregation || aggregation.by === 'year') {
+    if (!aggregation) {
       return [];
     }
     return [...aggregation.items]
       .map((bucket) => ({
-        key: bucket.key,
-        label: bucket.label ?? bucket.key ?? '(sin asignar)',
+        key: keyOf(bucket),
+        label: labelOf(bucket),
         value: bucket.amounts[this.figure()],
         note: `${integer(bucket.lines)} partidas`,
       }))
@@ -198,10 +203,15 @@ export class BudgetPage {
       next: (response) =>
         this.chapterOptions.set(
           response.item.items
-            .filter((bucket) => bucket.key)
+            // El capítulo sin clave no es una opción de filtro: no se puede filtrar por «ninguno».
+            .filter((bucket): bucket is typeof bucket & { key: string } => !!bucket.key)
             .map((bucket) => ({ value: bucket.key, label: `${bucket.key} — ${bucket.label ?? ''}` })),
         ),
       error: () => undefined,
+    });
+    this.api.budgetAggregation('year').subscribe({
+      next: (response) => this.years.set(response.item),
+      error: () => this.error.set('No se ha podido leer la serie por ejercicio.'),
     });
     this.loadAggregation();
     this.loadLines();

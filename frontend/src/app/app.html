@@ -1,52 +1,86 @@
 <a class="skip" href="#contenido">Saltar al contenido</a>
 
-<header class="masthead">
-  <div class="wrap">
-    <div class="title">
-      <a routerLink="/" class="wordmark">
-        <span class="city">Zaragoza</span>
+<div class="shell" [class.open]="menuOpen()">
+  <!-- Barra superior: solo en móvil y tablet, donde la lateral se convierte en cajón. -->
+  <header class="topbar">
+    <button
+      type="button"
+      class="burger"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="navegacion"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        @if (menuOpen()) {
+          <path d="M6 6l12 12M18 6L6 18" />
+        } @else {
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        }
+      </svg>
+      <span class="sr-only">{{ menuOpen() ? 'Cerrar menú' : 'Abrir menú' }}</span>
+    </button>
+    <a routerLink="/" class="wordmark compact">
+      <span class="mark">OZ</span>
+      <span class="name">Observatorio</span>
+    </a>
+  </header>
+
+  <aside class="sidebar" id="navegacion">
+    <a routerLink="/" class="wordmark">
+      <span class="mark">OZ</span>
+      <span class="titles">
         <span class="name">Observatorio</span>
-      </a>
-      <p class="stance">
-        Datos abiertos municipales, con sus denominadores, su cobertura y sus huecos a la vista.
-        Herramienta de análisis, no de conclusiones.
-      </p>
-    </div>
+        <span class="city">Datos abiertos de Zaragoza</span>
+      </span>
+    </a>
 
     <nav aria-label="Secciones">
-      <ul>
-        @for (section of sections; track section.route) {
-          <li>
-            <a
-              [routerLink]="section.route"
-              routerLinkActive="on"
-              [routerLinkActiveOptions]="{ exact: false }"
-              >{{ section.label }}</a
-            >
-          </li>
-        }
-      </ul>
+      @for (group of groups; track group.label) {
+        <p class="group-label">{{ group.label }}</p>
+        <ul>
+          @for (section of group.sections; track section.route) {
+            <li>
+              <a
+                [routerLink]="section.route"
+                routerLinkActive="on"
+                [style.--accent]="group.accent"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="section.icon" /></svg>
+                {{ section.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
     </nav>
-  </div>
-</header>
 
-<main id="contenido" class="wrap">
-  <router-outlet />
-</main>
+    <p class="stance">
+      Enseña los denominadores, la cobertura y los huecos de cada fuente.
+      <strong>Herramienta de análisis, no de conclusiones.</strong>
+    </p>
+  </aside>
 
-<footer class="wrap">
-  <div class="foot">
-    <p>
-      Datos del
-      <a href="https://www.zaragoza.es/sede/portal/datos-abiertos/" rel="noreferrer noopener" target="_blank">
-        portal de datos abiertos
-      </a>
-      del Ayuntamiento de Zaragoza, bajo su licencia de reutilización. Este sitio los lee con una API propia
-      cuyo contrato es público.
-    </p>
-    <p>
-      No usa medición, ni fuentes remotas, ni mapas de terceros: <strong>no envía nada a nadie sobre quien lo
-      visita</strong>. Las tipografías van dentro del propio sitio.
-    </p>
+  <!-- Fondo que cierra el cajón al tocar fuera. Solo existe en móvil. -->
+  <button type="button" class="scrim" (click)="menuOpen.set(false)" tabindex="-1" aria-hidden="true"></button>
+
+  <div class="main">
+    <main id="contenido">
+      <router-outlet />
+    </main>
+
+    <footer>
+      <p>
+        Datos del
+        <a href="https://www.zaragoza.es/sede/portal/datos-abiertos/" rel="noreferrer noopener" target="_blank">
+          portal de datos abiertos
+        </a>
+        del Ayuntamiento de Zaragoza, bajo su licencia de reutilización. Leídos por una API propia cuyo contrato
+        es público.
+      </p>
+      <p>
+        Sin medición, sin fuentes remotas y sin mapas de terceros:
+        <strong>no envía nada a nadie sobre quien lo visita</strong>.
+      </p>
+    </footer>
   </div>
-</footer>
+</div>

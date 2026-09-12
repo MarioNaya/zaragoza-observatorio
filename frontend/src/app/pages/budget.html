@@ -1,4 +1,4 @@
-<header class="page-head">
+<header class="page-head" style="--accent: var(--cat-2)">
   <p class="eyebrow">Dinero · 01</p>
   <h1>El presupuesto de gastos</h1>
   <p class="lede">
@@ -52,8 +52,7 @@
     </div>
   </header>
 
-  @if (axis() !== 'year') {
-    <div class="switch figures">
+  <div class="switch figures">
       @for (option of figures; track option.key) {
         <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
           {{ option.label }}
@@ -64,15 +63,9 @@
       Ordenado por <strong>{{ figureLabel() }}</strong>. Cambiar de cifra cambia el orden, y eso es lo que hay
       que ver: un capítulo puede tener mucho crédito y poco ejecutado.
     </p>
-    <obs-ranking [data]="ranking()" [format]="euroShort" />
-    @if (aggregation()?.snapshotDate; as snapshot) {
-      <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
-    }
-  } @else {
-    <p class="note">
-      El eje por ejercicio ya está arriba, con sus cuatro cifras. Elige otro eje para ver el reparto dentro de
-      una instantánea.
-    </p>
+  <obs-ranking [data]="ranking()" [format]="euroShort" />
+  @if (aggregation()?.snapshotDate; as snapshot) {
+    <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
   }
 </section>
 

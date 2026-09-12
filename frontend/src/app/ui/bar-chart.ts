@@ -33,7 +33,6 @@ export interface Bar {
 
       <svg
         [attr.viewBox]="'0 0 ' + W + ' ' + H"
-        preserveAspectRatio="none"
         role="img"
         [attr.aria-label]="title()"
         (pointerleave)="hover.set(null)"
@@ -100,7 +99,7 @@ export class BarChart {
   readonly picked = output<string>();
 
   protected readonly W = 760;
-  protected readonly H = 240;
+  protected readonly H = 270;
   protected readonly PAD_L = 64;
   protected readonly PAD_R = 8;
   protected readonly PAD_T = 10;
@@ -163,13 +162,19 @@ export class BarChart {
   });
 }
 
-/** Un techo redondo para el eje: 4.359.405.416 → 5.000.000.000, no 4.359.405.416. */
+/**
+ * Un techo redondo para el eje, **cerca del dato**.
+ *
+ * La versión anterior solo admitía 1, 2, 2,5, 5 y 10, así que un máximo de 1,09 mM€ subía el eje a 2 mM€ y las
+ * cuatro líneas del presupuesto quedaban aplastadas en la mitad inferior, superpuestas y sin poder distinguirse.
+ * Con los escalones intermedios ese mismo máximo sube a 1,2 y la serie ocupa el gráfico.
+ */
 export function niceCeiling(value: number): number {
   if (value <= 0) {
     return 1;
   }
   const magnitude = 10 ** Math.floor(Math.log10(value));
   const normalised = value / magnitude;
-  const step = normalised <= 1 ? 1 : normalised <= 2 ? 2 : normalised <= 2.5 ? 2.5 : normalised <= 5 ? 5 : 10;
-  return step * magnitude;
+  const steps = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+  return (steps.find((step) => normalised <= step + 1e-9) ?? 10) * magnitude;
 }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { Observatory, Query } from '../core/api';
-import { date, euro, euroShort, integer, percent } from '../core/format';
+import { byKey, date, euro, euroShort, integer, keyOf, labelOf } from '../core/format';
 import { ContractingProcess, Source, SpendingAggregation, SpendingSummary } from '../core/types';
 import { BarChart, Bar } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
@@ -149,10 +149,10 @@ export class ContractsPage {
       return [];
     }
     return [...aggregation.buckets]
-      .sort((a, b) => a.key.localeCompare(b.key))
+      .sort(byKey)
       .map((bucket) => ({
-        key: bucket.key,
-        label: bucket.key,
+        key: keyOf(bucket),
+        label: keyOf(bucket),
         value: bucket.tenderedAmount,
         value2: bucket.awardedAmount,
       }));
@@ -165,8 +165,8 @@ export class ContractsPage {
     }
     return [...aggregation.buckets]
       .map((bucket) => ({
-        key: bucket.key,
-        label: this.labelOf(bucket.key, bucket.label),
+        key: keyOf(bucket),
+        label: this.stageAware(bucket),
         value: bucket.awardedAmount || bucket.tenderedAmount,
         note: `${integer(bucket.processes)} procesos · ${integer(bucket.awards)} adjudicaciones`,
       }))
@@ -261,11 +261,12 @@ export class ContractsPage {
     this.loadProcesses();
   }
 
-  private labelOf(key: string, label: string | null): string {
+  /** En el eje de etapa el nulo tiene nombre propio: es el hecho de que el documento no la sostiene. */
+  private stageAware(bucket: { key: string | null; label: string | null }): string {
     if (this.axis() === 'stage') {
-      return key ? (STAGE_LABELS[key] ?? key) : 'Sin etapa (el documento no la sostiene)';
+      return bucket.key ? (STAGE_LABELS[bucket.key] ?? bucket.key) : 'Sin etapa (el documento no la sostiene)';
     }
-    return label ?? key ?? '(sin valor)';
+    return labelOf(bucket);
   }
 
   private loadAggregation(): void {

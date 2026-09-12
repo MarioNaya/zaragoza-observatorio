@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { Observatory, Query } from '../core/api';
-import { date, euro, euroShort, integer, percent } from '../core/format';
+import { byKey, date, euro, euroShort, integer, keyOf, percent } from '../core/format';
 import { Grant, GrantAggregation, GrantsSummary, Source } from '../core/types';
 import { BarChart, Bar } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
@@ -119,8 +119,8 @@ export class GrantsPage {
       return [];
     }
     return [...aggregation.buckets]
-      .sort((a, b) => a.key.localeCompare(b.key))
-      .map((bucket) => ({ key: bucket.key, label: bucket.key, value: bucket.granted }));
+      .sort(byKey)
+      .map((bucket) => ({ key: keyOf(bucket), label: keyOf(bucket), value: bucket.granted }));
   });
 
   readonly ranking = computed<RankRow[]>(() => {
@@ -130,7 +130,7 @@ export class GrantsPage {
     }
     return [...aggregation.buckets]
       .map((bucket) => ({
-        key: bucket.key,
+        key: keyOf(bucket),
         label: bucket.label ?? bucket.key ?? '(sin beneficiario)',
         value: bucket.granted,
         note:

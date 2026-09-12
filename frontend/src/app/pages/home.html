@@ -11,7 +11,7 @@
 <ul class="sumario stagger">
   @for (card of cards(); track card.route) {
     <li>
-      <a [routerLink]="card.route">
+      <a [routerLink]="card.route" [style.--accent]="card.accent">
         <p class="eyebrow">{{ card.eyebrow }}</p>
         <h2>{{ card.title }}</h2>
         <p class="blurb">{{ card.blurb }}</p>

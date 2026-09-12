@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { Observatory, Query } from '../core/api';
-import { date, integer, percent } from '../core/format';
+import { byKey, date, integer, keyOf, labelOf, percent } from '../core/format';
 import { Premises, Source, UrbanAggregation, UrbanSummary } from '../core/types';
 import { BarChart, Bar } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
@@ -121,8 +121,8 @@ export class UrbanPage {
     }
     return [...aggregation.buckets]
       .filter((bucket) => Number(bucket.key) >= 1990)
-      .sort((a, b) => a.key.localeCompare(b.key))
-      .map((bucket) => ({ key: bucket.key, label: bucket.key, value: bucket.licences || bucket.premises }));
+      .sort(byKey)
+      .map((bucket) => ({ key: keyOf(bucket), label: keyOf(bucket), value: bucket.licences || bucket.premises }));
   });
 
   readonly ranking = computed<RankRow[]>(() => {
@@ -133,8 +133,8 @@ export class UrbanPage {
     const licences = aggregation.unit === 'licences';
     return [...aggregation.buckets]
       .map((bucket) => ({
-        key: bucket.key,
-        label: bucket.label ?? bucket.key ?? '(sin asignar)',
+        key: keyOf(bucket),
+        label: labelOf(bucket),
         value: licences ? bucket.licences : bucket.premises,
         note: licences
           ? `${integer(bucket.premises)} locales`

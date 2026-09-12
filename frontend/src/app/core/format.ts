@@ -137,3 +137,36 @@ export function toInstant(day: string | null): string | null {
 export function toDay(instant: string | null | undefined): string {
   return instant ? instant.slice(0, 10) : '';
 }
+
+/**
+ * Compara dos claves de grupo tolerando el nulo.
+ *
+ * La API devuelve `key: null` en el grupo «sin asignar» —procesos sin etapa, licencias sin año, partidas sin
+ * programa— y ese nulo **es el dato**, no un error (regla 6). Ordenar con `a.key.localeCompare(b.key)` rompía
+ * la pantalla entera con un `TypeError` en cuanto aparecía uno. El grupo sin clave va al final.
+ */
+export function byKey(a: { key: string | null }, b: { key: string | null }): number {
+  if (a.key === b.key) {
+    return 0;
+  }
+  if (a.key === null || a.key === undefined) {
+    return 1;
+  }
+  if (b.key === null || b.key === undefined) {
+    return -1;
+  }
+  return a.key.localeCompare(b.key);
+}
+
+/** Lo que se enseña cuando la fuente no da clave. Es un grupo real, no un hueco que tapar (regla 6). */
+export const NO_KEY = '(sin asignar)';
+
+/** La clave de un grupo como texto, con el nulo nombrado. */
+export function keyOf(bucket: { key: string | null }): string {
+  return bucket.key ?? NO_KEY;
+}
+
+/** La etiqueta de un grupo: su nombre si lo trae, su clave si no, y el nulo nombrado en último término. */
+export function labelOf(bucket: { key: string | null; label?: string | null }): string {
+  return bucket.label ?? bucket.key ?? NO_KEY;
+}

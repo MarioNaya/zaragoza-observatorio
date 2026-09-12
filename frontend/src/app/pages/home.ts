@@ -6,6 +6,8 @@ import { euroShort, integer, percent } from '../core/format';
 
 interface Card {
   route: string;
+  /** Color de la familia, el mismo que la barra lateral y la cabecera de su página. */
+  accent: string;
   eyebrow: string;
   title: string;
   blurb: string;
@@ -84,6 +86,7 @@ export class HomePage {
   readonly cards = computed<Card[]>(() => [
     {
       route: '/presupuesto',
+      accent: 'var(--cat-2)',
       eyebrow: 'Dinero · 01',
       title: 'El presupuesto de gastos',
       blurb:
@@ -95,6 +98,7 @@ export class HomePage {
     },
     {
       route: '/contratacion',
+      accent: 'var(--cat-2)',
       eyebrow: 'Dinero · 02',
       title: 'La contratación pública',
       blurb:
@@ -106,6 +110,7 @@ export class HomePage {
     },
     {
       route: '/subvenciones',
+      accent: 'var(--cat-2)',
       eyebrow: 'Dinero · 03',
       title: 'Las subvenciones',
       blurb:
@@ -117,6 +122,7 @@ export class HomePage {
     },
     {
       route: '/quejas',
+      accent: 'var(--cat-1)',
       eyebrow: 'Ciudadanía · 01',
       title: 'Quejas y sugerencias',
       blurb:
@@ -128,6 +134,7 @@ export class HomePage {
     },
     {
       route: '/actividad',
+      accent: 'var(--cat-1)',
       eyebrow: 'Ciudad · 01',
       title: 'Actividad urbana',
       blurb:
@@ -139,6 +146,7 @@ export class HomePage {
     },
     {
       route: '/territorio',
+      accent: 'var(--cat-1)',
       eyebrow: 'Territorio · 01',
       title: 'El cruce por junta',
       blurb:
@@ -150,6 +158,7 @@ export class HomePage {
     },
     {
       route: '/catalogo',
+      accent: 'var(--cat-3)',
       eyebrow: 'Calidad del dato · 01',
       title: 'El monitor de frescura',
       blurb:

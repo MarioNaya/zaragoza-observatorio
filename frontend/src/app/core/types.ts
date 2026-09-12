@@ -182,7 +182,8 @@ export interface ServiceRequest {
 }
 
 export interface CitizenBucket {
-  key: string;
+  /** `null` en el grupo «sin asignar»: procesos sin etapa, licencias sin año, partidas sin programa. */
+  key: string | null;
   label: string | null;
   year: number | null;
   total: number;
@@ -250,7 +251,7 @@ export interface Premises {
 }
 
 export interface UrbanBucket {
-  key: string;
+  key: string | null;
   label: string | null;
   year: number | null;
   premises: number;
@@ -317,7 +318,7 @@ export interface ContractingProcess {
 }
 
 export interface SpendingBucket {
-  key: string;
+  key: string | null;
   label: string | null;
   year: number | null;
   total: number;
@@ -385,7 +386,7 @@ export interface BudgetLine {
 }
 
 export interface BudgetBucket {
-  key: string;
+  key: string | null;
   label: string | null;
   snapshotDate: string | null;
   lines: number;
@@ -442,7 +443,7 @@ export interface Grant {
 }
 
 export interface GrantBucket {
-  key: string;
+  key: string | null;
   label: string | null;
   grants: number;
   granted: number;
