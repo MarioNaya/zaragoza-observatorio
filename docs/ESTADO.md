@@ -261,7 +261,7 @@ Los caminos posibles a partir de aquí están en el recuadro del principio de es
 
 Y, con spike propio, sigue disponible la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45, 19:30 y 20:05 del 2026-09-10; 10:40, 13:30, 14:15 y 15:05 del 2026-09-11; 00:30, 01:05, 01:20, 12:20 y 12:35 del 2026-09-12)
+## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45, 19:30 y 20:05 del 2026-09-10; 10:40, 13:30, 14:15 y 15:05 del 2026-09-11; 00:30, 01:05, 01:20, 12:20, 12:35 y 12:55 del 2026-09-12)
 
 **00:30–01:20 CEST del 2026-09-12 (decimoquinta sesión, el cruce territorial contra la base de desarrollo cargada).** Con la aplicación en el 8085 y las tres fuentes ya ingeridas de sesiones anteriores:
 
@@ -490,6 +490,8 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 - **CORS**: preflight `OPTIONS` sobre `/api/v1/territory/districts` con `Origin` ajeno → `200` con `Access-Control-Allow-Origin` devuelto, `Allow-Methods` con `GET` y **sin `POST`**, y **sin** `Allow-Credentials` (que es lo que hace inofensivo el comodín). Un `GET` simple y `/v3/api-docs` también lo llevan. **El actuator no**: `OPTIONS /actuator/health` no devuelve cabecera de origen.
 - **Build del frontend**: `dist/observatorio/browser` son **5 ficheros** —`index.html` (1.455 B), `main-*.js` (266.258 B), `styles-*.css` (838 B), `favicon.ico` y `.htaccess` (1.573 B)—, **73,4 KB transferidos**. `npm test`: **17 en verde**. `.\mvnw.cmd clean verify`: **325 en verde** (321 antes, más los 4 de CORS).
 - **Lo que no se ha comprobado**: el aspecto en un navegador. La extensión de Chrome no estaba conectada, así que la pantalla está verificada por lógica y por geometría, no por vista (§4, §6).
+
+- **12:55, ya en la instancia desplegada** (redespliegue tras el merge, en marcha al minuto): `GET /api/v1/geo/boundaries` responde **exactamente lo mismo que en local** —`200`, `application/geo+json`, **372.877 bytes**, 29 features con ids 1..30, **16.462 vértices**, geometría como objeto y no como cadena—, con `ingestedAt` del 2026-09-11. El preflight desde un origen ajeno devuelve `200` con `Access-Control-Allow-Methods: GET,HEAD,OPTIONS`, el origen devuelto, `Expose-Headers` y **sin `Allow-Credentials`**; el mismo preflight sobre `/actuator/health` responde `200` **sin una sola cabecera de origen**, que es lo que se quería: el actuator no se abre. **El frontend todavía no está publicado** (§6), así que lo que está vivo es la API que lo alimenta, no la pantalla.
 
 ## 6. Pendientes del usuario
 
