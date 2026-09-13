@@ -49,7 +49,7 @@ flowchart LR
   end
 
   API["API REST /api/v1 (+ OpenAPI en /v3/api-docs)<br/>lectura pública · paginación · sort explícito<br/>source · ingestedAt · caveats<br/><b>CORS de solo lectura, sin credenciales</b> (ADR-020)"]
-  FRONT["<b>frontend/</b> — la pantalla (ADR-020)<br/>Angular 21 zoneless · sitio estático en <b>otro dominio</b><br/>matriz + mapa SVG (sin teselas) + ficha de junta<br/>clasificación nombrada · paleta secuencial · cobertura en la leyenda<br/>ordena el backend, pinta el navegador"]
+  FRONT["<b>frontend/</b> — la aplicación (ADR-020, ADR-021)<br/>Angular 21 zoneless · sitio estático en <b>otro dominio</b><br/><b>siete secciones</b> con explorador de registros, series y rankings<br/>mapa y gráficos en SVG a mano, sin librería ni teselas<br/>ordena y pagina el backend, pinta el navegador"]
   CONS["Otros consumidores<br/>reutilizadores de la API · workspace / identity (fase 5)"]
 
   CAT & SWG & FED & QYS & DIS & LIC & OCDS & PRE -- "GET .json" --> HTTP
