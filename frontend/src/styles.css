@@ -97,9 +97,15 @@
     --border: #e3e8f0;
     --border-strong: #cfd6e2;
 
+    /*
+     * Tinta del modo claro, **medida** contra las tres superficies donde se usa (#f5f7fa, #f0f3f8, #e7ecf4).
+     * El modo oscuro es el primario y el claro se escribió sin medir: `--text-3` daba 4,20 / 4,06 / 3,81 y el
+     * mínimo para texto pequeño es 4,5, así que la letra pequeña de todas las pantallas —copetes, pie,
+     * cabeceras de tabla— incumplía en claro y en oscuro no (axe, ADR-022 §6). Ahora: 5,09 / 4,91 / 4,60.
+     */
     --text: #121821;
     --text-2: #5a6577;
-    --text-3: #6e7787;
+    --text-3: #606a7b;
 
     --primary: #1668d6;
     --primary-strong: #0f52ad;
@@ -180,6 +186,17 @@ p {
 a {
   color: var(--primary);
   text-decoration: none;
+}
+
+/*
+ * Un enlace dentro de un párrafo se distingue **subrayado**, no solo por color: frente al texto que lo rodea
+ * el azul da 1,25:1 y el mínimo es 3:1, así que sin subrayado no se ve que es un enlace (axe, ADR-022 §6).
+ * Los enlaces que son tarjeta o elemento de navegación no lo necesitan: se distinguen por su sitio.
+ */
+p a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
 }
 
 a:hover {
@@ -588,15 +605,19 @@ select:focus-visible {
   font-variation-settings: 'wght' 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent, var(--primary));
+  color: var(--text-2);
 }
 
+/*
+ * La familia sigue identificando la tarjeta, pero con la marca y no con el texto: los `--cat-*` son colores de
+ * dato y a 10,9 px daban 4,06:1 sobre la superficie, por debajo del 4,5:1 exigible (axe, ADR-022 §6).
+ */
 .sumario .eyebrow::before {
   content: '';
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 2px;
-  background: currentColor;
+  background: var(--accent, var(--primary));
 }
 
 .sumario h2 {

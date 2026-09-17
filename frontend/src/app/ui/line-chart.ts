@@ -165,16 +165,34 @@ export class LineChart {
     }));
   });
 
+  /**
+   * Los rótulos del eje, **solo los que caben**.
+   *
+   * El último se forzaba siempre, y con 165 meses caía a media distancia del anterior: «septiembre de 2026» se
+   * imprimía encima de «febrero de 2025» y no se leía ninguno de los dos. Es la misma trampa que el mapa ya
+   * tenía resuelta con los nombres de las juntas (ADR-021), así que aquí se resuelve igual: se mide el ancho
+   * del rótulo —monoespaciada de 9 px, unos 5,4 px por letra— y si no cabe, no se pinta. Cuando el que choca
+   * es el del final se quita el anterior, porque el final es el que dice hasta cuándo llega la serie.
+   */
   readonly ticks = computed(() => {
     const points = this.series()[0]?.points ?? [];
-    const every = Math.ceil(points.length / 9);
-    return points
-      .filter((_, i) => i % every === 0 || i === points.length - 1)
-      .map((point, i, kept) => ({
-        key: point.key,
-        x: this.x(points.indexOf(point)),
-        text: kept.length > 1 ? point.label : point.label,
-      }));
+    const every = Math.max(1, Math.ceil(points.length / 9));
+    const kept: { key: string; x: number; text: string; width: number }[] = [];
+    for (const [index, point] of points.entries()) {
+      if (index % every !== 0 && index !== points.length - 1) {
+        continue;
+      }
+      const tick = { key: point.key, x: this.x(index), text: point.label, width: point.label.length * 5.4 };
+      const previous = kept[kept.length - 1];
+      if (previous && tick.x - previous.x < (tick.width + previous.width) / 2 + 6) {
+        if (index !== points.length - 1) {
+          continue;
+        }
+        kept.pop();
+      }
+      kept.push(tick);
+    }
+    return kept;
   });
 
   readonly reading = computed(() => {

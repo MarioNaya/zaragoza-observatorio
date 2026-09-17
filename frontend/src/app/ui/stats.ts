@@ -23,11 +23,17 @@ export interface Stat {
   template: `
     <dl class="stats" [class.compact]="compact()">
       @for (stat of data(); track stat.label) {
+        <!--
+          Dentro del div de una dl solo caben dt y dd, y el dt va antes. La nota estaba en un párrafo suelto y
+          el valor iba primero, así que esto no era una lista de definiciones para un lector de pantalla (lo
+          midió axe, ADR-022 §6). El orden visual —cifra, etiqueta, nota— lo pone el CSS; el del documento es
+          el que se lee en voz alta. Un término con dos descripciones es válido.
+        -->
         <div [class.caution]="stat.caution">
-          <dd class="num">{{ stat.value }}</dd>
           <dt>{{ stat.label }}</dt>
+          <dd class="num">{{ stat.value }}</dd>
           @if (stat.note) {
-            <p>{{ stat.note }}</p>
+            <dd class="note">{{ stat.note }}</dd>
           }
         </div>
       }

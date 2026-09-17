@@ -13,6 +13,7 @@
 .stats > div {
   position: relative;
   display: grid;
+  grid-template-rows: auto auto 1fr;
   align-content: start;
   gap: 0.15rem;
   padding: var(--s4);
@@ -33,8 +34,17 @@
   opacity: 0.85;
 }
 
+/*
+ * El orden del documento es etiqueta, valor y nota —que es como se lee en voz alta y lo que hace de esto una
+ * lista de definiciones de verdad—; el de la pantalla es cifra, etiqueta y nota, porque la cifra es la
+ * protagonista. Lo invierte la rejilla, no el marcado: un término con dos descripciones es válido.
+ */
 dd {
   margin: 0;
+}
+
+.num {
+  grid-row: 1;
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: clamp(1.5rem, 2.6vw, 1.95rem);
@@ -45,13 +55,15 @@ dd {
 }
 
 dt {
+  grid-row: 2;
   font-size: 0.82rem;
   font-variation-settings: 'wght' 650;
   color: var(--text);
 }
 
-p {
-  margin: 0.3rem 0 0;
+.note {
+  grid-row: 3;
+  margin-top: 0.15rem;
   font-size: 0.74rem;
   line-height: 1.5;
   color: var(--text-3);
@@ -83,6 +95,6 @@ p {
   padding: var(--s3) var(--s4);
 }
 
-.compact dd {
+.compact .num {
   font-size: 1.25rem;
 }

@@ -139,10 +139,17 @@ nav a:hover {
   text-decoration: none;
 }
 
-/* La activa se rellena con el color de su familia: se ve dónde estás sin leer. */
+/*
+ * La activa se rellena con el color de su familia: se ve dónde estás sin leer.
+ *
+ * El **texto** va en tinta, no en el color de la familia. Teñirlo daba 3,4:1 y 4,1:1 en dos de las tres
+ * familias sobre su propio relleno (medido con axe, ADR-022 §6), y los `--cat-*` son colores de dato, no de
+ * texto. Lo que identifica sigue siendo el relleno y la barra de la izquierda, que son marca y no letra.
+ */
 nav a.on {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+  color: var(--text);
   font-variation-settings: 'wght' 650;
 }
 
