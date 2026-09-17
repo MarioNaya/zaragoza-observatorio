@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 
 import { Observatory, Query } from '../core/api';
 import { byKey, date, hours, integer, keyOf, labelOf, month, percent } from '../core/format';
-import { CitizenAggregation, CitizenSummary, ServiceRequest, Source } from '../core/types';
+import { CitizenAggregation, CitizenSummary, ServiceRequest, Source, YearCoverage } from '../core/types';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
 import { FilterDef, FilterValues, Filters } from '../ui/filters';
@@ -41,6 +41,7 @@ export class CitizenPage {
   readonly filters = signal<FilterValues>({ status: '', assignment: '', internal: '', from: '', to: '' });
 
   protected readonly integer = integer;
+  protected readonly percent = percent;
   protected readonly size = 25;
   protected readonly axes: { key: Axis; label: string }[] = [
     { key: 'month', label: 'Por mes' },
@@ -53,9 +54,13 @@ export class CitizenPage {
       key: 'status',
       label: 'Estado',
       kind: 'select',
+      // Los cuatro estados que la API publica, no los dos que se esperan: hay un REJECTED y un UNKNOWN, y un
+      // filtro que no los ofrece deja dos registros fuera del alcance de quien mira.
       options: [
         { value: 'OPEN', label: 'Abiertas' },
         { value: 'CLOSED', label: 'Cerradas' },
+        { value: 'REJECTED', label: 'Rechazadas' },
+        { value: 'UNKNOWN', label: 'Sin estado reconocible' },
       ],
     },
     {
@@ -64,6 +69,7 @@ export class CitizenPage {
       kind: 'select',
       options: [
         { value: 'RESOLVED', label: 'Situada en una junta' },
+        { value: 'AMBIGUOUS', label: 'En dos juntas a la vez' },
         { value: 'NO_POINT', label: 'Sin coordenadas' },
         { value: 'OUTSIDE', label: 'Fuera del término' },
       ],
@@ -189,11 +195,21 @@ export class CitizenPage {
     this.loadRequests();
   }
 
-  readonly coverageByYear = computed(() => this.aggregation()?.coverageByYear ?? []);
+  /**
+   * La cobertura de punto de cada año entero, que es la cifra que permite comparar dos años (ADR-015).
+   *
+   * **No viene con el eje por junta**: la API la manda solo en el eje de serie `district_year`, así que se pide
+   * aparte. Antes se leía del mismo cuerpo que el reparto por junta, donde llega siempre vacía a propósito, y
+   * el panel entero no se pintaba nunca aunque la pantalla lo prometiera dos párrafos antes.
+   */
+  readonly coverageByYear = signal<YearCoverage[]>([]);
 
   setAxis(axis: Axis): void {
     this.axis.set(axis);
     this.loadAggregation();
+    if (axis === 'district' && this.coverageByYear().length === 0) {
+      this.loadCoverage();
+    }
   }
 
   setFilter(change: { key: string; value: string }): void {
@@ -223,6 +239,14 @@ export class CitizenPage {
     this.api.citizenAggregation(this.axis()).subscribe({
       next: (response) => this.aggregation.set(response.item),
       error: () => this.error.set('No se ha podido leer la agregación de quejas.'),
+    });
+  }
+
+  /** Una petición más, solo cuando hace falta: el eje de serie pesa 90 KB y no se pide al entrar. */
+  private loadCoverage(): void {
+    this.api.citizenAggregation('district_year').subscribe({
+      next: (response) => this.coverageByYear.set(response.item.coverageByYear),
+      error: () => this.error.set('No se ha podido leer la cobertura por año.'),
     });
   }
 

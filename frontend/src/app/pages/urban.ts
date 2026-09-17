@@ -72,8 +72,11 @@ export class UrbanPage {
       key: 'assignment',
       label: 'Situación territorial',
       kind: 'select',
+      // Los cuatro estados de `geo.Assignment`, AMBIGUOUS incluido: los 29 polígonos se solapan en Juslibol y
+      // esa ambigüedad se registra, no se resuelve en silencio (ADR-011). Si no se puede pedir, no se ve.
       options: [
         { value: 'RESOLVED', label: 'Situado en una junta' },
+        { value: 'AMBIGUOUS', label: 'En dos juntas a la vez' },
         { value: 'NO_POINT', label: 'Sin coordenadas' },
         { value: 'OUTSIDE', label: 'Fuera del término' },
       ],
@@ -119,10 +122,14 @@ export class UrbanPage {
     if (!aggregation || aggregation.by !== 'licence_year') {
       return [];
     }
-    return [...aggregation.buckets]
-      .filter((bucket) => Number(bucket.key) >= 1990)
-      .sort(byKey)
-      .map((bucket) => ({ key: keyOf(bucket), label: keyOf(bucket), value: bucket.licences || bucket.premises }));
+    return (
+      [...aggregation.buckets]
+        .filter((bucket) => Number(bucket.key) >= 1990)
+        .sort(byKey)
+        // `total` es el recuento en la unidad que la respuesta declara. `licences || premises` cambiaba de
+        // unidad en cuanto un año tenía cero licencias, y eso es enseñar locales llamándolos licencias.
+        .map((bucket) => ({ key: keyOf(bucket), label: keyOf(bucket), value: bucket.total }))
+    );
   });
 
   readonly ranking = computed<RankRow[]>(() => {
@@ -135,7 +142,7 @@ export class UrbanPage {
       .map((bucket) => ({
         key: keyOf(bucket),
         label: labelOf(bucket),
-        value: licences ? bucket.licences : bucket.premises,
+        value: bucket.total,
         note: licences
           ? `${integer(bucket.premises)} locales`
           : `${integer(bucket.licences)} licencias${bucket.perThousandInhabitants ? ` · ${bucket.perThousandInhabitants.toFixed(1)} por mil hab.` : ''}`,

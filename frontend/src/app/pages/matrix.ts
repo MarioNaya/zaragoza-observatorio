@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
+import { decimal, integer } from '../core/format';
 import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../core/types';
 
 /**
@@ -106,19 +107,16 @@ export class Matrix {
     return this.descending() ? '▾' : '▴';
   }
 
+  // El formato es de `core/format`, que ya sabe qué hacer con el hueco: una medida puede no traer valor para
+  // una junta y `value.toLocaleString()` sobre eso es el `TypeError` de siempre (ADR-022 §4).
+  protected readonly integer = integer;
+  protected readonly decimal = decimal;
+
   protected label(measure: MeasureColumn): string {
     return MEASURE_LABELS[measure.id] ?? measure.id;
   }
 
   protected unit(measure: MeasureColumn): string {
     return UNIT_LABELS[measure.unit] ?? measure.unit;
-  }
-
-  protected integer(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 0 });
-  }
-
-  protected decimal(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 1 });
   }
 }

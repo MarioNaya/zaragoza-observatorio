@@ -133,7 +133,7 @@ export class CatalogPage {
     return Object.entries(summary.byDeclaredFreshness).map(([key, value]) => ({
       key,
       label: FRESHNESS_LABELS[key] ?? key,
-      value,
+      value: value ?? 0,
     }));
   });
 
@@ -145,7 +145,7 @@ export class CatalogPage {
     return Object.entries(summary.byObservationMethod).map(([key, value]) => ({
       key,
       label: METHOD_LABELS[key] ?? key,
-      value,
+      value: value ?? 0,
     }));
   });
 
@@ -157,11 +157,10 @@ export class CatalogPage {
       sortable: 'title',
       get: (row) => row.title,
       sub: (row) => {
-        const method = row['observationMethod'] as string | undefined;
-        const delisted = row['delistedAt'] as string | undefined;
-        const parts = [method ? METHOD_LABELS[method] ?? method : null];
-        if (delisted) {
-          parts.push(`dada de baja el ${date(delisted)}`);
+        const method = row.latestObservationMethod;
+        const parts = [method ? (METHOD_LABELS[method] ?? method) : null];
+        if (row.delistedAt) {
+          parts.push(`dada de baja el ${date(row.delistedAt)}`);
         }
         return parts.filter(Boolean).join(' · ') || null;
       },
@@ -180,14 +179,15 @@ export class CatalogPage {
     {
       key: 'observedLastChange',
       label: 'Observamos cambio',
+      // El campo del cuerpo y el del `sort` no se llaman igual, y el de la respuesta es el de `latest`.
       sortable: 'observedLastChange',
-      get: (row) => date(row['observedLastChange'] as string | null),
+      get: (row) => date(row.latestObservedChange),
     },
     {
       key: 'freshness',
       label: 'Frescura declarada',
       get: (row) => {
-        const key = row['declaredFreshness'] as string | undefined;
+        const key = row.latestFreshness;
         return key ? (FRESHNESS_LABELS[key] ?? key) : '—';
       },
     },

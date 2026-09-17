@@ -48,6 +48,17 @@
   </header>
 
   @if (axis() !== 'year') {
+    <div class="switch figures">
+      @for (option of figures; track option.key) {
+        <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    <p class="note">
+      Ordenado por <strong>{{ figureLabel() }}</strong>. Los dos importes van por separado y ninguno sustituye
+      al otro: un grupo puede licitar mucho y adjudicar poco, y la barra dice cuál de los dos está midiendo.
+    </p>
     <obs-ranking [data]="ranking()" [format]="euroShort" />
     @if (overlapping()) {
       <p class="note">

@@ -23,6 +23,21 @@ const AXES: { key: Axis; label: string }[] = [
 ];
 
 /**
+ * Las dos cifras de esta fuente, que **no son intercambiables** (ADR-017, regla 33): el ranking ordena por una
+ * o por la otra y dice por cuál.
+ *
+ * Antes pintaba `awardedAmount || tenderedAmount`, que mezclaba las dos en la misma barra —un grupo sin
+ * adjudicar caía a lo licitado sin avisar— y además dejaba la barra sin nombre. Es exactamente lo que la ADR de
+ * la fuente prohíbe hacer con estos dos importes.
+ */
+const FIGURES = [
+  { key: 'awardedAmount', label: 'Adjudicado' },
+  { key: 'tenderedAmount', label: 'Licitado' },
+] as const;
+
+type FigureKey = (typeof FIGURES)[number]['key'];
+
+/**
  * Las **dos** etapas que existen, comprobadas contra la API y no supuestas: `stage` solo se publica donde el
  * documento lo sostiene, así que 4.292 de los 8.005 procesos salen **sin etapa** y eso no es un hueco que
  * rellenar (ADR-017). No hay «licitado» ni «adjudicado» como etapa: el filtro los rechazaría.
@@ -55,6 +70,7 @@ export class ContractsPage {
   readonly error = signal<string | null>(null);
 
   readonly axis = signal<Axis>('year');
+  readonly figure = signal<FigureKey>('awardedAmount');
   readonly page = signal(0);
   readonly sort = signal('publishedAt,desc');
   readonly filters = signal<FilterValues>({
@@ -67,6 +83,7 @@ export class ContractsPage {
   });
 
   protected readonly axes = AXES;
+  protected readonly figures = FIGURES;
   protected readonly euroShort = euroShort;
   protected readonly size = 25;
 
@@ -163,16 +180,23 @@ export class ContractsPage {
     if (!aggregation || aggregation.by === 'year') {
       return [];
     }
+    const figure = this.figure();
+    const other = figure === 'awardedAmount' ? 'tenderedAmount' : 'awardedAmount';
+    const otherLabel = figure === 'awardedAmount' ? 'licitado' : 'adjudicado';
     return [...aggregation.buckets]
       .map((bucket) => ({
         key: keyOf(bucket),
         label: this.stageAware(bucket),
-        value: bucket.awardedAmount || bucket.tenderedAmount,
-        note: `${integer(bucket.processes)} procesos · ${integer(bucket.awards)} adjudicaciones`,
+        value: bucket[figure],
+        note: `${integer(bucket.processes)} procesos · ${euroShort(bucket[other])} ${otherLabel}`,
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 18);
   });
+
+  readonly figureLabel = computed(
+    () => FIGURES.find((option) => option.key === this.figure())?.label ?? '',
+  );
 
   readonly columns: Column<ContractingProcess>[] = [
     {
@@ -229,6 +253,10 @@ export class ContractsPage {
   setAxis(axis: Axis): void {
     this.axis.set(axis);
     this.loadAggregation();
+  }
+
+  setFigure(figure: FigureKey): void {
+    this.figure.set(figure);
   }
 
   setFilter(change: { key: string; value: string }): void {

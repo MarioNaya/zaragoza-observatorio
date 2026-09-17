@@ -195,14 +195,6 @@ svg {
   font-size: 0.82rem;
 }
 
-.ranking li.pickable {
-  cursor: pointer;
-}
-
-.ranking li.pickable:hover {
-  background: var(--surface-2);
-}
-
 .rank {
   font-size: 0.7rem;
   color: var(--text-3);

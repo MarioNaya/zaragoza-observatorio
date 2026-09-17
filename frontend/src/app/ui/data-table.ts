@@ -14,8 +14,12 @@ export interface Column<T> {
 }
 
 /**
- * El explorador de registros. Es la pieza que convierte la API en una herramienta: paginar, ordenar y abrir
- * una ficha, sobre cualquiera de los seis recursos que la API pagina.
+ * El explorador de registros. Es la pieza que convierte la API en una herramienta: paginar y ordenar sobre
+ * cualquiera de los seis recursos que la API pagina.
+ *
+ * No abre la ficha de un registro: la tabla llevaba un `pickable`/`picked` que **ninguna página conectó nunca**
+ * y que la auditoría quitó, porque una capacidad que no se usa no se prueba y engaña al que lee el código. El
+ * detalle de un registro sigue pendiente y, cuando entre, entra con su ruta (ADR-022 §7).
  *
  * **Ordena y pagina el backend, siempre** (regla 8, `SPEC.md` §4.9): pulsar una cabecera emite el `sort` y
  * quien lo recibe vuelve a pedir. Nunca se reordena el array que ya está en memoria, porque entonces la
@@ -51,7 +55,7 @@ export interface Column<T> {
         </thead>
         <tbody>
           @for (row of rows(); track $index) {
-            <tr [class.pickable]="pickable()" (click)="pickable() && picked.emit(row)">
+            <tr>
               @for (column of columns(); track column.key) {
                 <td [class.numeric]="column.numeric" [class.wide]="column.wide">
                   <span class="cell" [class.num]="column.numeric">{{ column.get(row) }}</span>
@@ -102,11 +106,9 @@ export class DataTable<T> {
   readonly sort = input<string>('');
   readonly unit = input('registros');
   readonly caption = input('Registros');
-  readonly pickable = input(false);
 
   readonly sortChanged = output<string>();
   readonly pageChanged = output<number>();
-  readonly picked = output<T>();
 
   readonly field = computed(() => this.sort().split(',')[0]);
   private readonly descending = computed(() => this.sort().split(',')[1] === 'desc');

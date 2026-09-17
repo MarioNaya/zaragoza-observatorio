@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 export interface RankRow {
   key: string;
@@ -23,7 +23,7 @@ export interface RankRow {
   template: `
     <ol class="ranking">
       @for (row of rows(); track row.key) {
-        <li [class.pickable]="pickable()" (click)="pickable() && picked.emit(row.key)">
+        <li>
           <span class="rank num">{{ $index + 1 }}</span>
           <span class="name" [title]="row.label">{{ row.label }}</span>
           <span class="track"><span class="fill" [style.width.%]="row.share"></span></span>
@@ -42,9 +42,6 @@ export interface RankRow {
 export class Ranking {
   readonly data = input.required<RankRow[]>();
   readonly format = input.required<(value: number) => string>();
-  readonly pickable = input(false);
-
-  readonly picked = output<string>();
 
   readonly rows = computed(() => {
     const data = this.data();

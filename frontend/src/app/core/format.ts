@@ -138,6 +138,11 @@ export function toDay(instant: string | null | undefined): string {
   return instant ? instant.slice(0, 10) : '';
 }
 
+/** El año de una fecha del origen, o cadena vacía si no hay fecha. Las fechas del censo pueden faltar. */
+export function year(day: string | null | undefined): string {
+  return day ? day.slice(0, 4) : '';
+}
+
 /**
  * Compara dos claves de grupo tolerando el nulo.
  *

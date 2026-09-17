@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { Observatory } from '../core/api';
-import { euroShort, integer, percent } from '../core/format';
+import { euroShort, integer, percent, year } from '../core/format';
 
 interface Card {
   route: string;
@@ -40,7 +40,10 @@ export class HomePage {
       next: (r) =>
         this.budget.set({
           obligations: euroShort(r.item.latestAmounts.obligations),
-          span: `${r.item.firstSnapshot.slice(0, 4)}–${r.item.lastSnapshot.slice(0, 4)}`,
+          // Las dos fechas son del censo y pueden no estar: con la base recién creada no hay serie que nombrar.
+          span: year(r.item.firstSnapshot) && year(r.item.lastSnapshot)
+            ? `${year(r.item.firstSnapshot)}–${year(r.item.lastSnapshot)}`
+            : '—',
         }),
       error: () => undefined,
     });

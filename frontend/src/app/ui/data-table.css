@@ -103,10 +103,6 @@ thead button.on {
   white-space: normal;
 }
 
-tbody tr.pickable {
-  cursor: pointer;
-}
-
 tbody tr:hover {
   background: var(--surface-2);
 }

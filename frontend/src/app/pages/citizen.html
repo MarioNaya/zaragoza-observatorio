@@ -72,7 +72,7 @@
             <th scope="row" class="num">{{ year.year }}</th>
             <td class="numeric num">{{ integer(year.total) }}</td>
             <td class="numeric num">{{ integer(year.withPoint) }}</td>
-            <td class="numeric num">{{ year.pointCoverage !== null ? (year.pointCoverage * 100).toFixed(1) + ' %' : '—' }}</td>
+            <td class="numeric num">{{ percent(year.pointCoverage) }}</td>
           </tr>
         }
       </tbody>

@@ -1,6 +1,12 @@
 /**
  * Los cuerpos que devuelve la API, escritos contra las respuestas reales de la instancia y no de memoria
  * (regla 1). El contrato vive en `/v3/api-docs`; esto es su lectura en TypeScript.
+ *
+ * **Un tipo de aquí puede declarar menos campos que la respuesta, nunca otros ni con otra nulabilidad.** Lo
+ * primero es elegir qué se usa; lo segundo es una mentira que el compilador no puede ver, y ya costó tres
+ * columnas vacías en el catálogo —`observationMethod` por `latestObservationMethod`— escondidas detrás de un
+ * `[key: string]: unknown`. Por eso ninguna interfaz de este fichero tiene índice abierto y `contract.spec.ts`
+ * las compara contra la forma grabada de la instancia (`npm run contract`).
  */
 
 // --- sobres comunes ---------------------------------------------------------------------------------
@@ -9,6 +15,15 @@ export interface Source {
   dataset: string;
   url: string;
 }
+
+/**
+ * Un mapa que llega en JSON. La clave que se pide **puede no estar**: los recuentos por estado, por método o
+ * por medida traen las claves que tienen datos, no las que el lector imagine.
+ *
+ * Se declara así y no como `Record<string, V>` porque ese tipo promete que cualquier índice es un valor, y esa
+ * promesa es la que dejó un `undefined.toLocaleString()` a un paso de la pantalla (ADR-022 §4).
+ */
+export type ApiMap<V> = Partial<Record<string, V>>;
 
 /** Sobre de un objeto. `territory` es el único sin `source` ni `ingestedAt` en la raíz (ADR-019 §2). */
 export interface ApiItem<T> {
@@ -88,8 +103,8 @@ export interface DistrictRow {
   padronId: number | null;
   population: number | null;
   populationYear: number | null;
-  values: Record<string, number>;
-  perThousandInhabitants: Record<string, number>;
+  values: ApiMap<number>;
+  perThousandInhabitants: ApiMap<number>;
 }
 
 export type Denominator = 'population' | 'none';
@@ -147,7 +162,7 @@ export const MEASURE_LABELS: Record<MeasureId, string> = {
 // --- citizen ----------------------------------------------------------------------------------------
 
 export interface AssignmentBreakdown {
-  byAssignment: Record<string, number>;
+  byAssignment: ApiMap<number>;
   declaredAgrees: number;
   declaredDisagrees: number;
   declaredOnly: number;
@@ -157,10 +172,11 @@ export interface AssignmentBreakdown {
 export interface CitizenSummary {
   total: number;
   internal: number;
-  earliestRequestedAt: string;
-  latestRequestedAt: string;
-  latestUpdatedAt: string;
-  byStatus: Record<string, number>;
+  /** Nulo con la base vacía: el resumen existe antes de que la primera ingesta acabe. */
+  earliestRequestedAt: string | null;
+  latestRequestedAt: string | null;
+  latestUpdatedAt: string | null;
+  byStatus: ApiMap<number>;
   assignment: AssignmentBreakdown;
 }
 
@@ -198,10 +214,23 @@ export interface CitizenBucket {
   perThousandInhabitants: number | null;
 }
 
+/**
+ * Cobertura de punto de un año entero. **Solo llega en los ejes de serie** —`district_year` en `citizen`,
+ * `licence_year` y `district_licence_year` en `urban`—; en los demás la API manda una lista vacía a propósito,
+ * porque no hay dos años que comparar.
+ */
+export interface YearCoverage {
+  year: number;
+  total: number;
+  withPoint: number;
+  assigned: number;
+  pointCoverage: number;
+}
+
 export interface CitizenAggregation {
   by: string;
   buckets: CitizenBucket[];
-  coverageByYear: { year: number; total: number; withPoint: number; pointCoverage: number | null }[];
+  coverageByYear: YearCoverage[];
   assignment: AssignmentBreakdown;
   matched: number;
   unassigned: number;
@@ -213,10 +242,10 @@ export interface CitizenAggregation {
 export interface UrbanSummary {
   premises: number;
   licences: number;
-  earliestCreatedAt: string;
-  latestUpdatedAt: string;
-  byStatusCode: Record<string, number>;
-  assignment: Record<string, number>;
+  earliestCreatedAt: string | null;
+  latestUpdatedAt: string | null;
+  byStatusCode: ApiMap<number>;
+  assignment: ApiMap<number>;
 }
 
 export interface Licence {
@@ -254,10 +283,17 @@ export interface UrbanBucket {
   key: string | null;
   label: string | null;
   year: number | null;
+  /**
+   * Los registros del grupo **en la unidad que declara la respuesta** (`unit`). Es el campo que evita adivinar:
+   * un eje de licencias con cero licencias vale 0 aquí, y `licences || premises` habría enseñado locales.
+   */
+  total: number;
   premises: number;
   licences: number;
-  withPoint: number | null;
-  pointCoverage: number | null;
+  withPoint: number;
+  pointCoverage: number;
+  /** Registros con fecha de baja. **No son cierres**: lo dicen los `caveats` de la respuesta. */
+  deregistered: number;
   population: number | null;
   populationYear: number | null;
   perThousandInhabitants: number | null;
@@ -267,14 +303,17 @@ export interface UrbanAggregation {
   by: string;
   unit: string;
   buckets: UrbanBucket[];
-  coverageByYear?: { year: number; total: number; withPoint: number; pointCoverage: number | null }[];
+  coverageByYear: YearCoverage[];
+  assignment: ApiMap<number>;
+  matched: number;
+  unassigned: number;
 }
 
 // --- spending: contratación -------------------------------------------------------------------------
 
 export interface SpendingSummary {
   processes: number;
-  byReleaseStatus: Record<string, number>;
+  byReleaseStatus: ApiMap<number>;
   notInDocumentedList: number;
   withoutStage: number;
   emptyContracts: number;
@@ -282,8 +321,8 @@ export interface SpendingSummary {
   naturalPersonSuppliers: number;
   tenderedAmount: number;
   awardedAmount: number;
-  earliestPublishedAt: string;
-  latestPublishedAt: string;
+  earliestPublishedAt: string | null;
+  latestPublishedAt: string | null;
 }
 
 export interface Cpv {
@@ -356,12 +395,13 @@ export interface BudgetAmounts {
 
 export interface BudgetSummary {
   snapshots: number;
-  byReadStatus: Record<string, number>;
+  byReadStatus: ApiMap<number>;
   pending: number;
   lines: number;
-  firstSnapshot: string;
-  lastSnapshot: string;
-  latestLoaded: string;
+  /** Nulos mientras el censo esté vacío: son fechas del censo, no constantes del producto. */
+  firstSnapshot: string | null;
+  lastSnapshot: string | null;
+  latestLoaded: string | null;
   latestAmounts: BudgetAmounts;
   redactedHeadings: number;
   linesWithoutProgramme: number;
@@ -412,9 +452,9 @@ export interface GrantsSummary {
   beneficiaries: number;
   naturalPersonBeneficiaries: number;
   naturalPersonGrants: number;
-  byClassification: Record<string, number>;
-  firstYear: number;
-  lastYear: number;
+  byClassification: ApiMap<number>;
+  firstYear: number | null;
+  lastYear: number | null;
   withoutBeneficiary: number;
   redactedTitles: number;
   impossibleDates: number;
@@ -438,7 +478,8 @@ export interface Grant {
   agreedOn: string | null;
   beneficiaryId: string | null;
   beneficiary: string | null;
-  naturalPerson: boolean;
+  /** `null` cuando la concesión no tiene enlace de beneficiario: 2.609 de 2013 y 2014 (ADR-018). */
+  naturalPerson: boolean | null;
   classification: string | null;
 }
 
@@ -461,22 +502,30 @@ export interface GrantAggregation {
 
 export interface CatalogSummary {
   datasets: number;
-  byDeclaredFreshness: Record<string, number>;
-  byPeriodicity: Record<string, number>;
+  byDeclaredFreshness: ApiMap<number>;
+  byPeriodicity: ApiMap<number>;
   withApi: number;
   open: number;
   explorable: number;
   withGeo: number;
-  latestSnapshotOn: string;
+  latestSnapshotOn: string | null;
   withoutSnapshot: number;
-  byObservationMethod: Record<string, number>;
+  byObservationMethod: ApiMap<number>;
   withoutObservation: number;
   notListed: number;
-  apiInventory: Record<string, number | string>;
-  federation: Record<string, number | string>;
-  thresholds: Record<string, number>;
+  apiInventory: ApiMap<number | string>;
+  federation: ApiMap<number | string>;
+  thresholds: ApiMap<number>;
 }
 
+/**
+ * Una ficha del catálogo municipal, con los dos ejes que no se mezclan (ADR-005).
+ *
+ * Los nombres son los de la respuesta y no los que parecen: lo **observado** llega con prefijo `latest`
+ * (`latestObservationMethod`, `latestObservedChange`, `latestFreshness`) mientras el parámetro de ordenación se
+ * llama `observedLastChange`. Escribir el del `sort` en el cuerpo dejó tres columnas vacías en la pantalla
+ * publicada sin que nada fallara (ADR-022 §4).
+ */
 export interface Dataset {
   id: number;
   title: string;
@@ -486,5 +535,25 @@ export interface Dataset {
   declaredPeriodicity: string | null;
   periodicityDays: number | null;
   publicationStatus: string | null;
-  [key: string]: unknown;
+  hasGeo: boolean | null;
+  open: boolean | null;
+  explorable: boolean;
+  hasApi: boolean;
+  apiTag: string | null;
+  federated: boolean;
+  federatedUrl: string | null;
+  /** Categoría del eje **declarado**: `ON_TIME` … `NOT_EVALUABLE`. */
+  latestFreshness: string | null;
+  latestRatio: number | null;
+  latestSnapshotOn: string | null;
+  /** Cuándo preguntamos nosotros al origen. */
+  observedAt: string | null;
+  latestObservationMethod: string | null;
+  /** Lo que el origen dice que cambió, medido por nosotros. No hay categoría observada (ADR-005 §6). */
+  latestObservedChange: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  /** `false` cuando la ficha dejó de aparecer en el listado municipal. No se borra nunca (ADR-013). */
+  listed: boolean;
+  delistedAt: string | null;
 }

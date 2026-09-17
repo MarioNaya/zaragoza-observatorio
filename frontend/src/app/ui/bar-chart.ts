@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 
 /** Un punto de la serie. `series` indexa la paleta categórica cuando hay más de una. */
 export interface Bar {
@@ -50,7 +50,6 @@ export interface Bar {
             class="bar"
             [class.dim]="hover() !== null && hover() !== bar.key"
             (pointerenter)="hover.set(bar.key)"
-            (click)="picked.emit(bar.key)"
           >
             <!-- Zona sensible del ancho completo: el objetivo es mayor que la marca. -->
             <rect class="hit" [attr.x]="bar.slotX" [attr.y]="PAD_T" [attr.width]="bar.slotW" [attr.height]="plotH" />
@@ -95,8 +94,6 @@ export class BarChart {
   readonly format = input.required<(value: number) => string>();
   readonly legend = input<string[]>([]);
   readonly hint = input('Pasa el ratón por una barra para ver la cifra exacta.');
-
-  readonly picked = output<string>();
 
   protected readonly W = 760;
   protected readonly H = 270;

@@ -127,10 +127,6 @@ export class Observatory {
     return this.get<ApiPage<ContractingProcess>>('/spending/processes', query);
   }
 
-  process(ocid: string): Observable<ApiItem<ContractingProcess>> {
-    return this.get<ApiItem<ContractingProcess>>(`/spending/processes/${encodeURIComponent(ocid)}`);
-  }
-
   spendingAggregation(by: string, query: Query = {}): Observable<ApiItem<SpendingAggregation>> {
     return this.get<ApiItem<SpendingAggregation>>('/spending/aggregations', { by, ...query });
   }
@@ -147,10 +143,6 @@ export class Observatory {
 
   budgetAggregation(by: string, query: Query = {}): Observable<ApiItem<BudgetAggregation>> {
     return this.get<ApiItem<BudgetAggregation>>('/spending/budget/aggregations', { by, ...query });
-  }
-
-  budgetSnapshots(): Observable<ApiItem<unknown>> {
-    return this.get<ApiItem<unknown>>('/spending/budget/snapshots');
   }
 
   // --- spending: subvenciones -----------------------------------------------------------------------
@@ -175,13 +167,5 @@ export class Observatory {
 
   datasets(query: Query): Observable<CatalogPage<Dataset>> {
     return this.get<CatalogPage<Dataset>>('/catalog/datasets', query);
-  }
-
-  dataset(id: number): Observable<ApiItem<Dataset>> {
-    return this.get<ApiItem<Dataset>>(`/catalog/datasets/${id}`);
-  }
-
-  freshnessHistory(id: number, limit = 60): Observable<ApiPage<Record<string, unknown>>> {
-    return this.get<ApiPage<Record<string, unknown>>>(`/catalog/datasets/${id}/freshness-history`, { limit });
   }
 }
