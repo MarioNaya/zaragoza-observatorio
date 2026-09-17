@@ -170,8 +170,9 @@ export class ContractsPage {
       .map((bucket) => ({
         key: keyOf(bucket),
         label: keyOf(bucket),
-        value: bucket.tenderedAmount,
-        value2: bucket.awardedAmount,
+        // Un año sin nada que sumar trae nulo, y en una barra el nulo se dibuja a cero.
+        value: bucket.tenderedAmount ?? 0,
+        value2: bucket.awardedAmount ?? 0,
       }));
   });
 
@@ -187,7 +188,7 @@ export class ContractsPage {
       .map((bucket) => ({
         key: keyOf(bucket),
         label: this.stageAware(bucket),
-        value: bucket[figure],
+        value: bucket[figure] ?? 0,
         note: `${integer(bucket.processes)} procesos · ${euroShort(bucket[other])} ${otherLabel}`,
       }))
       .sort((a, b) => b.value - a.value)

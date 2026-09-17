@@ -1,0 +1,896 @@
+{
+  "recordedAgainst": "https://observatorio-production-ed20.up.railway.app",
+  "recordedOn": "2026-09-17",
+  "endpoints": {
+    "citizen/summary": {
+      "path": "/citizen/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "total": "number",
+          "internal": "number",
+          "earliestRequestedAt": "string",
+          "latestRequestedAt": "string",
+          "latestUpdatedAt": "string",
+          "byStatus": {
+            "OPEN": "number",
+            "CLOSED": "number",
+            "REJECTED": "number",
+            "UNKNOWN": "number"
+          },
+          "assignment": {
+            "byAssignment": {
+              "AMBIGUOUS": "number",
+              "OUTSIDE": "number",
+              "RESOLVED": "number",
+              "NO_POINT": "number"
+            },
+            "declaredAgrees": "number",
+            "declaredDisagrees": "number",
+            "declaredOnly": "number",
+            "declaredUnmatched": "number"
+          }
+        }
+      }
+    },
+    "citizen/requests": {
+      "path": "/citizen/requests?size=3&sort=requestedAt,desc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "total": "number",
+        "page": "number",
+        "size": "number",
+        "items": {
+          "[]": {
+            "id": "number",
+            "status": "string",
+            "serviceCode": "string",
+            "serviceName": "string",
+            "requestedAt": "string",
+            "closedAt": "null",
+            "responseHours": "null",
+            "lon": "null",
+            "lat": "null",
+            "assignment": "string",
+            "districtId": "null",
+            "districtName": "null",
+            "districtDeclared": "null",
+            "districtDeclaredId": "null",
+            "firstSeenAt": "string",
+            "lastSeenAt": "string"
+          }
+        }
+      }
+    },
+    "citizen/aggregations": {
+      "path": "/citizen/aggregations?by=district_year",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "by": "string",
+          "buckets": {
+            "[]": {
+              "key": "string",
+              "label": "string",
+              "year": "number",
+              "total": "number",
+              "closed": "number",
+              "open": "number",
+              "withPoint": "number",
+              "pointCoverage": "number",
+              "internal": "number",
+              "medianResponseHours": "null|number",
+              "population": "null|number",
+              "populationYear": "null|number",
+              "perThousandInhabitants": "null|number"
+            }
+          },
+          "coverageByYear": {
+            "[]": {
+              "year": "number",
+              "total": "number",
+              "withPoint": "number",
+              "assigned": "number",
+              "pointCoverage": "number"
+            }
+          },
+          "assignment": {
+            "byAssignment": {
+              "AMBIGUOUS": "number",
+              "OUTSIDE": "number",
+              "RESOLVED": "number",
+              "NO_POINT": "number"
+            },
+            "declaredAgrees": "number",
+            "declaredDisagrees": "number",
+            "declaredOnly": "number",
+            "declaredUnmatched": "number"
+          },
+          "matched": "number",
+          "unassigned": "number",
+          "internal": "number"
+        }
+      }
+    },
+    "urban/summary": {
+      "path": "/urban/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "premises": "number",
+          "licences": "number",
+          "earliestCreatedAt": "string",
+          "latestUpdatedAt": "string",
+          "byStatusCode": {
+            "0": "number",
+            "1": "number",
+            "2": "number",
+            "3": "number"
+          },
+          "assignment": {
+            "RESOLVED": "number",
+            "AMBIGUOUS": "number",
+            "OUTSIDE": "number",
+            "NO_POINT": "number"
+          }
+        }
+      }
+    },
+    "urban/premises": {
+      "path": "/urban/premises?size=3&sort=createdAt,desc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "total": "number",
+        "page": "number",
+        "size": "number",
+        "items": {
+          "[]": {
+            "id": "number",
+            "iaeCode": "string",
+            "iaeTitle": "string",
+            "iaeSection": "number",
+            "iaeGroup": "number",
+            "statusCode": "number",
+            "portalCode": "null|string",
+            "saturatedZone": "null",
+            "createdAt": "string",
+            "updatedAt": "string",
+            "deregisteredAt": "null",
+            "lon": "null|number",
+            "lat": "null|number",
+            "assignment": "string",
+            "districtId": "null|number",
+            "districtName": "null|string",
+            "licences": {
+              "[]": {
+                "year": "number",
+                "fileNumber": "number",
+                "order": "null",
+                "typeId": "number",
+                "typeName": "string",
+                "resolvedOn": "string",
+                "resolutionCode": "number",
+                "deregisteredAt": "null"
+              }
+            },
+            "firstSeenAt": "string",
+            "lastSeenAt": "string"
+          }
+        }
+      }
+    },
+    "urban/aggregations": {
+      "path": "/urban/aggregations?by=licence_year",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "by": "string",
+          "unit": "string",
+          "buckets": {
+            "[]": {
+              "key": "string",
+              "label": "null",
+              "year": "number",
+              "total": "number",
+              "premises": "number",
+              "licences": "number",
+              "withPoint": "number",
+              "pointCoverage": "number",
+              "deregistered": "number",
+              "population": "null",
+              "populationYear": "null",
+              "perThousandInhabitants": "null"
+            }
+          },
+          "coverageByYear": {
+            "[]": {
+              "year": "number",
+              "total": "number",
+              "withPoint": "number",
+              "assigned": "number",
+              "pointCoverage": "number"
+            }
+          },
+          "assignment": {
+            "RESOLVED": "number",
+            "AMBIGUOUS": "number",
+            "OUTSIDE": "number",
+            "NO_POINT": "number"
+          },
+          "matched": "number",
+          "unassigned": "number"
+        }
+      }
+    },
+    "spending/summary": {
+      "path": "/spending/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "processes": "number",
+          "byReleaseStatus": {
+            "PENDING": "number",
+            "PUBLISHED": "number",
+            "EMPTY": "number",
+            "ABSENT": "number"
+          },
+          "notInDocumentedList": "number",
+          "withoutStage": "number",
+          "emptyContracts": "number",
+          "awards": "number",
+          "naturalPersonSuppliers": "number",
+          "tenderedAmount": "number",
+          "awardedAmount": "number",
+          "earliestPublishedAt": "string",
+          "latestPublishedAt": "string"
+        }
+      }
+    },
+    "spending/processes": {
+      "path": "/spending/processes?size=3&sort=publishedAt,desc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "total": "number",
+        "page": "number",
+        "size": "number",
+        "items": {
+          "[]": {
+            "ocid": "string",
+            "fileNumber": "number",
+            "inDocumentedList": "boolean",
+            "releaseStatus": "string",
+            "publishedAt": "string",
+            "tags": "string",
+            "title": "string",
+            "description": "string",
+            "tenderStatus": "string",
+            "procurementMethod": "string",
+            "category": "string",
+            "awardCriteria": "string",
+            "numberOfTenderers": "number",
+            "tenderAmount": "number",
+            "tenderMinAmount": "number",
+            "currency": "string",
+            "procuringEntity": "string",
+            "stage": "string",
+            "awardedAmount": "null",
+            "cpv": {
+              "[]": {
+                "code": "string",
+                "description": "string",
+                "main": "boolean"
+              }
+            },
+            "awards": {
+              "[]": "unknown"
+            },
+            "contracts": {
+              "[]": "unknown"
+            },
+            "firstSeenAt": "string",
+            "lastSeenAt": "string"
+          }
+        }
+      }
+    },
+    "spending/aggregations": {
+      "path": "/spending/aggregations?by=year",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "by": "string",
+          "unit": "string",
+          "overlapping": "boolean",
+          "buckets": {
+            "[]": {
+              "key": "null|string",
+              "label": "null",
+              "year": "null|number",
+              "total": "number",
+              "processes": "number",
+              "awards": "number",
+              "withRelease": "number",
+              "withoutStage": "number",
+              "tenderedAmount": "number",
+              "awardedAmount": "null|number"
+            }
+          },
+          "matched": "number",
+          "total": "number",
+          "withoutRelease": "number"
+        }
+      }
+    },
+    "budget/summary": {
+      "path": "/spending/budget/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "snapshots": "number",
+          "byReadStatus": {
+            "PENDING": "number",
+            "LOADED": "number",
+            "EMPTY": "number",
+            "ABSENT": "number"
+          },
+          "pending": "number",
+          "lines": "number",
+          "firstSnapshot": "string",
+          "lastSnapshot": "string",
+          "latestLoaded": "string",
+          "latestAmounts": {
+            "creditInitial": "number",
+            "creditModification": "number",
+            "creditFinal": "number",
+            "committed": "number",
+            "obligations": "number",
+            "payments": "number",
+            "paymentsPending": "number",
+            "creditRemaining": "number"
+          },
+          "redactedHeadings": "number",
+          "linesWithoutProgramme": "number"
+        }
+      }
+    },
+    "budget/lines": {
+      "path": "/spending/budget/lines?size=3&sort=obligations,desc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "snapshotDate": "string",
+        "total": "number",
+        "page": "number",
+        "size": "number",
+        "items": {
+          "[]": {
+            "snapshotDate": "string",
+            "concept": "string",
+            "areaId": "string",
+            "area": "string",
+            "chapterId": "number",
+            "chapter": "string",
+            "programmeId": "string",
+            "programme": "string",
+            "organId": "string",
+            "organ": "string",
+            "itemId": "string",
+            "item": "string",
+            "heading": "string",
+            "headingRedacted": "boolean",
+            "amounts": {
+              "creditInitial": "number",
+              "creditModification": "number",
+              "creditFinal": "number",
+              "committed": "number",
+              "obligations": "number",
+              "payments": "number",
+              "paymentsPending": "number",
+              "creditRemaining": "number"
+            }
+          }
+        }
+      }
+    },
+    "budget/aggregations": {
+      "path": "/spending/budget/aggregations?by=year",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "by": "string",
+          "unit": "string",
+          "basis": "string",
+          "snapshotDate": "null",
+          "items": {
+            "[]": {
+              "key": "string",
+              "label": "null",
+              "snapshotDate": "string",
+              "lines": "number",
+              "amounts": {
+                "creditInitial": "number",
+                "creditModification": "number",
+                "creditFinal": "number",
+                "committed": "number",
+                "obligations": "number",
+                "payments": "number",
+                "paymentsPending": "number",
+                "creditRemaining": "number"
+              }
+            }
+          },
+          "lines": "number"
+        }
+      }
+    },
+    "grants/summary": {
+      "path": "/spending/grants/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "grants": "number",
+          "granted": "number",
+          "calls": "number",
+          "callBudget": "number",
+          "beneficiaries": "number",
+          "naturalPersonBeneficiaries": "number",
+          "naturalPersonGrants": "number",
+          "byClassification": {
+            "(sin beneficiario)": "number",
+            "entidad-cultural-o-filantropica": "number",
+            "otros": "number",
+            "entidad-deportiva": "number",
+            "entidad-religiosa": "number",
+            "personas-fisicas": "number"
+          },
+          "firstYear": "number",
+          "lastYear": "number",
+          "withoutBeneficiary": "number",
+          "redactedTitles": "number",
+          "impossibleDates": "number"
+        }
+      }
+    },
+    "grants/list": {
+      "path": "/spending/grants?size=3&sort=granted,desc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "unit": "string",
+        "total": "number",
+        "page": "number",
+        "size": "number",
+        "items": {
+          "[]": {
+            "id": "number",
+            "callId": "number",
+            "call": "string",
+            "line": "string",
+            "type": "string",
+            "title": "string",
+            "titleRedacted": "boolean",
+            "fileNumber": "null|string",
+            "requested": "number",
+            "granted": "number",
+            "annual": "number",
+            "annuities": "number",
+            "requestedOn": "string",
+            "grantedOn": "string",
+            "agreedOn": "string",
+            "beneficiaryId": "string",
+            "beneficiary": "null|string",
+            "naturalPerson": "boolean",
+            "classification": "string"
+          }
+        }
+      }
+    },
+    "grants/aggregations": {
+      "path": "/spending/grants/aggregations?by=year",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "by": "string",
+          "unit": "string",
+          "buckets": {
+            "[]": {
+              "key": "string",
+              "label": "null",
+              "grants": "number",
+              "granted": "number",
+              "naturalPersonGrants": "number",
+              "beneficiaries": "number"
+            }
+          }
+        }
+      }
+    },
+    "catalog/summary": {
+      "path": "/catalog/summary",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "datasets": "number",
+        "byDeclaredFreshness": {
+          "ON_TIME": "number",
+          "SLIGHT_DELAY": "number",
+          "DELAYED": "number",
+          "NOT_UPDATED": "number",
+          "NOT_EVALUABLE": "number"
+        },
+        "byPeriodicity": {
+          "P1Y": "number",
+          "UNDECLARED": "number",
+          "NEVER": "number",
+          "P0DT1S": "number",
+          "P1M": "number",
+          "IRREG": "number",
+          "P2Y": "number",
+          "P1D": "number",
+          "P3M": "number",
+          "P4Y": "number",
+          "P1W": "number",
+          "P6M": "number",
+          "P5Y": "number"
+        },
+        "withApi": "number",
+        "open": "number",
+        "explorable": "number",
+        "withGeo": "number",
+        "latestSnapshotOn": "string",
+        "withoutSnapshot": "number",
+        "byObservationMethod": {
+          "FILE_HEADERS": "number",
+          "API_MAX_DATE": "number",
+          "API_COUNT": "number",
+          "WFS_HITS": "number",
+          "NOT_OBSERVABLE": "number"
+        },
+        "withoutObservation": "number",
+        "notListed": "number",
+        "apiInventory": {
+          "ingestedAt": "string",
+          "endpoints": "number",
+          "tags": "number",
+          "datasetsWithTag": "number",
+          "datasetsWithDocumentedTag": "number",
+          "tagsWithoutDataset": "number"
+        },
+        "federation": {
+          "ingestedAt": "string",
+          "federated": "number",
+          "inCatalog": "number",
+          "notInCatalog": "number",
+          "catalogNotFederated": "number"
+        },
+        "thresholds": {
+          "onTimeMax": "number",
+          "slightDelayMax": "number",
+          "delayedMax": "number"
+        }
+      }
+    },
+    "catalog/datasets": {
+      "path": "/catalog/datasets?size=3&sort=title,asc",
+      "shape": {
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "page": {
+          "number": "number",
+          "size": "number",
+          "totalElements": "number",
+          "totalPages": "number",
+          "sort": "string"
+        },
+        "items": {
+          "[]": {
+            "id": "number",
+            "title": "string",
+            "issued": "string",
+            "declaredModified": "string",
+            "metadataUpdated": "string",
+            "declaredPeriodicity": "string",
+            "periodicityDays": "null|number",
+            "publicationStatus": "string",
+            "hasGeo": "boolean",
+            "open": "boolean",
+            "explorable": "boolean",
+            "hasApi": "boolean",
+            "apiTag": "null|string",
+            "federated": "boolean",
+            "federatedUrl": "null|string",
+            "latestFreshness": "string",
+            "latestRatio": "null|number",
+            "latestSnapshotOn": "string",
+            "observedAt": "string",
+            "latestObservationMethod": "string",
+            "latestObservedChange": "null|string",
+            "firstSeenAt": "string",
+            "lastSeenAt": "string",
+            "listed": "boolean",
+            "delistedAt": "null"
+          }
+        }
+      }
+    },
+    "territory/districts": {
+      "path": "/territory/districts?measures=citizen.requests,urban.premises,urban.licences&denominator=population",
+      "shape": {
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "axis": "string",
+          "window": {
+            "from": "null",
+            "to": "null"
+          },
+          "denominator": "string",
+          "populationYear": "null",
+          "sort": "string",
+          "measures": {
+            "[]": {
+              "id": "string",
+              "module": "string",
+              "unit": "string",
+              "dateField": "string",
+              "dateFieldMeaning": "string",
+              "ingestedAt": "string",
+              "coverage": {
+                "total": "number",
+                "withPoint": "number",
+                "assigned": "number",
+                "unassigned": "number",
+                "pointCoverage": "number"
+              }
+            }
+          },
+          "districts": "number",
+          "items": {
+            "[]": {
+              "districtId": "number",
+              "name": "string",
+              "shortName": "string",
+              "padronId": "number",
+              "population": "number",
+              "populationYear": "number",
+              "values": {
+                "citizen.requests": "number",
+                "urban.premises": "number",
+                "urban.licences": "number"
+              },
+              "perThousandInhabitants": {
+                "citizen.requests": "number",
+                "urban.premises": "number",
+                "urban.licences": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "territory/district": {
+      "path": "/territory/districts/6?measures=citizen.requests,urban.premises,urban.licences&denominator=population",
+      "shape": {
+        "caveats": {
+          "[]": "string"
+        },
+        "item": {
+          "window": {
+            "from": "null",
+            "to": "null"
+          },
+          "denominator": "string",
+          "populationYear": "null",
+          "measures": {
+            "[]": {
+              "id": "string",
+              "module": "string",
+              "unit": "string",
+              "dateField": "string",
+              "dateFieldMeaning": "string",
+              "ingestedAt": "string",
+              "coverage": {
+                "total": "number",
+                "withPoint": "number",
+                "assigned": "number",
+                "unassigned": "number",
+                "pointCoverage": "number"
+              }
+            }
+          },
+          "item": {
+            "districtId": "number",
+            "name": "string",
+            "shortName": "string",
+            "padronId": "number",
+            "population": "number",
+            "populationYear": "number",
+            "values": {
+              "citizen.requests": "number",
+              "urban.premises": "number",
+              "urban.licences": "number"
+            },
+            "perThousandInhabitants": {
+              "citizen.requests": "number",
+              "urban.premises": "number",
+              "urban.licences": "number"
+            }
+          },
+          "populationSeries": {
+            "[]": {
+              "year": "number",
+              "population": "number"
+            }
+          }
+        }
+      }
+    },
+    "geo/boundaries": {
+      "path": "/geo/boundaries",
+      "shape": {
+        "type": "string",
+        "source": {
+          "dataset": "string",
+          "url": "string"
+        },
+        "ingestedAt": "string",
+        "caveats": {
+          "[]": "string"
+        },
+        "count": "number",
+        "features": {
+          "[]": {
+            "type": "string",
+            "id": "number",
+            "geometry": {
+              "type": "string",
+              "coordinates": {
+                "[]": {
+                  "[]": {
+                    "[]": "number"
+                  }
+                }
+              }
+            },
+            "properties": {
+              "id": "number",
+              "padronId": "number",
+              "name": "string",
+              "shortName": "string",
+              "kind": "string",
+              "firstSeenAt": "string",
+              "lastSeenAt": "string",
+              "latestPopulation": {
+                "year": "number",
+                "total": "number",
+                "spaniards": "number",
+                "foreigners": "number",
+                "under16": "number",
+                "under18": "number",
+                "households": "number",
+                "areaKm2": "number",
+                "densityPerKm2": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

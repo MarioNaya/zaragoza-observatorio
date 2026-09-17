@@ -365,8 +365,12 @@ export interface SpendingBucket {
   awards: number;
   withRelease: number;
   withoutStage: number;
-  tenderedAmount: number;
-  awardedAmount: number;
+  /**
+   * Los dos importes del grupo, **nulos cuando no hay ninguno que sumar**: un año sin adjudicaciones activas
+   * trae `awardedAmount: null`, y lo destapó `contract.spec.ts` en su primera ejecución.
+   */
+  tenderedAmount: number | null;
+  awardedAmount: number | null;
 }
 
 export interface SpendingAggregation {
