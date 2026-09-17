@@ -178,7 +178,9 @@ Dos lecturas:
    verdadero—, pero se descargan 20.910 beneficiarios para enseñar 18.
 
    **Esto no se arregla en el frontend**: pide `sort` y `limit` en los recursos de agregación, que es superficie
-   de API y por tanto decisión con ADR (regla 14). Queda planteado, no hecho.
+   de API y por tanto decisión con ADR (regla 14). **Decidido el mismo día: se deja como está y se documenta**
+   (ADR-022 §8, con las tres condiciones que lo reabrirían). La lectura es correcta y el coste lo paga la
+   descarga, no la exactitud.
 
 Lo que sí se corrigió aquí: los 373 KB de contornos ya se piden **una vez por sesión** (`shareReplay`), y se
 mantiene sin simplificar la geometría, que ADR-020 §4 descarta a propósito.
@@ -237,8 +239,9 @@ Y una trampa del entorno, para quien vuelva a tocar esto: **`/api/v1/geo/boundar
 
 **Lo que queda abierto y por qué**:
 
-1. **El peso de las agregaciones de ranking** (§6): necesita `sort` y `limit` en la API, que es superficie y
-   pide decisión. Es lo único de la auditoría que no se puede cerrar solo en el frontend.
+1. ~~El peso de las agregaciones de ranking~~ (§6) → **decidido el 2026-09-17: se deja**, medido y escrito.
+   Era lo único de la auditoría que no se podía cerrar solo en el frontend, y la decisión —que es de superficie
+   de API— fue no abrirla ahora. Las condiciones que la reabrirían están en ADR-022 §8.
 2. **Rutas profundas compartibles y exportación a CSV**: ya estaban en la lista de pendientes del frontend y la
    auditoría no las toca. La segunda además no es solo frontend (¿genera el CSV el backend, con su `source` y
    sus `caveats` dentro?).

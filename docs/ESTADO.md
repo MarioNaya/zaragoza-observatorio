@@ -202,8 +202,8 @@ La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **
 >
 > ---
 >
-> **La decisión que la auditoría deja sobre la mesa y no puede tomar sola** (afecta a superficie de API, regla
-> 14): los ejes de ranking bajan el catálogo entero de grupos para pintar 18 filas.
+> **Una decisión ya tomada, para que no se vuelva a abrir por costumbre** (2026-09-17): los ejes de ranking
+> bajan el catálogo entero de grupos para pintar 18 filas, **y se queda así**.
 >
 > | Eje | Tamaño | Grupos |
 > | --- | --- | --- |
@@ -214,11 +214,16 @@ La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **
 > | `citizen/aggregations?by=category` | 65 KB | ~150 |
 >
 > El resultado es correcto —están todos los grupos, así que el «top 18» es el verdadero—, pero el frontend
-> ordena y recorta **en el navegador**, lo que roza la regla 8, y quien abra subvenciones en el móvil se baja
-> 2 MB. La salida natural es **`sort` y `limit` en los recursos de agregación**, con su ADR: hay que decidir
-> qué pasa con el resto de los grupos (¿un `others` agregado, que sería una cifra nueva y por tanto regla 6? ¿o
-> simplemente el hecho de que la respuesta está recortada, declarado en la propia respuesta?) y si el `limit`
-> tiene tope. **No se toca sin esa decisión.**
+> ordena y recorta **en el navegador** y quien abra subvenciones en el móvil se baja 2 MB. La salida sería
+> `sort` y `limit` en los recursos de agregación, que es **superficie de API** (regla 14), y la decisión del
+> 2026-09-17 fue **no abrirla ahora**: el peso está medido y escrito, y lo que paga el coste es la descarga, no
+> la exactitud de la lectura.
+>
+> **Qué lo reabriría** (ADR-022 §8), para no tener que volver a medirlo: que el frontal se publique y alguien
+> use en serio los ejes de subvenciones desde una conexión móvil; que un eje pase de ~20.000 grupos; o que una
+> segunda pantalla necesite el mismo top, momento en el que recortar en el navegador dejaría de ser una rareza
+> de una pantalla y sería un patrón. Lo que **no** cambia: ordenar una página suelta y llamarlo ordenar sigue
+> prohibido (regla 8); aquí están todos los grupos.
 >
 > ---
 >
@@ -311,7 +316,7 @@ La **fase 2** tiene hechos sus tres pasos y su orden fue el correcto: primero sa
 1. **No está publicado.** El build sale de `frontend/` (`npm ci && npm run build`, salida en `dist/observatorio/browser`) y hay que subirlo al alojamiento a mano. Sigue siendo lo único de la fase 4 que la sesión no puede hacer por sí misma (§6). **Ojo con el `.htaccess`**, que empieza por punto y muchos clientes de FTP lo ocultan: sin él las rutas profundas dan 404 —cualquier recarga fuera de la portada— y no se aplica la `Content-Security-Policy`.
 2. ~~Nadie lo ha visto en un navegador~~ → **resuelto el 2026-09-13** y **convertido en herramienta del proyecto el 2026-09-17**: `npm run sweep` compila, sirve el build con la misma caída a `index.html` que el alojamiento y recorre 8 rutas × 4 anchos × 2 modos capturando pantalla en `.sweep/` y comprobando desborde horizontal, consola, peticiones a terceros, recorrido del tabulador y axe-core. Ya no depende del MCP del editor, que en esta máquina no conecta.
 3. ~~La auditoría de arquitectura y calidad está pendiente~~ → **hecha el 2026-09-17** (ADR-022, `docs/auditoria-frontend.md`). Las siete preguntas contestadas, cuatro guardianes corriendo y once defectos corregidos, tres de ellos visibles en la pantalla publicada.
-4. **El peso de las agregaciones de ranking es lo único que la auditoría no pudo cerrar**: 2,1 MB por beneficiario para pintar 18 filas. Pide `sort` y `limit` en la API, que es superficie y por tanto decisión con ADR (§4, recuadro).
+4. ~~El peso de las agregaciones de ranking~~ → **decidido el 2026-09-17: se deja**. Son 2,1 MB por beneficiario para pintar 18 filas; arreglarlo pedía `sort` y `limit` en la API (superficie, regla 14) y la decisión fue no abrirlo ahora. Medido y escrito, con las tres condiciones que lo reabrirían en ADR-022 §8 y en §4 de este documento.
 5. **No hay rutas profundas compartibles dentro de una sección.** La junta seleccionada, el eje elegido, los filtros y la página no viajan en la URL, así que no se puede enlazar a «subvenciones de 2025 ordenadas por importe». Es lo que más se va a echar de menos al usarlo en serio.
 6. **Los exploradores no exportan.** La API pagina y filtra, pero la pantalla no ofrece descargar el resultado en CSV. Para una herramienta de análisis es una carencia real, y **no es solo frontend**: habría que decidir si el CSV lo genera el backend (con su `source` y sus `caveats` dentro) o el navegador con lo que tiene a la vista, que sería solo la página actual.
 7. **No hay detalle de un registro.** La capacidad estaba insinuada en el código (`pickable`/`picked` en la tabla, el ranking y el gráfico) sin que ninguna página la conectara, y la auditoría la quitó: lo que no se usa no se prueba. Cuando entre, entra con su ruta.

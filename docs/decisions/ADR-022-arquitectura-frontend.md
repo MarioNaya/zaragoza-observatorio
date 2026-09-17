@@ -143,9 +143,21 @@ Lo que sí es un problema está en los ejes de ranking: `spending/grants/aggrega
 frontend ordena y recorta en el navegador, lo que además roza la regla 8. El resultado es correcto —están todos
 los grupos, así que el top es el verdadero—, pero se bajan 20.910 beneficiarios para enseñar 18.
 
-**Esa corrección no es de esta ADR**: exige `sort` y `limit` en los recursos de agregación, que es superficie de
-API y pide su propia decisión (regla 14). Queda planteada en el informe y en `docs/ESTADO.md`, con la medida al
-lado para que se decida con datos y no con impresión.
+**Decidido el 2026-09-17: se deja como está.** La corrección exigiría `sort` y `limit` en los recursos de
+agregación, que es superficie de API (regla 14), y el usuario ha elegido no abrirla ahora. Se documenta, que es
+la otra mitad de la decisión: el peso está medido y escrito, la lectura sigue siendo correcta y el coste lo
+paga la descarga, no la exactitud.
+
+Lo que reabriría esto, para que quien lo lea no tenga que volver a medirlo:
+
+- que el frontal se publique y alguien use en serio los ejes de subvenciones **desde una conexión móvil**;
+- que un eje pase de ~20.000 grupos, porque el peso crece con el catálogo de grupos y no con el tráfico;
+- o que aparezca una segunda pantalla que necesite el mismo top, momento en el que recortar en el navegador
+  dejaría de ser una rareza de una pantalla y sería un patrón.
+
+Mientras no pase nada de eso, la regla que sí se mantiene es la de siempre: **el frontend no recorta lo que
+afecta a la lectura**. Aquí no la afecta —están todos los grupos, así que el top es el verdadero—; ordenar una
+página suelta y llamarlo ordenar sigue prohibido (regla 8).
 
 ## 9. Consecuencias
 
