@@ -70,20 +70,6 @@ export function euroShort(value: number | null | undefined): string {
   return EURO.format(value);
 }
 
-export function countShort(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-  const abs = Math.abs(value);
-  if (abs >= 1e6) {
-    return `${DECIMAL.format(value / 1e6)} M`;
-  }
-  if (abs >= 1e4) {
-    return `${INTEGER.format(Math.round(value / 1e3))} k`;
-  }
-  return INTEGER.format(value);
-}
-
 export function percent(fraction: number | null | undefined, digits = 1): string {
   if (fraction === null || fraction === undefined) {
     return '—';

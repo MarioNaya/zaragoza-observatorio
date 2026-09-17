@@ -1,8 +1,19 @@
 # Estado del proyecto y arranque de sesión
 
-Última actualización: 2026-09-13, **decimoséptima sesión** (**el frontend, dos veces**: primero completo —siete secciones con explorador de registros, series y rankings, ADR-020 ampliada— y después **rediseñado de arriba abajo** como aplicación de datos, con ADR-021, tras dos rechazos del usuario y con Playwright instalado para dejar de diseñar a ciegas). La decimosexta, el 2026-09-12, cerró la fase 4 con la primera pantalla y ADR-020. La decimoquinta, ese mismo día, empezó la fase 4 con el módulo `territory` y ADR-019, la superficie de cruce, decidida antes de la primera pantalla como exigía SPEC.md §3. La decimocuarta, el 2026-09-11, cerró la ingesta de la fase 3 con las subvenciones (S3.3, ADR-018). La decimotercera, el 2026-09-10, trajo el gasto ejecutado con el presupuesto (S3.2). La duodécima, ese mismo día, arrancó la fase 3 con la contratación pública OCDS (S3.1, ADR-017); la undécima dio al eje territorial su segunda fuente (S2.4, ADR-016, contexto `urban`) y la décima cerró la fase 2 descartando Open311 (ADR-014) y resolvió con ADR-015 las dos decisiones que le quedaban a `citizen`. La fase 1 está cerrada, la instancia está en marcha en <https://observatorio-production-ed20.up.railway.app> y su volumen está respaldado (ADR-010); lo que le queda es tiempo (§4).
+Última actualización: 2026-09-17, **decimoctava sesión** (**la auditoría del frontend**: arquitectura como test, tipos que no pueden mentir, tres estados de carga, accesibilidad medida con herramientas y el barrido visual convertido en `npm run sweep`; informe en `docs/auditoria-frontend.md` y decisiones en ADR-022). La decimoséptima, el 2026-09-13 (**el frontend, dos veces**: primero completo —siete secciones con explorador de registros, series y rankings, ADR-020 ampliada— y después **rediseñado de arriba abajo** como aplicación de datos, con ADR-021, tras dos rechazos del usuario y con Playwright instalado para dejar de diseñar a ciegas). La decimosexta, el 2026-09-12, cerró la fase 4 con la primera pantalla y ADR-020. La decimoquinta, ese mismo día, empezó la fase 4 con el módulo `territory` y ADR-019, la superficie de cruce, decidida antes de la primera pantalla como exigía SPEC.md §3. La decimocuarta, el 2026-09-11, cerró la ingesta de la fase 3 con las subvenciones (S3.3, ADR-018). La decimotercera, el 2026-09-10, trajo el gasto ejecutado con el presupuesto (S3.2). La duodécima, ese mismo día, arrancó la fase 3 con la contratación pública OCDS (S3.1, ADR-017); la undécima dio al eje territorial su segunda fuente (S2.4, ADR-016, contexto `urban`) y la décima cerró la fase 2 descartando Open311 (ADR-014) y resolvió con ADR-015 las dos decisiones que le quedaban a `citizen`. La fase 1 está cerrada, la instancia está en marcha en <https://observatorio-production-ed20.up.railway.app> y su volumen está respaldado (ADR-010); lo que le queda es tiempo (§4).
 
-**Lo que hace esta sesión**: el frontend pasa de **una tabla** a un observatorio, y después de **documento** a aplicación. Dos entregas y dos rechazos por el medio, y de ahí salen las lecciones que más importan:
+**Lo que hace esta sesión**: la auditoría que la decimoséptima dejó pedida (§4). Lo que encontró, por orden de lo que más dolía:
+
+1. **Había arquitectura en la cabeza y no en el código.** Cuatro carpetas y ninguna regla que impidiera que una página importara de otra, que `ui/` pidiera datos o que entrara una librería de gráficos. Ahora son **dos tests** que corren en cada `npm test`, y las reglas se probaron **al revés** antes de darlas por buenas.
+2. **Los tipos mentían y ya se estaba pagando en la pantalla publicada.** El `[key: string]: unknown` de `Dataset` escondía que el catálogo leía `observationMethod`, `observedLastChange` y `declaredFreshness` cuando la respuesta trae `latestObservationMethod`, `latestObservedChange` y `latestFreshness`: **tres columnas vacías** y nada fallaba. El nombre del parámetro de `sort` no es el del cuerpo, y ahí estaba la trampa.
+3. **El cargando y el vacío eran lo mismo.** Ninguna de las siete copias del patrón tenía estado de carga, así que «Leyendo la serie…» se quedaba puesto para siempre si fallaba la petición, la tabla decía «ningún registro casa con estos filtros» cuando no se había podido preguntar, y la portada se tragaba los seis errores y pintaba un guion.
+4. **La accesibilidad, escrita con cuidado, incumplía el contraste en las siete pantallas en modo claro.** ADR-021 midió los colores de los gráficos y dio por bueno el resto; el claro se escribió sin medir porque el oscuro es el primario. Lo encontró axe-core en un navegador de verdad.
+5. **La repetición era deuda, no variedad.** Siete copias del mismo patrón con cuatro matices reales. Dos piezas de estado (`Loaded`, `Explorer`) y 927 líneas fuera.
+6. **Y mirar siguió encontrando cosas que ningún test buscaba**: el panel de cobertura por año de quejas **no se pintaba nunca**, la serie de actividad urbana **cambiaba de unidad** sin avisar, el ranking de contratación **mezclaba licitado y adjudicado** —lo que ADR-017 prohíbe—, los filtros ofrecían menos estados que la API y los rótulos del eje de tiempo se pisaban.
+
+Queda una cosa abierta y es decisión, no trabajo: la agregación por beneficiario pesa **2,1 MB** para pintar 18 filas, y arreglarlo pide `sort` y `limit` en la API (§4).
+
+**Lo que hizo la decimoséptima**: el frontend pasa de **una tabla** a un observatorio, y después de **documento** a aplicación. Dos entregas y dos rechazos por el medio, y de ahí salen las lecciones que más importan:
 
 1. **Una pantalla para un endpoint no es un producto.** La primera versión exponía 87 números de seis módulos y ~370.000 registros: sin poder consultar un registro, sin series, sin rankings y con el dinero —tres fuentes y veinte años de gasto ejecutado— sin ninguna pantalla. Ahora son **siete secciones** con explorador propio, filtros que solo existen si existen en la API, series temporales y rankings.
 2. **Tener criterio de diseño no basta si no se puede mirar.** Se habían cargado dos guías de diseño antes de escribir una línea, y aun así salió algo rechazado dos veces. La causa era que **la extensión de navegador no conecta en esta máquina** y ninguna de las dos versiones se vio nunca. Con **Playwright** instalado (ADR-021), la regla pasa a ser: se captura, se mira y se itera **antes** de entregar.
@@ -67,6 +78,7 @@ Este documento es el punto de entrada de cada sesión de trabajo: qué está hec
 | Fase 4: **superficie de cruce y módulo `territory`** | **Hecho** (2026-09-12, decimoquinta sesión) | [ADR-019](decisions/ADR-019-superficie-de-cruce.md), escrita **antes** del código como exigía `SPEC.md` §3 + módulo `territory` completo **sin una sola tabla ni migración**: catálogo cerrado `Measure` (3 medidas, 2 módulos), `Denominator`, `CrossTab`, `ComposeCrossTab` y la API `GET /territory/districts` y `/districts/{id}`. `citizen` y `urban` estrenan superficie pública (`Citizen`, `Urban`) y `shared` gana `DateWindow` y `TerritorialTally`. Un método nuevo en el repositorio de `urban` (`licenceAssignmentCounts`) porque la cobertura de licencias **no** es la de locales: 90,6 % contra 89,4 %. **Verificado contra la base real** (§5): las 29 filas suman exactamente lo asignado en las tres columnas. `.\mvnw.cmd verify`: **321 tests en verde** |
 | Fase 4: **la primera pantalla** (cierre de la fase) | **Hecho** (2026-09-12, decimosexta sesión) | [ADR-020](decisions/ADR-020-primera-pantalla.md) + proyecto Angular 21 en `frontend/` generado con `ng new` (zoneless, standalone, vitest) + dos piezas de backend que la pantalla necesitaba y que son aditivas: `WebCorsConfiguration` (lectura desde otro origen, sin credenciales, actuator fuera) y `GET /api/v1/geo/boundaries` (`DistrictBoundaries` con `ST_AsGeoJSON` y `@JsonRawValue`; **`geo` publica geometría por primera vez**). La pantalla es la matriz, el mapa SVG **sin teselas de terceros** y la ficha de junta, con tres clasificaciones nombradas, paleta secuencial y la cobertura en la leyenda. **Comprobado contra la base real y visto en el navegador**: 29 features, 16.462 vértices, 373 KB, escala isótropa a 17,169 px/km, y el mapa dibujando el término reconocible (§5). `.\mvnw.cmd clean verify`: **325 tests en verde**; `npm test`: **17 en verde**; build de 5 ficheros y 73 KB |
 | Fase 4: **el frontend completo y su rediseño** | **Hecho** (2026-09-13, decimoséptima sesión) | [ADR-021](decisions/ADR-021-frontend-aplicacion.md) + rama `feat/s43-frontend-completo`. **Siete secciones** con explorador de registros, filtros, series y rankings sobre los seis recursos que la API pagina; `core/` (tipos, cliente y formato), `ui/` (tabla, filtros, gráficos SVG a mano, tarjetas de cifra, colofón), `pages/` (una por sección) y `map/`. Después, **rediseño entero** a aplicación de datos con barra lateral agrupada, tarjetas y modo oscuro como primario. **Comprobado mirándolo** con Playwright: 64 combinaciones de ruta × ancho × modo sin desbordes ni errores, y **111 peticiones** contra la instancia real sin un solo 400. Cuatro defectos corregidos que dos versiones no vieron (§5). `npm test`: **15 en verde** |
+| Fase 4: **auditoría del frontend** | **Hecha** (2026-09-17, decimoctava sesión) | [ADR-022](decisions/ADR-022-arquitectura-frontend.md) e informe `docs/auditoria-frontend.md`, con las siete preguntas de §4 contestadas. Cuatro guardianes nuevos: `architecture.spec.ts` (capas, cero dependencias de tiempo de ejecución, URL solo en `core/api.ts`, ninguna sección importa otra, carga diferida), `contract.spec.ts` contra la **forma grabada** de veinte respuestas reales (`npm run contract`), cinco tests de pantalla con `provideHttpClientTesting` y **`npm run sweep`** (Playwright + axe-core, 8 rutas × 4 anchos × 2 modos: desborde, consola, terceros, tabulador y axe). Corregidos tres columnas vacías del catálogo, un panel que no se pintaba nunca, dos mezclas de unidad y el contraste del modo claro. `npm test`: **31 en verde** (15 antes); barrido: **64 combinaciones sin un aviso** |
 | Fase 1: primera serie de instantáneas observadas | En curso: primer barrido completo el 2026-09-07 (436/436); el 2026-09-08 hay **dos días** de serie y ya se ve movimiento real (§5). Faltan días, no fichas | §4 |
 | Fases 3–5 | **Fase 3 con su ingesta cerrada**; **fase 4 empezada**; 5 pendiente | De `spending` están las **tres** fuentes: contratación (ADR-017), presupuesto (S3.2, el gasto ejecutado) y **subvenciones** (S3.3, ADR-018). De la fase 4, `territory` está **hecho** (ADR-019) y lo que queda es el **frontend**. Siguen pendientes `identity` y `workspace`. De `geo` queda la sección censal (491) como unidad fina opcional; de `citizen` no queda ninguna decisión abierta desde ADR-014 y ADR-015, y de `urban` solo la vigilancia del §4 y el significado de `estado`, que únicamente puede aclarar el ayuntamiento |
 
@@ -111,6 +123,7 @@ Conclusiones que condicionan todo lo demás (siguen vigentes):
 | [ADR-017](decisions/ADR-017-contratacion-ocds.md) | **La contratación OCDS se enumera con un interruptor, no con una fecha**: el censo va con `after=2030-01-01T00:00:00Z` y en cada ingesta se comprueba que el listado documentado sigue siendo subconjunto del ampliado; si deja de serlo, falla. El detalle son 8.001 peticiones y las hace un planificador propio con cadencia decreciente. Un proceso **sin release no es un error** (29,7 % del universo) y `stage` **solo donde el documento lo sostiene** (1.560 procesos sin etapa). El texto libre **sí se guarda** —0 DNI y 0 NIE válidos en 5.622 documentos—, pero `parties[].id` no: se descompone, y de una **persona física no entra ni NIF ni nombre**, con un `CHECK` que lo impone desde la base de datos |
 | [ADR-018](decisions/ADR-018-subvenciones-y-beneficiario.md) | **Las subvenciones entran con el beneficiario contado y no nombrado**: el nombre **no se descarga** (proyección fija sin `adjudicatario`), el identificador del título se **redacta por forma y no por validez**, y del beneficiario entra siempre el seudónimo que ya publica la fuente y la identidad **solo si no es persona física**, decidido por la **unión** de las dos señales. Ningún dato de contacto, de nadie. Dos `CHECK` lo imponen desde la base de datos. El censo completo es la **versión vieja**; `rows` y `page` nunca juntos |
 | [ADR-019](decisions/ADR-019-superficie-de-cruce.md) | **El cruce territorial da columnas comparables con su cobertura, no vistas precocinadas ni cocientes**: catálogo **cerrado** de medidas (3) y de denominadores (2), ventana libre que **cada medida aplica sobre la fecha que declara**, y **ninguna aritmética entre medidas**. La suma de las 29 filas es lo asignado y no el total, así que cada columna publica su cobertura; **nada se ajusta por cobertura**. `territory` compone desde las superficies públicas de `geo`, `citizen` y `urban`: sin tablas, sin caché, sin ingesta y sin dependientes. Pedir `spending.*` responde 400 explicando que ninguna fuente de gasto publica territorio |
+| [ADR-022](decisions/ADR-022-arquitectura-frontend.md) | **Las reglas del frontend van en tests**: fronteras de capas, cero dependencias de tiempo de ejecución, URL solo en `core/api.ts` y ninguna sección importando otra, todo en `architecture.spec.ts`; los tipos pueden declarar **menos** campos que la respuesta pero nunca otros ni con otra nulabilidad, y lo comprueba `contract.spec.ts` contra la forma grabada de la instancia; el estado de lo que se pide tiene **tres** valores y el fallo se enseña con su motivo y su botón de reintento, nunca en silencio; la accesibilidad se mide con axe-core en navegador y el barrido es del proyecto (`npm run sweep`); lo que no se usa se borra |
 
 **No toda decisión vigente tiene ADR, y eso es deliberado.** Una fuente nueva dentro de un contexto ya fundado se decide en su spike (regla 9): el presupuesto de gastos entró en `spending` sin ADR nueva, como ADR-003 §2 y §4 preveían, y lo que decidió está en `docs/spikes/S3.2-presupuesto-ingesta.md` y en la **regla 36** de `CLAUDE.md` —la instantánea como unidad, la congelación al cargar, las cuatro cifras separadas y la lista cerrada de fórmulas de persona—. Si alguna de esas decisiones se quiere cambiar, se cambia ahí.
 
@@ -172,64 +185,64 @@ El puerto 8080 suele estar ocupado en esta máquina por un contenedor phpMyAdmin
 - Contrato OpenAPI en `/v3/api-docs`; Swagger UI en `/swagger-ui.html`. **La API acepta peticiones desde otro origen** en `/api/v1/**` y `/v3/api-docs` —solo `GET`/`HEAD`/`OPTIONS` y sin credenciales—, que es lo que permite que el frontend viva en otro dominio; el actuator **no** se abre.
 - La base de datos de Compose usa el volumen `postgres-data` (persiste entre arranques; V014 ya aplicada); `docker compose -f compose.yaml stop` para pararla. Para consultas SQL: `docker exec -i zaragoza-observatorio-postgres-1 psql -U observatorio -d observatorio < fichero.sql` (desde Git Bash, la ruta dentro del contenedor se pasa por stdin para evitar la conversión de rutas).
 
-## 4. Siguiente paso: auditar el frontend, y después elegir camino
+## 4. Siguiente paso: publicar el frontend, y una decisión de API por el medio
 
-La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **La fase 2 está cerrada** y, desde la undécima sesión, tiene además una **segunda fuente territorial** (S2.4, ADR-016). **La fase 3 tiene su ingesta cerrada** desde la decimocuarta: contratación (S3.1), presupuesto (S3.2) y subvenciones (S3.3). **Y desde el 2026-09-12 la fase 4 está completa**: el cruce en la API (ADR-019) y el cruce a la vista (ADR-020).
+La fase 1 está completa, desplegada y respaldada; lo que le queda es tiempo. **La fase 2 está cerrada** y, desde la undécima sesión, tiene además una **segunda fuente territorial** (S2.4, ADR-016). **La fase 3 tiene su ingesta cerrada** desde la decimocuarta: contratación (S3.1), presupuesto (S3.2) y subvenciones (S3.3). **La fase 4 está completa** desde el 2026-09-12 —el cruce en la API (ADR-019) y el cruce a la vista (ADR-020)— y desde el 2026-09-17 **auditada** (ADR-022, informe en `docs/auditoria-frontend.md`).
 
-> ## Tarea inmediata: **auditoría de arquitectura y calidad de código del frontend**
+> ## Tarea inmediata: **publicar el frontend**
 >
-> El frontend se escribió entero en una sesión y se rediseñó entero en la misma, con dos rechazos por el medio.
-> Funciona y está comprobado por fuera —64 combinaciones de ruta, ancho y modo sin desbordes ni errores, 111
-> peticiones contra la instancia real sin un 400, 15 tests en verde—, pero **nadie lo ha mirado por dentro con
-> calma**. Es exactamente el momento de hacerlo: antes de publicarlo y antes de que crezca.
+> Es lo único que cierra la fase 4 de verdad y lo único que la sesión no puede hacer por sí misma (§6). El
+> build sale de `frontend/` con `npm ci && npm run build` y la salida es `dist/observatorio/browser`; hay que
+> subirlo al alojamiento a mano. **Ojo con el `.htaccess`**, que empieza por punto y muchos clientes de FTP
+> ocultan: sin él las rutas profundas dan 404 —cualquier recarga fuera de la portada— y no se aplica la
+> `Content-Security-Policy`.
 >
-> Lo que la auditoría tiene que contestar, por orden de lo que más puede doler:
->
-> 1. **¿Hay arquitectura o solo hay carpetas?** Existen `core/`, `ui/`, `pages/` y `map/`, pero no hay ninguna
->    regla que impida que una página importe de otra, que `ui/` conozca el dominio o que un componente se salte
->    `core/api.ts` y construya una URL. En el backend eso lo vigilan `ModularityTests` y
->    `HexagonalArchitectureTests` en cada build; **en el frontend no hay equivalente**. Decidir si hace falta y,
->    si lo hace, ponerlo como test y no como buena intención.
-> 2. **¿Cuánto se repite?** Las siete páginas comparten un patrón casi idéntico —señales de estado, `setFilter`,
->    `setSort`, `setPage`, `loadX`— copiado siete veces. Puede ser repetición sana (cada página tiene sus
->    matices) o deuda disfrazada. Hay que mirarlo con el diff delante, no de memoria.
-> 3. **¿Los tipos dicen la verdad?** Ya reventó una vez: `key: string` cuando la API devuelve `null`. Conviene
->    pasar el resto del contrato por el mismo cedazo, porque los tipos se escribieron a mano leyendo respuestas
->    reales y cualquier campo opcional mal declarado es el mismo fallo esperando.
-> 4. **¿Qué pasa cuando la API falla?** Hoy cada página pinta un mensaje y poco más; no hay reintento, ni estado
->    de carga por bloque, ni distinción entre «no hay datos» y «no se pudo leer». Con siete secciones y muchas
->    peticiones por pantalla, eso se nota.
-> 5. **Accesibilidad de verdad**, no por encima: foco visible en todo, navegación por teclado en tabla, mapa y
->    cajón, `aria` correcto en los controles, y la tabla usable con lector de pantalla. Se escribió con cuidado
->    pero **no se ha comprobado con herramientas**.
-> 6. **Rendimiento medido**, no supuesto: la portada lanza seis resúmenes al entrar y el cruce compone tres
->    agregaciones por petición. Cronometrarlo antes de decidir si algo necesita caché (que sería ADR propia).
-> 7. **Los tests que faltan.** Quince cubren lógica; cero cubren que una página pinte lo que la API devuelve. El
->    barrido de Playwright existe pero se lanza a mano.
->
-> **Cómo hacerla**: `/code-review` sobre la rama `feat/s43-frontend-completo` da el primer barrido de
-> correcciones concretas; lo que salga de arquitectura y de deuda merece decisión escrita, y si cambia la forma
-> de los módulos del frontend, ADR. **No integrar en `main` antes de la auditoría**: es más barato corregir la
-> estructura ahora que con la pantalla ya publicada.
+> Antes de subir, lo que la auditoría deja hecho y conviene volver a pasar: `npm test` (31), `npm run sweep`
+> (64 combinaciones) y, si el backend ha cambiado alguna respuesta, `npm run contract`.
 >
 > ---
 >
-> **Después de la auditoría**, los caminos, por orden de lo que más aporta al producto:
+> **La decisión que la auditoría deja sobre la mesa y no puede tomar sola** (afecta a superficie de API, regla
+> 14): los ejes de ranking bajan el catálogo entero de grupos para pintar 18 filas.
 >
-> 1. **Publicar el frontend** en el alojamiento (§6). Es lo único que cierra la fase 4 de verdad.
-> 2. **El enlace ficha↔fuente** (ADR-019 §10, duda abierta de `SPEC.md` §9). Haría que el cruce dijera *cuándo
->    cambió el origen* y no solo *cuándo lo leímos*, y ahora se nota más: la ficha de junta escribe «Origen leído
->    …» y esa frase pide la otra mitad. Las dos fuentes con eje territorial son justo las dos que se observan con
->    fecha (fichas **1062** y **1420**, método `API_MAX_DATE`), y **no es uno a uno**. Spike propio.
-> 3. **Una tercera fuente territorial en `urban`**, que añadiría una columna al cruce, al mapa y a la matriz sin
+> | Eje | Tamaño | Grupos |
+> | --- | --- | --- |
+> | `spending/grants/aggregations?by=beneficiary` | **2.117 KB** | 20.910 |
+> | `spending/aggregations?by=supplier` | 292 KB | ~6.000 |
+> | `spending/grants/aggregations?by=call` | 243 KB | 1.589 |
+> | `spending/aggregations?by=cpv` | 186 KB | ~4.000 |
+> | `citizen/aggregations?by=category` | 65 KB | ~150 |
+>
+> El resultado es correcto —están todos los grupos, así que el «top 18» es el verdadero—, pero el frontend
+> ordena y recorta **en el navegador**, lo que roza la regla 8, y quien abra subvenciones en el móvil se baja
+> 2 MB. La salida natural es **`sort` y `limit` en los recursos de agregación**, con su ADR: hay que decidir
+> qué pasa con el resto de los grupos (¿un `others` agregado, que sería una cifra nueva y por tanto regla 6? ¿o
+> simplemente el hecho de que la respuesta está recortada, declarado en la propia respuesta?) y si el `limit`
+> tiene tope. **No se toca sin esa decisión.**
+>
+> ---
+>
+> **Después**, por orden de lo que más aporta al producto:
+>
+> 1. **El enlace ficha↔fuente** (ADR-019 §10, duda abierta de `SPEC.md` §9). Haría que el cruce dijera *cuándo
+>    cambió el origen* y no solo *cuándo lo leímos*, y ahora se nota más: la ficha de junta escribe «Origen
+>    leído …» y esa frase pide la otra mitad. Las dos fuentes con eje territorial son justo las dos que se
+>    observan con fecha (fichas **1062** y **1420**, método `API_MAX_DATE`), y **no es uno a uno**. Spike propio.
+> 2. **Una tercera fuente territorial en `urban`**, que añadiría una columna al cruce, al mapa y a la matriz sin
 >    tocar la superficie de ninguno: `licencia-obra` (2.042 parcelas, 100 % con punto) es la más barata,
 >    `via-publica/incidencia` la más viva y `locales-vacios` la única con junta declarada. Entra sin ADR nueva
 >    (ADR-016 lo prevé), solo con su spike.
-> 4. **Rutas profundas compartibles y exportación a CSV**, que es lo que más se echa de menos al usar los
->    exploradores en serio (§4, pendientes del frontend).
+> 3. **Rutas profundas compartibles y exportación a CSV**, que es lo que más se echa de menos al usar los
+>    exploradores en serio. La segunda **no es solo frontend**: hay que decidir si el CSV lo genera el backend
+>    —con su `source` y sus `caveats` dentro— o el navegador con lo que tiene a la vista, que sería solo la
+>    página actual.
+> 4. **El detalle de un registro**: la auditoría quitó el `pickable`/`picked` que insinuaba esa capacidad sin
+>    conectarla. Cuando entre, entra con su ruta, y entonces se puede enlazar a una queja o a un proceso.
 >
-> **Lo que no toca hacer**: caché del cruce (ADR-019 §9 la descarta a propósito y exigiría ADR propia), ni
-> ajustar por cobertura, ni añadir un mapa base. Las tres tentaciones están razonadas y descartadas por escrito.
+> **Lo que no toca hacer**: caché del cruce (ADR-019 §9 la descarta a propósito y ahora además está medido:
+> 0,80 s sin caché), ni ajustar por cobertura, ni añadir un mapa base. Las tres tentaciones están razonadas y
+> descartadas por escrito.
+
 
 **La primera serie de instantáneas observadas** sigue siendo lo único que solo necesita días: el primer barrido
 terminó el 2026-09-07 y se mira cuando haya dos o tres semanas (punto 1 de la lista de abajo).
@@ -293,22 +306,26 @@ La **fase 2** tiene hechos sus tres pasos y su orden fue el correcto: primero sa
 5. **`citizen` y `urban` tienen ahora superficie pública**, y eso crea una obligación nueva: lo que entra en el paquete raíz es contrato entre módulos, no un `public` más. Ampliarlo es una decisión.
 6. **El eje `district_year` no se ofrece en el cruce.** Cada módulo tiene su serie por junta y año (ADR-015), pero la matriz es de una sola ventana. Cruzar dos medidas **a lo largo de una serie** es otra forma y otra decisión; hoy se hace pidiendo la matriz una vez por ventana.
 
-**Lo que queda abierto del frontend** (ADR-020, ADR-021):
+**Lo que queda abierto del frontend** (ADR-020, ADR-021, ADR-022):
 
 1. **No está publicado.** El build sale de `frontend/` (`npm ci && npm run build`, salida en `dist/observatorio/browser`) y hay que subirlo al alojamiento a mano. Sigue siendo lo único de la fase 4 que la sesión no puede hacer por sí misma (§6). **Ojo con el `.htaccess`**, que empieza por punto y muchos clientes de FTP lo ocultan: sin él las rutas profundas dan 404 —cualquier recarga fuera de la portada— y no se aplica la `Content-Security-Policy`.
-2. ~~Nadie lo ha visto en un navegador~~ → **resuelto el 2026-09-13**: Playwright instalado y en uso. La comprobación visual es ahora parte del trabajo (ADR-021 §1). La extensión de Chrome **sigue sin conectar** en esta máquina; no contar con ella.
-3. **La auditoría de arquitectura y calidad del frontend está pendiente**, y es el primer trabajo de la próxima sesión (§4, recuadro).
-4. **No hay rutas profundas compartibles dentro de una sección.** La junta seleccionada, el eje elegido, los filtros y la página no viajan en la URL, así que no se puede enlazar a «subvenciones de 2025 ordenadas por importe». Es lo que más se va a echar de menos al usarlo en serio.
-5. **Los exploradores no exportan.** La API pagina y filtra, pero la pantalla no ofrece descargar el resultado en CSV. Para una herramienta de análisis es una carencia real, y **no es solo frontend**: habría que decidir si el CSV lo genera el backend (con su `source` y sus `caveats` dentro) o el navegador con lo que tiene a la vista, que sería solo la página actual.
-6. **Angular se queda en la línea 21** porque la 22 exige Node ≥ 24.15.0 y la máquina tiene 24.13.0. Subir de línea es subir Node primero.
-7. **El coste de la matriz y de la portada bajo carga no está medido.** La portada lanza seis resúmenes en paralelo al entrar y el cruce compone tres agregaciones por petición sin caché (ADR-019 §9). Con los volúmenes de hoy va sobrado, pero nadie lo ha cronometrado.
-8. **Sin tests de extremo a extremo.** Los 15 que hay cubren lógica (clasificación, contrato de la tabla, armazón) y el barrido de Playwright se lanza a mano. Convertirlo en algo repetible es candidato natural de la auditoría.
+2. ~~Nadie lo ha visto en un navegador~~ → **resuelto el 2026-09-13** y **convertido en herramienta del proyecto el 2026-09-17**: `npm run sweep` compila, sirve el build con la misma caída a `index.html` que el alojamiento y recorre 8 rutas × 4 anchos × 2 modos capturando pantalla en `.sweep/` y comprobando desborde horizontal, consola, peticiones a terceros, recorrido del tabulador y axe-core. Ya no depende del MCP del editor, que en esta máquina no conecta.
+3. ~~La auditoría de arquitectura y calidad está pendiente~~ → **hecha el 2026-09-17** (ADR-022, `docs/auditoria-frontend.md`). Las siete preguntas contestadas, cuatro guardianes corriendo y once defectos corregidos, tres de ellos visibles en la pantalla publicada.
+4. **El peso de las agregaciones de ranking es lo único que la auditoría no pudo cerrar**: 2,1 MB por beneficiario para pintar 18 filas. Pide `sort` y `limit` en la API, que es superficie y por tanto decisión con ADR (§4, recuadro).
+5. **No hay rutas profundas compartibles dentro de una sección.** La junta seleccionada, el eje elegido, los filtros y la página no viajan en la URL, así que no se puede enlazar a «subvenciones de 2025 ordenadas por importe». Es lo que más se va a echar de menos al usarlo en serio.
+6. **Los exploradores no exportan.** La API pagina y filtra, pero la pantalla no ofrece descargar el resultado en CSV. Para una herramienta de análisis es una carencia real, y **no es solo frontend**: habría que decidir si el CSV lo genera el backend (con su `source` y sus `caveats` dentro) o el navegador con lo que tiene a la vista, que sería solo la página actual.
+7. **No hay detalle de un registro.** La capacidad estaba insinuada en el código (`pickable`/`picked` en la tabla, el ranking y el gráfico) sin que ninguna página la conectara, y la auditoría la quitó: lo que no se usa no se prueba. Cuando entre, entra con su ruta.
+8. **Angular se queda en la línea 21** porque la 22 exige Node ≥ 24.15.0 y la máquina tiene 24.13.0. Subir de línea es subir Node primero.
+9. ~~El coste de la matriz y de la portada bajo carga no está medido~~ → **medido el 2026-09-17** (§5). La portada: 6 peticiones, 17 KB, lista en ~1 s. El cruce: 2 peticiones, 377 KB —373 son los contornos, que se piden una vez por sesión— y 1,7 s, con la matriz en 0,80 s contra producción. **No hace falta caché en ningún sitio**, y la de ADR-019 §9 sigue descartada con número delante.
+10. ~~Sin tests de extremo a extremo~~ → **parcialmente resuelto**: hay cinco tests de pantalla con `provideHttpClientTesting` que comprueban que se pinta lo que la API devuelve y qué pasa cuando falla, y el barrido es repetible. Lo que sigue sin existir es un extremo a extremo de verdad (navegador contra la API real en CI), y para eso no hay CI.
+11. **`ui/` y `map/` no tienen tests propios de pintado.** Los de la tabla y la clasificación sí; los gráficos SVG y el mapa se comprueban solo mirando el barrido. No es urgente —la geometría ya está medida— pero es el hueco que queda.
+
 
 Los caminos posibles a partir de aquí están en el recuadro del principio de esta sección.
 
 Y, con spike propio, sigue disponible la **ingesta de las partes de series y colecciones** que el listado `catalogo.json` omite (SPEC.md §9, S1.3): al menos 108 fichas federadas solo alcanzables por `catalogo/{id}.json`.
 
-## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45, 19:30 y 20:05 del 2026-09-10; 10:40, 13:30, 14:15 y 15:05 del 2026-09-11; 00:30, 01:05, 01:20, 12:20, 12:35, 12:55 y 13:15 del 2026-09-12)
+## 5. Comprobaciones reales (19:01, 22:27, 23:12 CEST del 2026-09-06; 00:26 del 2026-09-07; 10:30, 11:47, 12:23, 13:33, 16:30, 17:10 y 17:40 del 2026-09-08; 10:35, 11:40, 11:58, 12:05, 12:51, 13:16, 21:30 y 21:47 del 2026-09-09; 12:45, 19:30 y 20:05 del 2026-09-10; 10:40, 13:30, 14:15 y 15:05 del 2026-09-11; 00:30, 01:05, 01:20, 12:20, 12:35, 12:55 y 13:15 del 2026-09-12; 14:10, 14:35, 15:05 y 15:20 del 2026-09-17)
 
 **00:30–01:20 CEST del 2026-09-12 (decimoquinta sesión, el cruce territorial contra la base de desarrollo cargada).** Con la aplicación en el 8085 y las tres fuentes ya ingeridas de sesiones anteriores:
 
@@ -552,6 +569,20 @@ Cuarta sesión, aplicación en el puerto 8085 con PostGIS de Compose (base de da
 - **La rampa del mapa se levantó** en oscuro: con el primer paso en `#1b2a35` las juntas de la clase más baja se confundían con la tarjeta y parecía que faltaban del mapa.
 - **Build y tests**: `npm run build` sin un solo aviso, **15 tests en verde**, y el paquete inicial en **76 KB transferidos** más una porción por sección, que se carga solo al entrar en ella.
 
+**La auditoría del frontend, medida (2026-09-17, decimoctava sesión).** Todo contra la instancia real y con el build de producción servido como sitio estático:
+
+- **Los tres campos fantasma, confirmados contra la API antes de tocar nada.** `GET /api/v1/catalog/datasets` devuelve `latestObservationMethod`, `latestObservedChange` y `latestFreshness`; la pantalla leía `observationMethod`, `observedLastChange` y `declaredFreshness`. El parámetro `sort=observedLastChange,desc` **sí** existe y responde 200, que es lo que hacía creíble el nombre equivocado.
+- **El panel de cobertura por año no podía pintarse nunca**, medido por eje: `citizen/aggregations?by=district` devuelve `coverageByYear` con **0** entradas y `by=district_year` con **14**; en `urban`, `by=district` **0** y `by=licence_year` **63**. La lista vacía es deliberada de la API —en un eje sin años no hay nada que comparar— y la condición de la pantalla era imposible.
+- **Los cuatro valores de filtro nuevos, comprobados uno a uno**: `assignment=AMBIGUOUS` → **13** quejas y **0** locales (200 las dos), `status=REJECTED` → 1, `status=UNKNOWN` → 1. Ninguno se ofrecía.
+- **`noUncheckedIndexedAccess` medido y descartado**: 37 errores de compilación, **30** en `classification.ts`, `projection.ts` y `line-chart.ts`, donde el índice está probado por construcción.
+- **Contraste del modo claro, medido con axe-core en Chromium**: `--text-3` (#6e7787) daba **4,20 / 4,06 / 3,81** sobre #f5f7fa, #f0f3f8 y #e7ecf4, con 4,5 de mínimo para texto pequeño, y afectaba a copetes, pie y cabeceras de tabla de **las siete pantallas**. El valor nuevo (#606a7b) da **5,09 / 4,91 / 4,60**. En oscuro no fallaba ninguno.
+- **Barrido completo en verde**: **64 combinaciones** (8 rutas × 4 anchos × 2 modos) sin desborde horizontal, sin error de consola, **sin una sola petición a un tercero**, sin violación seria o crítica de axe y con el recorrido del tabulador limpio —25 paradas por pantalla, ninguna perdida, todas interactivas y todas con foco visible—.
+- **Rendimiento por pantalla**, medido en el navegador contra producción: portada 6 peticiones / 17 KB / ~1,0 s; presupuesto 5 / 39 KB / 0,8 s; contratación 3 / 42 KB / 0,8 s; subvenciones 3 / 25 KB / 1,0 s; quejas 3 / 59 KB / 1,0 s; actividad 3 / 27 KB / 1,0 s; **territorio 2 / 377 KB / 1,7 s** (373 KB son los contornos, una vez por sesión); catálogo 2 / 24 KB / 0,8 s. La matriz sola, con `curl` y tres pasadas: **0,80 s**.
+- **El peso de los ejes de ranking, medido**: beneficiario **2.117 KB**, adjudicataria 292 KB, convocatoria 243 KB, CPV 186 KB, categoría de queja 65 KB. Es lo que queda abierto (§4).
+- **Los guardianes muerden**, probado al revés: una página importando otra, `ui/` inyectando `Observatory` y un paquete instalado que no es Angular ponen en rojo el test que les toca; un campo declarado que la respuesta no trae pone en rojo el del contrato —comprobado volviendo a meter `observationMethod` a mano—.
+- **Tests y build**: `npm test` **31 en verde** (15 antes), `npm run build` sin un solo aviso.
+- **Una trampa nueva del entorno**: `/api/v1/geo/boundaries` se sirve como `application/geo+json` y responde **406** a un `accept: application/json`. El `HttpClient` del navegador manda `*/*` y por eso nunca se había notado; el grabador del contrato tuvo que pedir `*/*`.
+
 ## 6. Pendientes del usuario
 
 - **Publicar el frontend en el alojamiento de Hostinger.** Es lo único que le queda a la fase 4 y la sesión no lo puede hacer sola. **Conviene esperar a la auditoría** (§4): es más barato corregir la estructura antes de publicar que después. El build es `cd frontend ; npm ci ; npm run build` y lo que se sube es el **contenido** de `frontend/dist/observatorio/browser` (5 ficheros: `index.html`, `main-*.js`, `styles-*.css`, `favicon.ico` y `.htaccess`, 73 KB transferidos), a la raíz del dominio. **Ojo con el `.htaccess`**: empieza por punto, así que muchos clientes de FTP y gestores de archivos lo ocultan por defecto; sin él las rutas profundas darán 404 y no se aplicará la `Content-Security-Policy`. No hace falta tocar nada más: la API ya acepta peticiones desde otro origen (CORS de solo lectura, sin credenciales) y la URL de la instancia va dentro del bundle. **Si el dominio final se quiere restringir**, la variable es `zaragoza.web.cors.allowed-origins` en Railway; por defecto es comodín a propósito, porque la API es GET público y `SPEC.md` §6 la quiere reutilizable desde el navegador.
@@ -581,34 +612,48 @@ De la fase 4 (ADR-019, el cruce): queda **resuelta la superficie de la API de cr
 ## 8. Mapa del repositorio
 
 ```
-SPEC.md                         especificación viva (v0.22, ADR-000)
-CLAUDE.md                       reglas de trabajo (1–38) y contexto operativo
+SPEC.md                         especificación viva (v0.25, ADR-000)
+CLAUDE.md                       reglas de trabajo (1–41) y contexto operativo
 README.md                       presentación breve, enlaces y API
 docs/ESTADO.md                  este documento
 docs/despliegue.md              runbook de despliegue en Railway (IaC, variables, comprobaciones)
+docs/auditoria-frontend.md      informe de la auditoría del frontend: las siete preguntas y sus medidas (ADR-022)
 .railway/railway.ts             infraestructura en código: base de datos PostGIS y servicio de la app (ADR-008)
 package.json, package-lock.json  única dependencia: el SDK `railway` que importa .railway/railway.ts
 docs/arquitectura.md            diagramas Mermaid (flujo de datos, módulos, hexagonal con clases reales)
 docs/arquitectura.html          página HTML de la fase 0, CONGELADA (nombres previos a la implementación, `geo` como pendiente): manda el .md
-docs/decisions/                 ADR-000..021
+docs/decisions/                 ADR-000..022
 docs/spikes/                    informes S0.1..S0.6, S1.1..S1.3, S2.1..S2.4, S3.1..S3.3, matriz CSV, índice
-frontend/                       la aplicacion (ADR-020 que se ensena, ADR-021 como se ve). Angular 21.2
-                                zoneless generado con `ng new`; sin dependencias de tiempo de ejecucion salvo
-                                Angular y las tres tipografias empaquetadas. Graficos SVG a mano, sin libreria
+frontend/                       la aplicacion (ADR-020 que se ensena, ADR-021 como se ve, **ADR-022 como se
+                                sostiene**). Angular 21.2 zoneless generado con `ng new`; sin dependencias de
+                                tiempo de ejecucion salvo Angular y las tipografias empaquetadas —Playwright y
+                                axe-core son de desarrollo y un test lo comprueba—. Graficos SVG a mano
+  tools/sweep.mjs               `npm run sweep`: sirve el build y barre 8 rutas x 4 anchos x 2 modos con
+                                Playwright, capturando pantalla en .sweep/ y comprobando desborde horizontal,
+                                consola, peticiones a terceros, tabulador con foco visible y axe-core
+  tools/record-contract.mjs     `npm run contract`: graba la **forma** de veinte respuestas reales (nombres y
+                                tipos, ni un valor) en src/app/core/contract.shape.json
   src/styles.css                el sistema visual: fichas de color con su oficio (interactivo, familia,
                                 categorica, secuencial del mapa, ordenada del ciclo, estado), escala de
                                 espaciado, tarjetas y composicion de pagina. **El modo oscuro es la base**
   src/environments/             la URL de la API por configuracion de compilacion (prod: Railway; dev: 8085)
   src/app/app.*                 armazon: barra lateral agrupada por familia con iconos, cajon en movil, rutas
                                 perezosas (una por seccion) y pie
-  src/app/core/                 types.ts (el contrato en TypeScript, con `key: string | null` porque la API lo
-                                devuelve), api.ts (la unica pieza con URLs, los 34 endpoints) y format.ts
-                                (cifras y fechas en es-ES, en un solo sitio)
-  src/app/ui/                   piezas compartidas: data-table (ordena y pagina **el backend**), filters
-                                (declarativos: solo existen si existen en la API), bar-chart y line-chart en
-                                SVG, ranking, stats (tarjetas de cifra) y colophon (procedencia + caveats)
+  src/app/core/                 types.ts (el contrato en TypeScript: `key: string | null` porque la API lo
+                                devuelve, `ApiMap<V>` para los mapas de JSON y **ningun indice abierto**),
+                                api.ts (la unica pieza con URLs), format.ts (cifras y fechas en es-ES, en un
+                                solo sitio), **state.ts** (`Loaded` y `Explorer`: el estado de lo que se pide,
+                                con tres valores) y contract.shape.json + contract.spec.ts (el guardian de los
+                                tipos)
+  src/app/architecture.spec.ts  las fronteras como test: capas, cero dependencias de tiempo de ejecucion, URL
+                                solo en core/api.ts, ui/map sin Observatory, ninguna seccion importa otra
+  src/app/ui/                   piezas compartidas: data-table (ordena y pagina **el backend**, con `busy`),
+                                filters (declarativos: solo existen si existen en la API), bar-chart y
+                                line-chart en SVG, ranking, stats (tarjetas de cifra), **state** (leyendo o no
+                                se pudo leer, con reintento) y colophon (procedencia + caveats)
   src/app/pages/                una por seccion: home, budget, contracts, grants, citizen, urban, territory y
-                                catalog; mas matrix y district-card, que son del cruce
+                                catalog; mas matrix y district-card, que son del cruce, y pages.spec.ts, que
+                                comprueba que una pantalla pinta lo que la API devuelve y que dice cuando falla
   src/app/map/                  classification.ts (cuantiles, intervalos iguales, Jenks), projection.ts
                                 (equirectangular con correccion por cos(lat)) y choropleth (el mapa; `measure`
                                 es input obligatorio porque lleva la cobertura, ADR-020 §9)

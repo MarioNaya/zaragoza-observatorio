@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import { DistrictFeature, DistrictRow, MeasureColumn } from '../core/types';
-import { Classification, classOf, CLASS_COUNT } from './classification';
+import { Classification, classOf } from './classification';
 import { boundsOf, labelPointOf, pathOf, projectionFor } from './projection';
 
 interface Shape {
@@ -157,8 +157,6 @@ export class Choropleth {
       `ninguna parte y no se ajusta nada por cobertura.`
     );
   });
-
-  protected readonly classes = CLASS_COUNT;
 
   private valueOf(row: DistrictRow | undefined): number | null {
     if (!row) {

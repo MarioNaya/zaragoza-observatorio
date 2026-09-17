@@ -115,6 +115,21 @@ for (const scheme of SCHEMES) {
         }
       });
 
+      const started = Date.now();
+      // El peso se mide leyendo el cuerpo, no con Resource Timing: la API está en otro dominio y sin
+      // `Timing-Allow-Origin` el navegador devuelve 0 en `decodedBodySize`.
+      const bodies = [];
+      page.on('response', (response) => {
+        if (response.url().includes('/api/v1/')) {
+          bodies.push(
+            response
+              .body()
+              .then((body) => body.length)
+              .catch(() => 0),
+          );
+        }
+      });
+
       await page.goto(`http://127.0.0.1:${port}${route}`, { waitUntil: 'networkidle' });
       // El mapa y las series tardan algo más que `networkidle` en pintarse: se espera a que no haya
       // ningún «Leyendo…» a la vista, con tope, para no capturar una pantalla a medio hacer.
@@ -128,6 +143,68 @@ for (const scheme of SCHEMES) {
       }));
       if (overflow.scrollWidth > overflow.clientWidth) {
         problems.push(`desborda en horizontal: ${overflow.scrollWidth} > ${overflow.clientWidth}`);
+      }
+
+      const ready = Date.now() - started;
+      /**
+       * Lo que cuesta la pantalla, medido dentro del navegador con el API de Resource Timing: cuántas
+       * peticiones le hace a la API, cuánto pesan descomprimidas y cuál es la más lenta.
+       */
+      const slowestMs = await page.evaluate(() =>
+        performance
+          .getEntriesByType('resource')
+          .filter((entry) => entry.name.includes('/api/v1/'))
+          .reduce((slowest, entry) => Math.max(slowest, Math.round(entry.duration)), 0),
+      );
+      const sizes = await Promise.all(bodies);
+      const api = {
+        calls: sizes.length,
+        kilobytes: Math.round(sizes.reduce((total, size) => total + size, 0) / 1024),
+        slowestMs,
+      };
+
+      /**
+       * Recorrido con el tabulador: no basta con que el `aria` esté bien si después no se puede llegar.
+       *
+       * Se comprueban tres cosas de cada parada: que el foco no se queda en el cuerpo —lo que significaría
+       * que se ha perdido—, que el elemento enfocado es interactivo de verdad, y que **se ve** el foco, que es
+       * lo que axe no puede medir porque depende de `:focus-visible`.
+       */
+      const keyboard = await (async () => {
+        const stops = [];
+        for (let i = 0; i < 25; i++) {
+          await page.keyboard.press('Tab');
+          stops.push(
+            await page.evaluate(() => {
+              const active = document.activeElement;
+              if (!active || active === document.body) {
+                return { tag: 'body', visible: false, interactive: false };
+              }
+              const style = getComputedStyle(active);
+              const outline = Number.parseFloat(style.outlineWidth) || 0;
+              return {
+                tag: active.tagName.toLowerCase(),
+                visible: outline > 0 || style.boxShadow !== 'none',
+                interactive: ['a', 'button', 'input', 'select', 'textarea', 'path'].includes(
+                  active.tagName.toLowerCase(),
+                ),
+              };
+            }),
+          );
+        }
+        return stops;
+      })();
+      const lostFocus = keyboard.filter((stop) => stop.tag === 'body').length;
+      const invisibleFocus = keyboard.filter((stop) => stop.tag !== 'body' && !stop.visible);
+      const inertStops = keyboard.filter((stop) => stop.tag !== 'body' && !stop.interactive);
+      if (lostFocus > 1) {
+        problems.push(`el foco se pierde ${lostFocus} veces en 25 tabulaciones`);
+      }
+      if (invisibleFocus.length > 0) {
+        problems.push(`${invisibleFocus.length} paradas del tabulador sin foco visible`);
+      }
+      if (inertStops.length > 0) {
+        problems.push(`${inertStops.length} paradas del tabulador en algo que no es interactivo`);
       }
 
       await page.addScriptTag({ content: axe });
@@ -160,6 +237,8 @@ for (const scheme of SCHEMES) {
         problems,
         thirdParty: [...thirdParty],
         axe: violations,
+        // Rendimiento medido, no supuesto (ADR-022 §8): cuántas peticiones lanza la pantalla y cuánto tarda.
+        performance: { readyMs: ready, ...api },
       });
       const tag = `${name} ${width} ${scheme}`;
       const bad = problems.length + violations.length + thirdParty.size;
