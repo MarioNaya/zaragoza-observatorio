@@ -1,33 +1,39 @@
+import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 
-import { Observatory } from './api/observatory';
 import { App } from './app';
+import { routes } from './app.routes';
 
 describe('App', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [App],
-      providers: [
-        {
-          provide: Observatory,
-          useValue: {
-            crossTab: () => of({ caveats: [], item: null }),
-            district: () => of({ caveats: [], item: null }),
-            boundaries: () => of({ type: 'FeatureCollection', count: 0, features: [] }),
-          },
-        },
-      ],
-    });
+    TestBed.configureTestingModule({ imports: [App], providers: [provideRouter(routes)] });
   });
 
-  it('dice lo que la herramienta hace y, sobre todo, lo que no hace', async () => {
+  it('declara su postura editorial en la cabecera, no solo su nombre', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Observatorio');
-    expect(text).toContain('No se divide una medida por otra ni se ajusta nada');
+    expect(text).toContain('Herramienta de análisis, no de conclusiones');
+  });
+
+  it('ofrece las siete secciones, y el dinero va primero', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('nav a'),
+    ).map((a) => a.getAttribute('href'));
+    expect(links).toEqual([
+      '/presupuesto',
+      '/contratacion',
+      '/subvenciones',
+      '/quejas',
+      '/actividad',
+      '/territorio',
+      '/catalogo',
+    ]);
   });
 
   it('no manda a quien visita a ningún tercero, y lo dice', async () => {
@@ -35,8 +41,11 @@ describe('App', () => {
     await fixture.whenStable();
 
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.textContent).toContain('no envía nada a nadie sobre quien la visita');
+    expect(element.textContent).toContain('no envía nada a nadie sobre quien lo visita');
     // Si alguna vez entra una fuente, un script o un mapa de terceros, esto se pone rojo.
-    expect(element.querySelectorAll('link[href^="http"], script[src^="http"]')).toHaveLength(0);
+    const remote = element.querySelectorAll(
+      'link[href^="http"], script[src^="http"], img[src^="http"], iframe',
+    );
+    expect(remote).toHaveLength(0);
   });
 });

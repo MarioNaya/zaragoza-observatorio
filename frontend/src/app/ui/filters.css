@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.7rem 1rem;
+  padding: 0.8rem 0 0.9rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+label {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 8rem;
+}
+
+label.wide {
+  flex: 1 1 16rem;
+  max-width: 26rem;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.hint {
+  font-size: 0.68rem;
+  color: var(--text-3);
+}
+
+.clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0 0 1px;
+  margin-bottom: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.clear:hover {
+  color: var(--warn);
+}

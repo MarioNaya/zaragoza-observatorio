@@ -1,0 +1,68 @@
+<header class="page-head hero">
+  <p class="eyebrow">Datos abiertos del Ayuntamiento de Zaragoza</p>
+  <h1>Una herramienta para mirar el dinero, la ciudad y la calidad del dato.</h1>
+  <p class="lede">
+    Siete fuentes municipales ingeridas a diario y servidas por una API pública. El observatorio
+    <strong>da columnas, no conclusiones</strong>: enseña los denominadores, la cobertura y los huecos de cada
+    fuente para que el análisis lo haga quien lee. Cada cifra viaja con la advertencia que le corresponde.
+  </p>
+</header>
+
+<ul class="sumario stagger">
+  @for (card of cards(); track card.route) {
+    <li>
+      <a [routerLink]="card.route" [style.--accent]="card.accent">
+        <p class="eyebrow">{{ card.eyebrow }}</p>
+        <h2>{{ card.title }}</h2>
+        <p class="blurb">{{ card.blurb }}</p>
+        <dl>
+          @for (figure of card.figures; track figure.label) {
+            <div>
+              <dt>{{ figure.label }}</dt>
+              <dd class="num">{{ figure.value }}</dd>
+            </div>
+          }
+        </dl>
+      </a>
+      <!--
+        Que una cifra no esté y que no se haya podido leer no son lo mismo, y el guion solo no lo distingue.
+        El botón va fuera del enlace de la tarjeta: dentro, pulsarlo navegaría.
+      -->
+      @if (card.status === 'failed') {
+        <p class="unread" role="alert">
+          No se ha podido leer {{ card.title.toLowerCase() }}.
+          <button type="button" (click)="card.reload()">Volver a intentarlo</button>
+        </p>
+      }
+    </li>
+  }
+</ul>
+
+<section class="panel manifesto">
+  <header>
+    <h2>Lo que este observatorio no hace</h2>
+  </header>
+  <ul>
+    <li>
+      <strong>No divide una medida por otra.</strong> Las columnas van completas y la división la hace quien
+      lee, sabiendo que cruza unidades, ventanas y coberturas distintas.
+    </li>
+    <li>
+      <strong>No ajusta nada por cobertura.</strong> Ajustar supondría que lo que no se pudo situar se reparte
+      como lo que sí, y eso no está comprobado en ninguna fuente.
+    </li>
+    <li>
+      <strong>No pone etiquetas.</strong> Ninguna cifra se llama «degradado», «sospechoso» ni «locales
+      abiertos». Cuando la fuente no publica una taxonomía, se publica el código desnudo.
+    </li>
+    <li>
+      <strong>No republica datos personales.</strong> El texto de las quejas no se descarga; del beneficiario de
+      una subvención se publica cuánto y no quién; del adjudicatario persona física no entra ni el NIF ni el
+      nombre.
+    </li>
+    <li>
+      <strong>No manda a nadie a un tercero.</strong> Sin medición, sin fuentes remotas y sin mapas de terceros:
+      esta página no envía nada sobre quien la visita.
+    </li>
+  </ul>
+</section>

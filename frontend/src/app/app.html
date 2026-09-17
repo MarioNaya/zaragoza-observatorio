@@ -1,23 +1,86 @@
-<header class="masthead">
-  <div class="wrap">
-    <p class="eyebrow">Datos abiertos del Ayuntamiento de Zaragoza</p>
-    <h1>Observatorio</h1>
-    <p class="lede">
-      Quejas, locales con licencia y licencias de actividad sobre el mismo eje territorial: las 29 juntas
-      municipales y vecinales. Columnas comparables con su cobertura al lado.
-      <strong>No se divide una medida por otra ni se ajusta nada</strong>: el análisis lo hace quien lee.
+<a class="skip" href="#contenido">Saltar al contenido</a>
+
+<div class="shell" [class.open]="menuOpen()">
+  <!-- Barra superior: solo en móvil y tablet, donde la lateral se convierte en cajón. -->
+  <header class="topbar">
+    <button
+      type="button"
+      class="burger"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="navegacion"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        @if (menuOpen()) {
+          <path d="M6 6l12 12M18 6L6 18" />
+        } @else {
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        }
+      </svg>
+      <span class="sr-only">{{ menuOpen() ? 'Cerrar menú' : 'Abrir menú' }}</span>
+    </button>
+    <a routerLink="/" class="wordmark compact">
+      <span class="mark">OZ</span>
+      <span class="name">Observatorio</span>
+    </a>
+  </header>
+
+  <aside class="sidebar" id="navegacion">
+    <a routerLink="/" class="wordmark">
+      <span class="mark">OZ</span>
+      <span class="titles">
+        <span class="name">Observatorio</span>
+        <span class="city">Datos abiertos de Zaragoza</span>
+      </span>
+    </a>
+
+    <nav aria-label="Secciones">
+      @for (group of groups; track group.label) {
+        <p class="group-label">{{ group.label }}</p>
+        <ul>
+          @for (section of group.sections; track section.route) {
+            <li>
+              <a
+                [routerLink]="section.route"
+                routerLinkActive="on"
+                [style.--accent]="group.accent"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="section.icon" /></svg>
+                {{ section.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </nav>
+
+    <p class="stance">
+      Enseña los denominadores, la cobertura y los huecos de cada fuente.
+      <strong>Herramienta de análisis, no de conclusiones.</strong>
     </p>
+  </aside>
+
+  <!-- Fondo que cierra el cajón al tocar fuera. Solo existe en móvil. -->
+  <button type="button" class="scrim" (click)="menuOpen.set(false)" tabindex="-1" aria-hidden="true"></button>
+
+  <div class="main">
+    <main id="contenido">
+      <router-outlet />
+    </main>
+
+    <footer>
+      <p>
+        Datos del
+        <a href="https://www.zaragoza.es/sede/portal/datos-abiertos/" rel="noreferrer noopener" target="_blank">
+          portal de datos abiertos
+        </a>
+        del Ayuntamiento de Zaragoza, bajo su licencia de reutilización. Leídos por una API propia cuyo contrato
+        es público.
+      </p>
+      <p>
+        Sin medición, sin fuentes remotas y sin mapas de terceros:
+        <strong>no envía nada a nadie sobre quien lo visita</strong>.
+      </p>
+    </footer>
   </div>
-</header>
-
-<main class="wrap">
-  <obs-cross-tab />
-</main>
-
-<footer class="wrap">
-  <p>
-    Datos del <a href="https://www.zaragoza.es/sede/portal/datos-abiertos/" rel="noreferrer">portal de datos
-    abiertos</a> del Ayuntamiento de Zaragoza, leídos por una API propia cuyo contrato es público. Esta página
-    no usa medición, ni fuentes remotas, ni mapas de terceros: no envía nada a nadie sobre quien la visita.
-  </p>
-</footer>
+</div>

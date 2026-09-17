@@ -1,0 +1,206 @@
+<header class="page-head" style="--accent: var(--cat-1)">
+  <p class="eyebrow">Territorio · 01</p>
+  <h1>El cruce por junta</h1>
+  <p class="lede">
+    Quejas, locales y licencias sobre el mismo eje: las 29 juntas municipales y vecinales, que es la única
+    unidad territorial que publica el dato abierto de Zaragoza. <strong>Las columnas van completas y no se
+    divide una por otra</strong>: cruzar no es concluir.
+  </p>
+</header>
+
+<form class="controls" (submit)="$event.preventDefault()">
+  <fieldset>
+    <legend>Medidas</legend>
+    <div class="chips">
+      @for (id of allMeasures; track id) {
+        <label [class.on]="measures().includes(id)">
+          <input type="checkbox" [checked]="measures().includes(id)" (change)="toggleMeasure(id)" />
+          {{ measureLabels[id] }}
+        </label>
+      }
+    </div>
+    <p class="hint">
+      Al entrar están las tres: no es elegir un cruce, es no elegir ninguno. El gasto público no está porque
+      ninguna de sus tres fuentes tiene junta en el dato publicado.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Ventana</legend>
+    <div class="dates">
+      <label>
+        <span>Desde</span>
+        <input type="date" [value]="toDay(from())" (change)="setWindow('from', $any($event.target).value)" />
+      </label>
+      <label>
+        <span>Hasta</span>
+        <input type="date" [value]="toDay(to())" (change)="setWindow('to', $any($event.target).value)" />
+      </label>
+      @if (from() || to()) {
+        <button type="button" class="link" (click)="clearWindow()">Todo el histórico</button>
+      }
+    </div>
+    <!-- Sin esta línea la pantalla no dice de qué periodo son las cifras, y se leen como del año del padrón. -->
+    <p class="hint">
+      Estás viendo <strong>{{ windowText() }}</strong>. Cada medida la aplica sobre la fecha que declara, y no es
+      la misma en todas.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Denominador</legend>
+    <div class="chips">
+      <label [class.on]="denominator() === 'population'">
+        <input
+          type="radio"
+          name="denominator"
+          [checked]="denominator() === 'population'"
+          (change)="setDenominator('population')"
+        />
+        Padrón por junta
+      </label>
+      <label [class.on]="denominator() === 'none'">
+        <input
+          type="radio"
+          name="denominator"
+          [checked]="denominator() === 'none'"
+          (change)="setDenominator('none')"
+        />
+        Cifras absolutas
+      </label>
+    </div>
+    @if (denominator() === 'population' && populationYears().length > 0) {
+      <label class="year">
+        <span>Año del padrón</span>
+        <select (change)="setPopulationYear($any($event.target).value)">
+          <option value="" [selected]="populationYear() === null">El más reciente</option>
+          @for (year of populationYears(); track year) {
+            <option [value]="year" [selected]="populationYear() === year">{{ year }}</option>
+          }
+        </select>
+      </label>
+      <p class="hint">
+        El padrón tiene 2020, 2021, 2022 y 2024. Pedir 2023 devuelve las 29 sin denominador: el hueco de la
+        serie a la vista.
+      </p>
+    }
+  </fieldset>
+</form>
+
+@if (tab.value(); as crossTab) {
+  <div class="cols-map">
+    <section class="panel map">
+      <header>
+        <h2>Mapa</h2>
+        <label class="painted">
+          <span>Columna pintada</span>
+          <select (change)="painted.set($any($event.target).value)">
+            @for (measure of crossTab.measures; track measure.id) {
+              <option [value]="measure.id" [selected]="paintedMeasure()?.id === measure.id">
+                {{ measureLabels[measure.id] }}
+              </option>
+            }
+          </select>
+        </label>
+      </header>
+
+      @if (paintedByRule()) {
+        <p class="note">
+          Entra por la medida <strong>mejor cubierta</strong>, que hoy es esa. Es una regla, no una preferencia:
+          abrir por la peor cubierta enseñaría primero la columna más frágil.
+        </p>
+      }
+
+      <div class="switch">
+        @for (option of methods; track option) {
+          <button
+            type="button"
+            [class.on]="method() === option"
+            [title]="methodHints[option]"
+            (click)="method.set(option)"
+          >
+            {{ methodLabels[option] }}
+          </button>
+        }
+      </div>
+
+      @if (boundaries.value(); as geo) {
+        @if (paintedMeasure(); as measure) {
+          <obs-choropleth
+            [features]="geo.features"
+            [rows]="crossTab.items"
+            [measure]="measure"
+            [classification]="classification()"
+            [methodLabel]="methodLabels[method()]"
+            [title]="paintedTitle()"
+            [perThousand]="perThousand()"
+            [selected]="selected()"
+            (districtPicked)="pickDistrict($event)"
+          />
+        }
+      } @else {
+        <obs-state
+          [status]="boundaries.status()"
+          [error]="boundaries.error()"
+          [what]="boundaries.what"
+          (retry)="boundaries.reload()"
+        />
+      }
+
+      @if (withoutDenominator() > 0) {
+        <p class="note">
+          {{ withoutDenominator() }} de {{ crossTab.districts }} juntas salen sin denominador para el año pedido.
+          Su polígono va en gris: sin dato no es cero.
+        </p>
+      }
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>La matriz</h2>
+        <p class="aside">Pulsa una cabecera para ordenar. La ordenación la hace el backend, no el navegador.</p>
+      </header>
+      <obs-matrix
+        [tab]="crossTab"
+        [selected]="selected()"
+        [showRates]="perThousand()"
+        (sortBy)="sortByField($event)"
+        (districtPicked)="pickDistrict($event)"
+      />
+    </section>
+  </div>
+
+  @if (selected() !== null) {
+    <section class="panel">
+      @if (card.value(); as open) {
+        <obs-district-card [card]="open" (closed)="closeCard()" />
+      } @else {
+        <obs-state [status]="card.status()" [error]="card.error()" [what]="card.what" (retry)="card.reload()" />
+      }
+    </section>
+  }
+
+  <section class="panel">
+    <header>
+      <h2>De dónde sale cada columna</h2>
+    </header>
+    <ul class="provenance-list">
+      @for (measure of crossTab.measures; track measure.id) {
+        <li>
+          <strong>{{ measureLabels[measure.id] }}</strong> cuenta {{ measure.unit }}. La ventana cae sobre
+          {{ measure.dateFieldMeaning }}. Situadas
+          <span class="num">{{ integer(measure.coverage.assigned) }}</span> de
+          <span class="num">{{ integer(measure.coverage.total) }}</span>
+          ({{ percent(measure.coverage.pointCoverage) }}).
+        </li>
+      }
+    </ul>
+  </section>
+} @else {
+  <obs-state [status]="tab.status()" [error]="tab.error()" [what]="tab.what" (retry)="tab.reload()" />
+}
+
+<obs-colophon
+  [caveats]="tab.caveats()"
+  extra="No hay una fecha de lectura única: cada medida trae la suya, porque cada una viene de un módulo distinto que ingiere a su ritmo."
+/>

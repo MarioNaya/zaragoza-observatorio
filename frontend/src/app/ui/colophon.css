@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  margin-top: var(--s6);
+}
+
+.colophon {
+  display: grid;
+  grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+  gap: var(--s5);
+  padding: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 58rem) {
+  .colophon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .colophon {
+    padding: var(--s4);
+  }
+}
+
+h2 {
+  font-size: 0.7rem;
+  font-variation-settings: 'wght' 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 var(--s3);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.count {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  color: var(--text-2);
+}
+
+.provenance p {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-2);
+  margin-bottom: var(--s2);
+}
+
+.provenance strong {
+  color: var(--text);
+  font-variation-settings: 'wght' 650;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.05em 0.32em;
+  border-radius: 4px;
+  color: var(--text-2);
+}
+
+/*
+ * Las advertencias se pintan todas y tal como llegan (ADR-020 §10). Lo que cambia respecto de la versión
+ * anterior es la forma: en vez de un muro de diez párrafos, una rejilla de fichas cortas que se puede recorrer.
+ * Sigue sin haber ningún desplegable que las esconda.
+ */
+.caveats ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: caveat;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--s2);
+}
+
+.caveats li {
+  counter-increment: caveat;
+  position: relative;
+  padding: var(--s3) var(--s3) var(--s3) 2.2rem;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.caveats li::before {
+  content: counter(caveat);
+  position: absolute;
+  left: var(--s3);
+  top: var(--s3);
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 4px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-family: var(--mono);
+  font-size: 0.64rem;
+}

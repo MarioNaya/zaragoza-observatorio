@@ -2,6 +2,17 @@
   display: block;
 }
 
+/*
+ * La matriz desplaza dentro de su caja. Sin esto, a 375 px la tabla de 29 juntas por cuatro columnas empujaba
+ * el documento entero a 602 px de ancho y la página se iba por el lado: era el fallo de responsive.
+ */
+.scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -15,7 +26,7 @@ caption {
 th,
 td {
   padding: 0.4rem 0.55rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: baseline;
 }
@@ -23,8 +34,8 @@ td {
 thead th {
   position: sticky;
   top: 0;
-  background: var(--paper);
-  border-bottom: 1.5px solid var(--ink);
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--text);
   font-size: 0.76rem;
   line-height: 1.2;
   z-index: 1;
@@ -43,11 +54,11 @@ thead button {
 }
 
 thead button:hover {
-  color: var(--accent);
+  color: var(--primary);
 }
 
 thead button.active {
-  color: var(--accent);
+  color: var(--primary);
 }
 
 .arrow {
@@ -93,12 +104,12 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: var(--tint);
+  background: var(--primary-soft);
 }
 
 tbody tr.selected {
-  background: var(--tint);
-  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--primary-soft);
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .district {
@@ -107,7 +118,7 @@ tbody tr.selected {
 
 tfoot th,
 tfoot td {
-  border-top: 1.5px solid var(--ink);
+  border-top: 1.5px solid var(--text);
   border-bottom: 0;
   font-weight: 600;
   color: var(--muted);

@@ -1,31 +1,138 @@
 /*
- * Estilos globales. Tipografías del sistema y ninguna fuente remota (ADR-020 §13): el navegador de quien
- * visita no hace una sola petición a un tercero.
+ * Sistema visual del observatorio (ADR-021).
+ *
+ * Es una **aplicación de datos**, no una pieza impresa: barra lateral con las secciones agrupadas, tarjetas con
+ * superficie propia sobre un fondo tintado, cifras grandes como protagonistas y color con presencia. La versión
+ * anterior imitaba un periódico y se leía como un documento; esta imita lo que es.
+ *
+ * **El modo oscuro es el primario**, no una inversión del claro: es el que ve quien tiene el sistema en oscuro,
+ * y cada color está elegido y medido contra su propia superficie (contrastes WCAG comprobados, no estimados).
+ *
+ * Las dos familias se empaquetan con la aplicación, sin pedir nada a terceros (ADR-020 §13). La serif de
+ * titulares se cayó justamente porque era la que empujaba hacia el aspecto de documento.
  */
 
-:root {
-  --paper: #fdfdfc;
-  --ink: #1b1b1a;
-  --muted: #6b6b68;
-  --rule: #e0dfdb;
-  --tint: #eef3f9;
-  --accent: #2f5d96;
-  --accent-ink: #24486f;
-  --warn: #a8571f;
+@import '@fontsource-variable/public-sans/wght.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
 
-  color-scheme: light dark;
+:root {
+  /* --- superficies (modo oscuro, el primario) ------------------------------------------------------ */
+  --bg: #0d0f13;
+  --surface: #161a21;
+  --surface-2: #1d222b;
+  --surface-3: #242a35;
+  --border: #2b3240;
+  --border-strong: #3a4354;
+
+  /* --- tinta. Contrastes medidos sobre el fondo: 16,2 / 7,6 / 5,6 ---------------------------------- */
+  --text: #e8ecf2;
+  --text-2: #9aa4b5;
+  --text-3: #828b9d;
+
+  /* --- color interactivo. Se usa con generosidad: nav activa, botones, enlaces, foco --------------- */
+  --primary: #4d9fff;
+  --primary-strong: #2b86f0;
+  --primary-soft: #16283f;
+  --on-primary: #08121f;
+
+  /* --- estado. Reservado: nunca es «la serie 4» ---------------------------------------------------- */
+  --good: #3fb27f;
+  --warn: #e08a5b;
+  --warn-soft: #2a1d16;
+  --bad: #e5636d;
+
+  /* --- datos. Categórica validada para daltonismo, con pasos propios de este fondo ----------------- */
+  --cat-1: #3f8cc6;
+  --cat-2: #bd8a24;
+  --cat-3: #a263a9;
+  /*
+   * Secuencial de un solo tono, luminosidad monótona y pasos regulares: la rampa del mapa. Arranca por encima
+   * de la superficie de la tarjeta a propósito: con el primer paso más oscuro, las juntas de la clase más baja
+   * se confundían con el fondo y parecía que faltaban del mapa.
+   */
+  --seq-0: #24394c;
+  --seq-1: #2f5a7c;
+  --seq-2: #3d7ba6;
+  --seq-3: #5aa0cd;
+  --seq-4: #84c4ea;
+  /*
+   * Rampa de **etapas ordenadas** (los cuatro importes del ciclo presupuestario). No es categórica: crédito ≥
+   * comprometido ≥ obligación ≥ pago es un orden, y la guía pide secuencial para lo ordenado. Con cuatro hues
+   * categóricos el par azul/ciruela caía a ΔE 4,6 en deuteranopía. Aquí los cuatro pasos son del mismo tono,
+   * con luminosidad monótona y **todos por encima de 3:1** contra su superficie.
+   */
+  --ord-0: #a8d4f7;
+  --ord-1: #7fb4e4;
+  --ord-2: #5c94cf;
+  --ord-3: #4278b0;
+
+  /* --- tipografía --------------------------------------------------------------------------------- */
+  --sans: 'Public Sans Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* --- ritmo. Un solo escalón base para que el aire sea coherente ---------------------------------- */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 3rem;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: none;
+  --sidebar: 250px;
+
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --paper: #141416;
-    --ink: #e8e7e4;
-    --muted: #9a9996;
-    --rule: #2d2d31;
-    --tint: #1c2632;
-    --accent: #64a8dc;
-    --accent-ink: #8dc3e9;
-    --warn: #d99a5f;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-2: #f0f3f8;
+    --surface-3: #e7ecf4;
+    --border: #e3e8f0;
+    --border-strong: #cfd6e2;
+
+    /*
+     * Tinta del modo claro, **medida** contra las tres superficies donde se usa (#f5f7fa, #f0f3f8, #e7ecf4).
+     * El modo oscuro es el primario y el claro se escribió sin medir: `--text-3` daba 4,20 / 4,06 / 3,81 y el
+     * mínimo para texto pequeño es 4,5, así que la letra pequeña de todas las pantallas —copetes, pie,
+     * cabeceras de tabla— incumplía en claro y en oscuro no (axe, ADR-022 §6). Ahora: 5,09 / 4,91 / 4,60.
+     */
+    --text: #121821;
+    --text-2: #5a6577;
+    --text-3: #606a7b;
+
+    --primary: #1668d6;
+    --primary-strong: #0f52ad;
+    --primary-soft: #e8f0fd;
+    --on-primary: #ffffff;
+
+    --good: #1c7a52;
+    --warn: #b4531f;
+    --warn-soft: #fcf0e9;
+    --bad: #c0303c;
+
+    --cat-1: #1f78b4;
+    --cat-2: #b07a14;
+    --cat-3: #8f4f96;
+    --seq-0: #e4edf5;
+    --seq-1: #aecce3;
+    --seq-2: #77aed6;
+    --seq-3: #3f89bd;
+    --seq-4: #1f5f92;
+    --ord-0: #5f96c9;
+    --ord-1: #40799f;
+    --ord-2: #295e85;
+    --ord-3: #123f61;
+
+    --shadow: 0 1px 2px rgba(18, 24, 33, 0.05), 0 2px 8px rgba(18, 24, 33, 0.04);
+
+    color-scheme: light;
   }
 }
 
@@ -39,32 +146,675 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  /* Ninguna pantalla desplaza el cuerpo en horizontal: lo ancho desplaza dentro de su propia caja. */
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 3.4vw, 2.15rem);
+  font-variation-settings: 'wght' 780;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: 1.02rem;
+  font-variation-settings: 'wght' 700;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
 }
 
 a {
-  color: var(--accent);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/*
+ * Un enlace dentro de un párrafo se distingue **subrayado**, no solo por color: frente al texto que lo rodea
+ * el azul da 1,25:1 y el mínimo es 3:1, así que sin subrayado no se ve que es un enlace (axe, ADR-022 §6).
+ * Los enlaces que son tarjeta o elemento de navegación no lo necesitan: se distinguen por su sitio.
+ */
+p a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
+  border-radius: 3px;
 }
 
-.wrap {
-  max-width: 78rem;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+/* Cifras siempre tabulares: una columna se compara de un vistazo. */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* --- tarjetas: la unidad de composición ------------------------------------------------------------ */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--s5);
+  margin-top: var(--s5);
+  min-width: 0;
+}
+
+.panel > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3) var(--s5);
+  margin-bottom: var(--s4);
+}
+
+.panel h2 {
+  font-size: 0.95rem;
+}
+
+.panel .aside {
+  font-size: 0.8rem;
+  color: var(--text-3);
+  max-width: 38rem;
+  flex: 1 1 16rem;
 }
 
 @media (max-width: 40rem) {
-  .wrap {
-    padding: 0 1rem;
+  .panel {
+    padding: var(--s4);
+    border-radius: var(--radius-sm);
   }
+}
+
+/* --- cabecera de página ---------------------------------------------------------------------------- */
+
+.page-head {
+  padding: var(--s6) 0 var(--s5);
+}
+
+.page-head .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 0.7rem;
+  font-variation-settings: 'wght' 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 var(--s3);
+}
+
+.page-head .eyebrow::before {
+  content: '';
+  width: 1.6rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent, var(--primary));
+}
+
+.page-head h1 {
+  max-width: 22ch;
+}
+
+.lede {
+  margin-top: var(--s3);
+  font-size: 0.98rem;
+  color: var(--text-2);
+  max-width: 52rem;
+  line-height: 1.6;
+}
+
+.lede strong {
+  color: var(--text);
+  font-variation-settings: 'wght' 650;
+}
+
+/* --- retículas -------------------------------------------------------------------------------------- */
+
+.cols-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--s5);
+}
+
+.cols-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s5);
+  align-items: start;
+}
+
+@media (max-width: 66rem) {
+  .cols-map {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- controles -------------------------------------------------------------------------------------- */
+
+input,
+select,
+button,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='date'],
+input[type='number'],
+select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.42rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  color-scheme: light dark;
+  min-width: 0;
+  transition: border-color 120ms ease;
+}
+
+input::placeholder {
+  color: var(--text-3);
+}
+
+input:hover,
+select:hover {
+  border-color: var(--border-strong);
+}
+
+input:focus-visible,
+select:focus-visible {
+  border-color: var(--primary);
+  outline-offset: 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.38rem 0.75rem;
+  font-size: 0.82rem;
+  font-variation-settings: 'wght' 550;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Grupo excluyente: pastillas dentro de un carril, con la activa rellena de color. */
+.switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  max-width: 100%;
+}
+
+.switch button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms ease;
+}
+
+.switch button:hover {
+  color: var(--text);
+}
+
+.switch button.on {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-variation-settings: 'wght' 650;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.chips label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.34rem 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 120ms ease;
+}
+
+.chips label:hover {
+  border-color: var(--border-strong);
+}
+
+.chips label.on {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-variation-settings: 'wght' 600;
+}
+
+.chips input {
+  accent-color: var(--primary);
+  margin: 0;
+}
+
+.link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.field {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.field > span,
+.field-label {
+  font-size: 0.72rem;
+  font-variation-settings: 'wght' 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.note {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  max-width: 52rem;
+}
+
+.note strong {
+  color: var(--text);
+}
+
+.loading {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  padding: var(--s5) 0;
+}
+
+.error {
+  margin: var(--s4) 0;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--warn);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  font-size: 0.85rem;
+}
+
+/* --- utilidades -------------------------------------------------------------------------------------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Cualquier cosa ancha (tablas, gráficos) desplaza dentro de su caja, nunca la página. */
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stagger > * {
+    animation: rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 20ms; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger > *:nth-child(4) { animation-delay: 140ms; }
+  .stagger > *:nth-child(5) { animation-delay: 180ms; }
+  .stagger > *:nth-child(6) { animation-delay: 220ms; }
+  .stagger > *:nth-child(7) { animation-delay: 260ms; }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* --- portada ----------------------------------------------------------------------------------------- */
+
+.hero {
+  padding-bottom: var(--s4);
+}
+
+.sumario {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--s4);
+}
+
+.sumario li {
+  min-width: 0;
+}
+
+.sumario a {
+  display: grid;
+  gap: var(--s2);
+  align-content: start;
+  height: 100%;
+  padding: var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+
+.sumario a:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.sumario .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 0.68rem;
+  font-variation-settings: 'wght' 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/*
+ * La familia sigue identificando la tarjeta, pero con la marca y no con el texto: los `--cat-*` son colores de
+ * dato y a 10,9 px daban 4,06:1 sobre la superficie, por debajo del 4,5:1 exigible (axe, ADR-022 §6).
+ */
+.sumario .eyebrow::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--accent, var(--primary));
+}
+
+.sumario h2 {
+  font-size: 1.12rem;
+  letter-spacing: -0.025em;
+}
+
+.blurb {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.sumario dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s5);
+  margin: var(--s2) 0 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+/*
+ * En el documento va primero la etiqueta y luego el valor —el par término-definición que se lee en voz alta—
+ * y en la pantalla al contrario, porque la cifra es la protagonista. Lo invierte la rejilla.
+ */
+.sumario dl > div {
+  display: grid;
+  grid-template-rows: auto auto;
+}
+
+.sumario dd {
+  grid-row: 1;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.sumario dt {
+  grid-row: 2;
+  font-size: 0.7rem;
+  color: var(--text-3);
+}
+
+/* Una cifra que no se pudo leer se dice con palabras, no con un guion (ADR-022 §5). */
+.unread {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin: var(--s2) 0 0;
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.unread button {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.manifesto ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--s4);
+}
+
+.manifesto li {
+  padding: var(--s3) var(--s4);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-strong);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.manifesto strong {
+  display: block;
+  color: var(--text);
+  font-variation-settings: 'wght' 650;
+  margin-bottom: 0.15rem;
+}
+
+/* --- cruce territorial: controles ---------------------------------------------------------------------- */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--s5);
+  padding: var(--s5);
+  margin-top: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.controls fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.controls legend {
+  font-size: 0.72rem;
+  font-variation-settings: 'wght' 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 0;
+  margin-bottom: var(--s3);
+}
+
+.controls .dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: var(--s3);
+}
+
+.controls .dates .link {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.controls .year {
+  margin-top: var(--s3);
+}
+
+.controls .hint {
+  margin-top: var(--s3);
+}
+
+.painted {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.painted select {
+  width: auto;
+  min-width: 11rem;
+}
+
+.provenance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s3);
+  font-size: 0.82rem;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.provenance-list li {
+  padding-left: var(--s4);
+  border-left: 2px solid var(--border);
+}
+
+.provenance-list strong {
+  color: var(--text);
+}
+
+/* --- tabla de cobertura por año ------------------------------------------------------------------------ */
+
+.coverage {
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  width: 100%;
+  max-width: 34rem;
+}
+
+.coverage th,
+.coverage td {
+  padding: 0.34rem 0.7rem 0.34rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.coverage thead th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+
+.coverage .numeric {
+  text-align: right;
 }

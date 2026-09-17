@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../api/types';
+import { decimal, integer } from '../core/format';
+import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../core/types';
 
 /**
  * La matriz: una fila por junta y una columna por medida (ADR-019 §1).
@@ -14,7 +15,8 @@ import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../api/typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './matrix.css',
   template: `
-    <table>
+    <div class="scroll">
+      <table>
       <caption class="sr-only">
         Las {{ tab().districts }} juntas municipales y vecinales por las medidas pedidas
       </caption>
@@ -77,7 +79,8 @@ import { CrossTab, MEASURE_LABELS, MeasureColumn, UNIT_LABELS } from '../api/typ
           <td class="numeric denominator"></td>
         </tr>
       </tfoot>
-    </table>
+      </table>
+    </div>
 
     <!-- El pie no es decorativo: es la diferencia entre lo que suma la tabla y lo que hay (ADR-019 §6). -->
     <p class="note">
@@ -104,19 +107,16 @@ export class Matrix {
     return this.descending() ? '▾' : '▴';
   }
 
+  // El formato es de `core/format`, que ya sabe qué hacer con el hueco: una medida puede no traer valor para
+  // una junta y `value.toLocaleString()` sobre eso es el `TypeError` de siempre (ADR-022 §4).
+  protected readonly integer = integer;
+  protected readonly decimal = decimal;
+
   protected label(measure: MeasureColumn): string {
     return MEASURE_LABELS[measure.id] ?? measure.id;
   }
 
   protected unit(measure: MeasureColumn): string {
     return UNIT_LABELS[measure.unit] ?? measure.unit;
-  }
-
-  protected integer(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 0 });
-  }
-
-  protected decimal(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 1 });
   }
 }

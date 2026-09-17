@@ -1,0 +1,136 @@
+<header class="page-head" style="--accent: var(--cat-2)">
+  <p class="eyebrow">Dinero · 02</p>
+  <h1>La contratación pública</h1>
+  <p class="lede">
+    Ocho mil procesos desde 2007 en formato OCDS. <strong>Ninguna cifra de aquí es dinero pagado</strong>: esta
+    fuente publica lo licitado y lo adjudicado, y la ejecución solo está en el presupuesto.
+  </p>
+</header>
+
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
+}
+
+<section class="panel">
+  <header>
+    <h2>Licitado y adjudicado, año a año</h2>
+    <p class="aside">
+      Dos columnas, no una: entre lo que sale a concurso y lo que se acaba adjudicando hay una distancia que el
+      producto no promedia ni interpreta.
+    </p>
+  </header>
+
+  @if (aggregation.status() === 'ready' && axis() === 'year') {
+    <obs-bar-chart
+      [data]="bars()"
+      title="Importe licitado y adjudicado por año"
+      [format]="euroShort"
+      [legend]="['Licitado', 'Adjudicado']"
+      hint="Pasa el ratón por un año para leer los dos importes."
+    />
+  } @else if (axis() !== 'year') {
+    <p class="note">
+      La serie por año se vuelve a pedir al elegir el eje «Año» arriba: cada eje es una petición distinta y no
+      se guarda la anterior, porque entonces la pantalla enseñaría cifras de antes sin poder decir de cuándo.
+    </p>
+  } @else {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Quién contrata y quién cobra</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (aggregation.status() === 'failed') {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  } @else if (axis() !== 'year') {
+    <div class="switch figures">
+      @for (option of figures; track option.key) {
+        <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    <p class="note">
+      Ordenado por <strong>{{ figureLabel() }}</strong>. Los dos importes van por separado y ninguno sustituye
+      al otro: un grupo puede licitar mucho y adjudicar poco, y la barra dice cuál de los dos está midiendo.
+    </p>
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+    @if (overlapping()) {
+      <p class="note">
+        En este eje <strong>un proceso puede caer en varios grupos</strong>, así que la suma de los grupos no es
+        el total. Lo dice la propia respuesta de la API, no lo deducimos aquí.
+      </p>
+    }
+  } @else {
+    <p class="note">El eje por año está arriba, con sus dos importes. Elige otro para ver el reparto.</p>
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar los procesos</h2>
+    <p class="aside">
+      El filtro «en el listado documentado» es el que enseña el hallazgo: pon «no» y verás los expedientes que
+      la API del ayuntamiento no publica en su listado.
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
+  />
+
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="procesos"
+      caption="Procesos de contratación"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
+</section>
+
+<obs-colophon
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
+  extra="Del adjudicatario se guarda el NIF de las empresas y nada de las personas físicas: la adjudicación sigue contando con su importe y lo que desaparece es quién."
+/>

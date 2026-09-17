@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { DistrictCard as Card, MEASURE_LABELS, UNIT_LABELS } from '../api/types';
+import { dateTime, decimal, integer } from '../core/format';
+import { DistrictCard as Card, MEASURE_LABELS, UNIT_LABELS } from '../core/types';
 
 /**
  * La ficha de una junta (ADR-019 §1): la misma fila del cruce con la **serie de padrón entera** al lado.
@@ -83,6 +84,9 @@ export class DistrictCardView {
     }));
   });
 
+  protected readonly integer = integer;
+  protected readonly decimal = decimal;
+
   protected label(id: string): string {
     return MEASURE_LABELS[id as keyof typeof MEASURE_LABELS] ?? id;
   }
@@ -91,18 +95,7 @@ export class DistrictCardView {
     return UNIT_LABELS[unit] ?? unit;
   }
 
-  protected integer(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 0 });
-  }
-
-  protected decimal(value: number): string {
-    return value.toLocaleString('es-ES', { maximumFractionDigits: 1 });
-  }
-
   protected readAt(instant: string | null): string {
-    if (!instant) {
-      return 'nunca';
-    }
-    return new Date(instant).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+    return instant ? dateTime(instant) : 'nunca';
   }
 }

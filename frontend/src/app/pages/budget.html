@@ -1,0 +1,127 @@
+<header class="page-head" style="--accent: var(--cat-2)">
+  <p class="eyebrow">Dinero · 01</p>
+  <h1>El presupuesto de gastos</h1>
+  <p class="lede">
+    Veinte ejercicios en <strong>140 instantáneas datadas</strong>, y la única fuente del observatorio que dice
+    lo que el ayuntamiento <em>pagó</em>. La contratación dice lo que se licitó y lo que se adjudicó; lo
+    reconocido y lo pagado solo salen de aquí.
+  </p>
+</header>
+
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
+}
+
+<section class="panel">
+  <header>
+    <h2>Las cuatro cifras del ciclo, ejercicio a ejercicio</h2>
+    <p class="aside">
+      No son cuatro maneras de decir lo mismo: van de lo presupuestado a lo pagado y la distancia entre ellas es
+      la noticia. Por eso se enseñan juntas y ninguna se llama «gasto» a secas.
+    </p>
+  </header>
+
+  @if (years.status() === 'ready') {
+    <obs-line-chart
+      [series]="series()"
+      title="Crédito definitivo, comprometido, obligación neta y pago neto por ejercicio"
+      [format]="euroShort"
+      hint="Cada ejercicio toma su última instantánea. Pasa el ratón para leer los cuatro importes de un año."
+    />
+  } @else {
+    <obs-state [status]="years.status()" [error]="years.error()" [what]="years.what" (retry)="years.reload()" />
+  }
+
+  <p class="note">
+    La serie toma <strong>la última foto de cada ejercicio</strong>. Cada instantánea es acumulada desde enero,
+    así que sumar las doce de un año contaría el mismo euro doce veces.
+  </p>
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Dónde va el dinero</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="switch figures">
+      @for (option of figures; track option.key) {
+        <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    <p class="note">
+      Ordenado por <strong>{{ figureLabel() }}</strong>. Cambiar de cifra cambia el orden, y eso es lo que hay
+      que ver: un capítulo puede tener mucho crédito y poco ejecutado.
+    </p>
+  @if (aggregation.status() === 'ready') {
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+    @if (snapshotDate(); as snapshot) {
+      <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
+    }
+  } @else {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar las partidas</h2>
+    <p class="aside">
+      @if (lineSnapshot(); as snapshot) {
+        Partidas de la instantánea del <strong>{{ snapshot }}</strong>, que es la más reciente cargada.
+      }
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
+  />
+
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns()"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="partidas"
+      caption="Partidas del presupuesto de gastos"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
+</section>
+
+<obs-colophon
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
+  extra="El endpoint de origen se llama «gasto corriente» y es el presupuesto de gastos entero: trae inversiones reales y los capítulos financieros."
+/>

@@ -1,27 +1,17 @@
 /*
- * Paleta secuencial de un solo tono (ADR-020 §7). No hay divergente: ninguna medida tiene un punto medio que
- * el dato defina, y fijarlo convertiría el mapa en «juntas por encima» y «juntas por debajo».
+ * Paleta del mapa. Consume la **rampa secuencial validada del sistema** (un solo tono, luminosidad monótona,
+ * pasos regulares medidos en OKLab). No hay divergente: ninguna medida tiene un punto medio que el dato defina
+ * (ADR-020 §7).
  */
 :host {
-  --c0: #e8eef6;
-  --c1: #c2d4e8;
-  --c2: #8fb2d6;
-  --c3: #5a89bd;
-  --c4: #2f5d96;
-  --no-data: #f1f1f0;
-  --stroke: color-mix(in srgb, var(--ink) 25%, transparent);
+  --c0: var(--seq-0);
+  --c1: var(--seq-1);
+  --c2: var(--seq-2);
+  --c3: var(--seq-3);
+  --c4: var(--seq-4);
+  --no-data: var(--surface-2);
+  --stroke: color-mix(in srgb, var(--text) 22%, transparent);
   display: block;
-}
-
-@media (prefers-color-scheme: dark) {
-  :host {
-    --c0: #1e2a38;
-    --c1: #27455f;
-    --c2: #336288;
-    --c3: #4183b4;
-    --c4: #64a8dc;
-    --no-data: #26262a;
-  }
 }
 
 .map {
@@ -45,12 +35,12 @@ svg {
 .district:focus-visible {
   fill-opacity: 0.78;
   outline: none;
-  stroke: var(--ink);
+  stroke: var(--text);
   stroke-width: 1.5;
 }
 
 .district.selected {
-  stroke: var(--accent);
+  stroke: var(--primary);
   stroke-width: 2.5;
 }
 
@@ -67,9 +57,9 @@ svg {
 
 .label {
   font-size: 9px;
-  fill: var(--ink);
+  fill: var(--text);
   paint-order: stroke;
-  stroke: var(--paper);
+  stroke: var(--surface);
   stroke-width: 2.5px;
   stroke-linejoin: round;
   text-anchor: middle;
@@ -140,8 +130,8 @@ svg {
 .coverage {
   margin: 0;
   padding: 0.6rem 0.75rem;
-  border-left: 3px solid var(--accent);
-  background: var(--tint);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
   border-radius: 0 4px 4px 0;
   font-size: 0.82rem;
   line-height: 1.45;

@@ -1,0 +1,99 @@
+<header class="page-head" style="--accent: var(--cat-1)">
+  <p class="eyebrow">Ciudad · 01</p>
+  <h1>Actividad urbana</h1>
+  <p class="lede">
+    Cuarenta y dos mil locales con licencia y sus casi setenta mil licencias.
+    <strong>Es un registro de licencias concedidas, no un censo de comercios abiertos</strong>, y ninguna cifra
+    de esta pantalla dice lo contrario.
+  </p>
+</header>
+
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
+}
+
+<section class="panel">
+  <header>
+    <h2>Qué actividad y dónde</h2>
+    <div class="switch">
+      @for (option of axes; track option.key) {
+        <button type="button" [class.on]="axis() === option.key" (click)="setAxis(option.key)">
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (aggregation.status() === 'ready') {
+    @if (axis() === 'licence_year') {
+      <obs-bar-chart
+        [data]="bars()"
+        title="Licencias concedidas por año"
+        [format]="integer"
+        hint="Desde 1990. La fuente trae alguna licencia con fecha imposible, incluida una de 2033."
+      />
+    } @else {
+      <p class="note">
+        Esta agregación cuenta <strong>{{ unit() === 'licences' ? 'licencias' : 'locales' }}</strong>, que lo dice
+        la propia respuesta de la API. No son intercambiables y por eso cada fila trae también la otra cifra.
+      </p>
+      <obs-ranking [data]="ranking()" [format]="integer" />
+    }
+  } @else {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  }
+</section>
+
+<section class="panel">
+  <header>
+    <h2>Explorar los locales</h2>
+    <p class="aside">
+      Esta fuente <strong>no guarda una sola línea de texto libre</strong>: su campo de comentarios contenía
+      quince DNI válidos, así que no hay columna, el traductor no lo lee y la página cruda no se guarda.
+    </p>
+  </header>
+
+  <obs-filters
+    [defs]="filterDefs"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
+  />
+
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="locales"
+      caption="Locales con licencia"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
+</section>
+
+<obs-colophon
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
+  extra="Esta fuente no declara junta, así que no hay contraste entre la junta resuelta y la declarada: solo la geométrica, y la ausencia se dice en vez de fabricarse cruzando el portal contra el callejero."
+/>

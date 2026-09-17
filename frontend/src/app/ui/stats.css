@@ -1,0 +1,100 @@
+:host {
+  display: block;
+}
+
+/* Tarjetas de cifra: cada una es su propia superficie, con la cifra como protagonista. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+  gap: var(--s4);
+  margin: 0;
+}
+
+.stats > div {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  gap: 0.15rem;
+  padding: var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Una banda de color arriba: da identidad sin teñir el número, que debe seguir siendo tinta. */
+.stats > div::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--accent, var(--primary));
+  opacity: 0.85;
+}
+
+/*
+ * El orden del documento es etiqueta, valor y nota —que es como se lee en voz alta y lo que hace de esto una
+ * lista de definiciones de verdad—; el de la pantalla es cifra, etiqueta y nota, porque la cifra es la
+ * protagonista. Lo invierte la rejilla, no el marcado: un término con dos descripciones es válido.
+ */
+dd {
+  margin: 0;
+}
+
+.num {
+  grid-row: 1;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+dt {
+  grid-row: 2;
+  font-size: 0.82rem;
+  font-variation-settings: 'wght' 650;
+  color: var(--text);
+}
+
+.note {
+  grid-row: 3;
+  margin-top: 0.15rem;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* La cifra que hay que leer con cuidado cambia la banda a color de estado y lo dice con un rótulo. */
+.caution::before {
+  background: var(--warn);
+  opacity: 1;
+}
+
+.caution dt::after {
+  content: 'ojo';
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  vertical-align: 0.1em;
+}
+
+.compact > div {
+  padding: var(--s3) var(--s4);
+}
+
+.compact .num {
+  font-size: 1.25rem;
+}

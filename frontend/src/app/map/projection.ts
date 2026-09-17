@@ -1,4 +1,4 @@
-import { DistrictFeature, GeoJsonPolygon } from '../api/types';
+import { DistrictFeature, GeoJsonPolygon } from '../core/types';
 
 /**
  * Proyección de los contornos a coordenadas de SVG (ADR-020 §4).
@@ -75,8 +75,16 @@ export function pathOf(geometry: GeoJsonPolygon, projection: Projection): string
   return parts.join('');
 }
 
-/** Un punto interior razonable para poner la etiqueta: el centro del recuadro del anillo exterior mayor. */
-export function labelPointOf(geometry: GeoJsonPolygon, projection: Projection): { x: number; y: number } {
+/**
+ * Dónde poner la etiqueta y cuánto sitio hay: el centro del recuadro del anillo mayor, y su ancho en píxeles.
+ *
+ * El ancho lo necesita quien pinta para decidir **si el nombre cabe**. Las juntas del centro son pequeñas y
+ * están pegadas, así que rotularlas todas amontona los nombres.
+ */
+export function labelPointOf(
+  geometry: GeoJsonPolygon,
+  projection: Projection,
+): { point: { x: number; y: number }; span: number } {
   let best: number[][] = [];
   forEachRing(geometry, (ring) => {
     if (ring.length > best.length) {
@@ -94,8 +102,11 @@ export function labelPointOf(geometry: GeoJsonPolygon, projection: Projection): 
     maxLat = Math.max(maxLat, lat);
   }
   return {
-    x: projection.x((minLon + maxLon) / 2),
-    y: projection.y((minLat + maxLat) / 2),
+    point: {
+      x: projection.x((minLon + maxLon) / 2),
+      y: projection.y((minLat + maxLat) / 2),
+    },
+    span: projection.x(maxLon) - projection.x(minLon),
   };
 }
 

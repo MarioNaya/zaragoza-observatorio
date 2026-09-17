@@ -1,53 +1,300 @@
-.masthead {
-  border-bottom: 1px solid var(--rule);
-  padding: 2.2rem 0 1.8rem;
-  margin-bottom: 2rem;
+:host {
+  display: block;
 }
 
-.eyebrow {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--muted);
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 0.5rem 0.9rem;
+  border-radius: 0 0 var(--radius-sm) 0;
 }
 
-h1 {
-  margin: 0.25rem 0 0.5rem;
-  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+.skip:focus {
+  left: 0;
+}
+
+/* --- armazón: lateral fija + contenido ------------------------------------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  padding: var(--s5) var(--s4);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.wordmark:hover {
+  text-decoration: none;
+}
+
+/* El distintivo: lo único decorativo de la interfaz, y el ancla de color de la marca. */
+.mark {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, var(--primary), var(--cat-3));
+  color: var(--on-primary);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.titles {
+  display: grid;
+  min-width: 0;
+}
+
+.wordmark .name {
+  font-size: 1.02rem;
+  font-variation-settings: 'wght' 720;
   letter-spacing: -0.025em;
-  line-height: 1.05;
-  font-weight: 700;
+  line-height: 1.15;
 }
 
-.lede {
+.wordmark .city {
+  font-size: 0.7rem;
+  color: var(--text-3);
+  line-height: 1.3;
+}
+
+nav {
+  display: grid;
+  align-content: start;
+  gap: var(--s1);
+  flex: 1;
+}
+
+.group-label {
+  margin: var(--s3) 0 var(--s1);
+  font-size: 0.66rem;
+  font-variation-settings: 'wght' 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-left: var(--s3);
+}
+
+nav ul {
+  list-style: none;
   margin: 0;
-  max-width: 46rem;
-  font-size: 0.95rem;
-  color: var(--muted);
-  line-height: 1.6;
+  padding: 0;
+  display: grid;
+  gap: 2px;
 }
 
-.lede strong {
-  color: var(--ink);
-  font-weight: 600;
+nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 0.5rem var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: 0.87rem;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+nav a svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.75;
+}
+
+nav a:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+/*
+ * La activa se rellena con el color de su familia: se ve dónde estás sin leer.
+ *
+ * El **texto** va en tinta, no en el color de la familia. Teñirlo daba 3,4:1 y 4,1:1 en dos de las tres
+ * familias sobre su propio relleno (medido con axe, ADR-022 §6), y los `--cat-*` son colores de dato, no de
+ * texto. Lo que identifica sigue siendo el relleno y la barra de la izquierda, que son marca y no letra.
+ */
+nav a.on {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+  color: var(--text);
+  font-variation-settings: 'wght' 650;
+}
+
+nav a.on svg {
+  opacity: 1;
+}
+
+.stance {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.5;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+
+.stance strong {
+  color: var(--text-2);
+  font-variation-settings: 'wght' 600;
+}
+
+/* --- contenido -------------------------------------------------------------------------------------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 main {
-  padding-bottom: 3rem;
+  flex: 1;
+  padding: 0 var(--s6) var(--s7);
+  min-width: 0;
 }
 
 footer {
-  border-top: 1px solid var(--rule);
-  padding-top: 1.2rem;
-  padding-bottom: 3rem;
+  padding: var(--s5) var(--s6) var(--s6);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--s3) var(--s6);
 }
 
 footer p {
-  margin: 0;
-  max-width: 52rem;
   font-size: 0.76rem;
-  color: var(--muted);
+  color: var(--text-3);
   line-height: 1.6;
+  max-width: 36rem;
+}
+
+footer strong {
+  color: var(--text-2);
+}
+
+/* --- barra superior y cajón: solo por debajo de 64rem ----------------------------------------------- */
+
+.topbar,
+.scrim {
+  display: none;
+}
+
+@media (max-width: 64rem) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: var(--s3);
+    padding: var(--s3) var(--s4);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .burger {
+    display: grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    flex: none;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .burger svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .wordmark.compact .city {
+    display: none;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    width: min(17rem, 84vw);
+    transform: translateX(-101%);
+    transition: transform 200ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  .shell.open .sidebar {
+    transform: none;
+  }
+
+  .shell.open .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: default;
+  }
+
+  main {
+    padding: 0 var(--s4) var(--s6);
+  }
+
+  footer {
+    padding: var(--s5) var(--s4) var(--s5);
+  }
+}
+
+/* La lateral no repite la marca cuando ya está en la barra superior. */
+@media (max-width: 64rem) {
+  .sidebar > .wordmark {
+    margin-bottom: var(--s2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
 }
