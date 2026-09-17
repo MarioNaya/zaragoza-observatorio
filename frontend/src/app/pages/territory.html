@@ -8,10 +8,6 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
-}
-
 <form class="controls" (submit)="$event.preventDefault()">
   <fieldset>
     <legend>Medidas</legend>
@@ -91,7 +87,7 @@
   </fieldset>
 </form>
 
-@if (tab(); as crossTab) {
+@if (tab.value(); as crossTab) {
   <div class="cols-map">
     <section class="panel map">
       <header>
@@ -128,7 +124,7 @@
         }
       </div>
 
-      @if (boundaries(); as geo) {
+      @if (boundaries.value(); as geo) {
         @if (paintedMeasure(); as measure) {
           <obs-choropleth
             [features]="geo.features"
@@ -143,7 +139,12 @@
           />
         }
       } @else {
-        <p class="loading">Leyendo los contornos de las 29 juntas…</p>
+        <obs-state
+          [status]="boundaries.status()"
+          [error]="boundaries.error()"
+          [what]="boundaries.what"
+          (retry)="boundaries.reload()"
+        />
       }
 
       @if (withoutDenominator() > 0) {
@@ -169,9 +170,13 @@
     </section>
   </div>
 
-  @if (card(); as open) {
+  @if (selected() !== null) {
     <section class="panel">
-      <obs-district-card [card]="open" (closed)="closeCard()" />
+      @if (card.value(); as open) {
+        <obs-district-card [card]="open" (closed)="closeCard()" />
+      } @else {
+        <obs-state [status]="card.status()" [error]="card.error()" [what]="card.what" (retry)="card.reload()" />
+      }
     </section>
   }
 
@@ -191,11 +196,11 @@
       }
     </ul>
   </section>
-} @else if (loading()) {
-  <p class="loading">Componiendo el cruce…</p>
+} @else {
+  <obs-state [status]="tab.status()" [error]="tab.error()" [what]="tab.what" (retry)="tab.reload()" />
 }
 
 <obs-colophon
-  [caveats]="caveats()"
+  [caveats]="tab.caveats()"
   extra="No hay una fecha de lectura única: cada medida trae la suya, porque cada una viene de un módulo distinto que ingiere a su ritmo."
 />

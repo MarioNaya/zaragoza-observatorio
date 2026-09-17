@@ -103,6 +103,11 @@ thead button.on {
   white-space: normal;
 }
 
+.scroll.busy {
+  opacity: 0.55;
+  transition: opacity 120ms ease-out;
+}
+
 tbody tr:hover {
   background: var(--surface-2);
 }

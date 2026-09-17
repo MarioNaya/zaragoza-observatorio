@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Observatory } from '../core/api';
 import { euroShort, integer, percent, year } from '../core/format';
+import { Loaded, Status } from '../core/state';
 
 interface Card {
   route: string;
@@ -12,6 +13,15 @@ interface Card {
   title: string;
   blurb: string;
   figures: { value: string; label: string }[];
+  /**
+   * En qué estado está el resumen del que salen las cifras de esta tarjeta.
+   *
+   * Hace falta porque antes los seis errores se tragaban con un `error: () => undefined` y la tarjeta pintaba
+   * un guion: desde fuera, «no hay dato» y «no se pudo leer» eran lo mismo. Son cosas distintas y esta es la
+   * pantalla de entrada (ADR-022 §5).
+   */
+  status: Status;
+  reload: () => void;
 }
 
 /**
@@ -28,148 +38,137 @@ interface Card {
 export class HomePage {
   private readonly api = inject(Observatory);
 
-  private readonly budget = signal<{ obligations: string; span: string } | null>(null);
-  private readonly contracts = signal<{ awarded: string; processes: string } | null>(null);
-  private readonly grants = signal<{ granted: string; beneficiaries: string } | null>(null);
-  private readonly citizen = signal<{ total: string; coverage: string } | null>(null);
-  private readonly urban = signal<{ premises: string; licences: string } | null>(null);
-  private readonly catalog = signal<{ datasets: string; notEvaluable: string } | null>(null);
+  private readonly budget = new Loaded(() => this.api.budgetSummary(), 'el resumen del presupuesto');
+  private readonly contracts = new Loaded(() => this.api.spendingSummary(), 'el de contratación');
+  private readonly grants = new Loaded(() => this.api.grantsSummary(), 'el de subvenciones');
+  private readonly citizen = new Loaded(() => this.api.citizenSummary(), 'el de quejas');
+  private readonly urban = new Loaded(() => this.api.urbanSummary(), 'el de actividad urbana');
+  private readonly catalog = new Loaded(() => this.api.catalogSummary(), 'el del catálogo');
 
-  constructor() {
-    this.api.budgetSummary().subscribe({
-      next: (r) =>
-        this.budget.set({
-          obligations: euroShort(r.item.latestAmounts.obligations),
-          // Las dos fechas son del censo y pueden no estar: con la base recién creada no hay serie que nombrar.
-          span: year(r.item.firstSnapshot) && year(r.item.lastSnapshot)
-            ? `${year(r.item.firstSnapshot)}–${year(r.item.lastSnapshot)}`
-            : '—',
-        }),
-      error: () => undefined,
-    });
-    this.api.spendingSummary().subscribe({
-      next: (r) =>
-        this.contracts.set({
-          awarded: euroShort(r.item.awardedAmount),
-          processes: integer(r.item.processes),
-        }),
-      error: () => undefined,
-    });
-    this.api.grantsSummary().subscribe({
-      next: (r) =>
-        this.grants.set({
-          granted: euroShort(r.item.granted),
-          beneficiaries: integer(r.item.beneficiaries),
-        }),
-      error: () => undefined,
-    });
-    this.api.citizenSummary().subscribe({
-      next: (r) =>
-        this.citizen.set({
-          total: integer(r.item.total),
-          coverage: percent((r.item.assignment.byAssignment['RESOLVED'] ?? 0) / r.item.total),
-        }),
-      error: () => undefined,
-    });
-    this.api.urbanSummary().subscribe({
-      next: (r) =>
-        this.urban.set({ premises: integer(r.item.premises), licences: integer(r.item.licences) }),
-      error: () => undefined,
-    });
-    this.api.catalogSummary().subscribe({
-      next: (r) =>
-        this.catalog.set({
-          datasets: integer(r.datasets),
-          notEvaluable: percent((r.byDeclaredFreshness['NOT_EVALUABLE'] ?? 0) / r.datasets),
-        }),
-      error: () => undefined,
-    });
-  }
-
-  readonly cards = computed<Card[]>(() => [
-    {
-      route: '/presupuesto',
-      accent: 'var(--cat-2)',
-      eyebrow: 'Dinero · 01',
-      title: 'El presupuesto de gastos',
-      blurb:
-        'Lo único del observatorio que dice lo que se pagó de verdad. Veinte ejercicios en instantáneas datadas, con las cuatro cifras del ciclo por separado.',
-      figures: [
-        { value: this.budget()?.obligations ?? '—', label: 'ejecutado en la última foto' },
-        { value: this.budget()?.span ?? '—', label: 'ejercicios' },
-      ],
-    },
-    {
-      route: '/contratacion',
-      accent: 'var(--cat-2)',
-      eyebrow: 'Dinero · 02',
-      title: 'La contratación pública',
-      blurb:
-        'Lo licitado y lo adjudicado, nunca lo pagado. Incluidos los 2.271 procesos que el listado documentado de la API esconde sin decirlo.',
-      figures: [
-        { value: this.contracts()?.awarded ?? '—', label: 'adjudicado' },
-        { value: this.contracts()?.processes ?? '—', label: 'procesos' },
-      ],
-    },
-    {
-      route: '/subvenciones',
-      accent: 'var(--cat-2)',
-      eyebrow: 'Dinero · 03',
-      title: 'Las subvenciones',
-      blurb:
-        'Quién recibe cuánto, con el beneficiario contado y no nombrado. El ayuntamiento publica el nombre y el DNI de miles de personas; aquí no entra ninguno.',
-      figures: [
-        { value: this.grants()?.granted ?? '—', label: 'concedido' },
-        { value: this.grants()?.beneficiaries ?? '—', label: 'beneficiarios' },
-      ],
-    },
-    {
-      route: '/quejas',
-      accent: 'var(--cat-1)',
-      eyebrow: 'Ciudadanía · 01',
-      title: 'Quejas y sugerencias',
-      blurb:
-        'Trece años de reclamaciones vecinales, sin su texto: el ayuntamiento lo publica sin anonimizar y este observatorio directamente no lo pide.',
-      figures: [
-        { value: this.citizen()?.total ?? '—', label: 'quejas' },
-        { value: this.citizen()?.coverage ?? '—', label: 'se pueden situar' },
-      ],
-    },
-    {
-      route: '/actividad',
-      accent: 'var(--cat-1)',
-      eyebrow: 'Ciudad · 01',
-      title: 'Actividad urbana',
-      blurb:
-        'Locales con licencia y sus licencias, que son dos unidades distintas. Es la fuente territorial con mejor cobertura del producto.',
-      figures: [
-        { value: this.urban()?.premises ?? '—', label: 'locales' },
-        { value: this.urban()?.licences ?? '—', label: 'licencias' },
-      ],
-    },
-    {
-      route: '/territorio',
-      accent: 'var(--cat-1)',
-      eyebrow: 'Territorio · 01',
-      title: 'El cruce por junta',
-      blurb:
-        'Las tres medidas territorializables sobre las 29 juntas, con su cobertura al lado y sin dividir una por otra. El dinero no está aquí porque no tiene junta.',
-      figures: [
-        { value: '29', label: 'juntas' },
-        { value: '3', label: 'medidas cruzables' },
-      ],
-    },
-    {
-      route: '/catalogo',
-      accent: 'var(--cat-3)',
-      eyebrow: 'Calidad del dato · 01',
-      title: 'El monitor de frescura',
-      blurb:
-        'Se pregunta a diario a cada ficha del catálogo municipal y se guarda la respuesta. No mide si un dato es bueno: mide si sigue vivo.',
-      figures: [
-        { value: this.catalog()?.datasets ?? '—', label: 'fichas vigiladas' },
-        { value: this.catalog()?.notEvaluable ?? '—', label: 'no evaluables' },
-      ],
-    },
-  ]);
+  readonly cards = computed<Card[]>(() => {
+    const budget = this.budget.value();
+    const contracts = this.contracts.value();
+    const grants = this.grants.value();
+    const citizen = this.citizen.value();
+    const urban = this.urban.value();
+    const catalog = this.catalog.value();
+    return [
+      {
+        route: '/presupuesto',
+        accent: 'var(--cat-2)',
+        eyebrow: 'Dinero · 01',
+        title: 'El presupuesto de gastos',
+        blurb:
+          'Lo único del observatorio que dice lo que se pagó de verdad. Veinte ejercicios en instantáneas datadas, con las cuatro cifras del ciclo por separado.',
+        figures: [
+          { value: budget ? euroShort(budget.latestAmounts.obligations) : '—', label: 'ejecutado en la última foto' },
+          {
+            // Las dos fechas son del censo y pueden no estar: con la base recién creada no hay serie.
+            value:
+              budget && year(budget.firstSnapshot) && year(budget.lastSnapshot)
+                ? `${year(budget.firstSnapshot)}–${year(budget.lastSnapshot)}`
+                : '—',
+            label: 'ejercicios',
+          },
+        ],
+        status: this.budget.status(),
+        reload: () => this.budget.reload(),
+      },
+      {
+        route: '/contratacion',
+        accent: 'var(--cat-2)',
+        eyebrow: 'Dinero · 02',
+        title: 'La contratación pública',
+        blurb:
+          'Lo licitado y lo adjudicado, nunca lo pagado. Incluidos los 2.271 procesos que el listado documentado de la API esconde sin decirlo.',
+        figures: [
+          { value: contracts ? euroShort(contracts.awardedAmount) : '—', label: 'adjudicado' },
+          { value: contracts ? integer(contracts.processes) : '—', label: 'procesos' },
+        ],
+        status: this.contracts.status(),
+        reload: () => this.contracts.reload(),
+      },
+      {
+        route: '/subvenciones',
+        accent: 'var(--cat-2)',
+        eyebrow: 'Dinero · 03',
+        title: 'Las subvenciones',
+        blurb:
+          'Quién recibe cuánto, con el beneficiario contado y no nombrado. El ayuntamiento publica el nombre y el DNI de miles de personas; aquí no entra ninguno.',
+        figures: [
+          { value: grants ? euroShort(grants.granted) : '—', label: 'concedido' },
+          { value: grants ? integer(grants.beneficiaries) : '—', label: 'beneficiarios' },
+        ],
+        status: this.grants.status(),
+        reload: () => this.grants.reload(),
+      },
+      {
+        route: '/quejas',
+        accent: 'var(--cat-1)',
+        eyebrow: 'Ciudadanía · 01',
+        title: 'Quejas y sugerencias',
+        blurb:
+          'Trece años de reclamaciones vecinales, sin su texto: el ayuntamiento lo publica sin anonimizar y este observatorio directamente no lo pide.',
+        figures: [
+          { value: citizen ? integer(citizen.total) : '—', label: 'quejas' },
+          {
+            value: citizen
+              ? percent((citizen.assignment.byAssignment['RESOLVED'] ?? 0) / citizen.total)
+              : '—',
+            label: 'se pueden situar',
+          },
+        ],
+        status: this.citizen.status(),
+        reload: () => this.citizen.reload(),
+      },
+      {
+        route: '/actividad',
+        accent: 'var(--cat-1)',
+        eyebrow: 'Ciudad · 01',
+        title: 'Actividad urbana',
+        blurb:
+          'Locales con licencia y sus licencias, que son dos unidades distintas. Es la fuente territorial con mejor cobertura del producto.',
+        figures: [
+          { value: urban ? integer(urban.premises) : '—', label: 'locales' },
+          { value: urban ? integer(urban.licences) : '—', label: 'licencias' },
+        ],
+        status: this.urban.status(),
+        reload: () => this.urban.reload(),
+      },
+      {
+        route: '/territorio',
+        accent: 'var(--cat-1)',
+        eyebrow: 'Territorio · 01',
+        title: 'El cruce por junta',
+        blurb:
+          'Las tres medidas territorializables sobre las 29 juntas, con su cobertura al lado y sin dividir una por otra. El dinero no está aquí porque no tiene junta.',
+        figures: [
+          { value: '29', label: 'juntas' },
+          { value: '3', label: 'medidas cruzables' },
+        ],
+        // Las dos cifras son del catálogo de medidas, no de una respuesta: no hay nada que leer ni que fallar.
+        status: 'ready',
+        reload: () => undefined,
+      },
+      {
+        route: '/catalogo',
+        accent: 'var(--cat-3)',
+        eyebrow: 'Calidad del dato · 01',
+        title: 'El monitor de frescura',
+        blurb:
+          'Se pregunta a diario a cada ficha del catálogo municipal y se guarda la respuesta. No mide si un dato es bueno: mide si sigue vivo.',
+        figures: [
+          { value: catalog ? integer(catalog.datasets) : '—', label: 'fichas vigiladas' },
+          {
+            value: catalog
+              ? percent((catalog.byDeclaredFreshness['NOT_EVALUABLE'] ?? 0) / catalog.datasets)
+              : '—',
+            label: 'no evaluables',
+          },
+        ],
+        status: this.catalog.status(),
+        reload: () => this.catalog.reload(),
+      },
+    ];
+  });
 }

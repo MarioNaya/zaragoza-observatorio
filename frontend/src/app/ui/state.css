@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+/* Misma letra pequeña y mismo aire que el «Leyendo…» que había suelto en las plantillas. */
+.loading {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  padding: var(--s5) 0;
+}
+
+/*
+ * El fallo usa el color de **estado** (`--warn`), que ADR-021 reserva para esto y que nunca es «la serie 4».
+ * Va con borde grueso a la izquierda para que se distinga de una tarjeta de dato incluso sin color.
+ */
+.failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3) var(--s4);
+  margin: var(--s4) 0;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--warn);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.failed p {
+  flex: 1 1 18rem;
+}
+
+.failed strong {
+  font-variation-settings: 'wght' 650;
+}
+
+.failed button {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.failed button:hover {
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}

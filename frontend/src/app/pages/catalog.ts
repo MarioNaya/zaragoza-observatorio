@@ -1,13 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { date, integer, percent } from '../core/format';
-import { CatalogSummary, Dataset } from '../core/types';
+import { Explorer, FilterValues, Loaded } from '../core/state';
+// El sobre del catálogo y esta pantalla se llaman igual, así que el tipo entra con otro nombre.
+import { CatalogPage as CatalogEnvelope, Dataset } from '../core/types';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
+
+const FILTERS: FilterValues = { q: '', freshness: '', observation: '', open: '', listed: '' };
 
 const FRESHNESS_LABELS: Record<string, string> = {
   ON_TIME: 'Al día',
@@ -36,24 +41,25 @@ const METHOD_LABELS: Record<string, string> = {
 @Component({
   selector: 'obs-catalog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './catalog.html',
 })
 export class CatalogPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<CatalogSummary | null>(null);
-  readonly datasets = signal<Dataset[]>([]);
-  readonly total = signal(0);
-  readonly caveats = signal<string[]>([]);
-  readonly error = signal<string | null>(null);
+  readonly summary = new Loaded(() => this.api.catalogSummary(), 'el resumen del catálogo');
 
-  readonly page = signal(0);
-  readonly sort = signal('title,asc');
-  readonly filters = signal<FilterValues>({ q: '', freshness: '', observation: '', open: '', listed: '' });
+  readonly explorer = new Explorer<Dataset, CatalogEnvelope<Dataset>>({
+    request: (query) => this.api.datasets(query),
+    rows: (response) => response.items,
+    // El catálogo pagina con un objeto `page`, no con campos sueltos como el resto de la API.
+    total: (response) => response.page.totalElements,
+    sort: 'title,asc',
+    filters: FILTERS,
+    what: 'las fichas del catálogo',
+  });
 
   protected readonly integer = integer;
-  protected readonly size = 25;
 
   readonly filterDefs: FilterDef[] = [
     { key: 'q', label: 'Buscar ficha', kind: 'text', placeholder: 'tráfico, padrón, contenedores…' },
@@ -90,7 +96,7 @@ export class CatalogPage {
   ];
 
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -126,7 +132,7 @@ export class CatalogPage {
   });
 
   readonly byFreshness = computed<RankRow[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -138,7 +144,7 @@ export class CatalogPage {
   });
 
   readonly byMethod = computed<RankRow[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -192,49 +198,4 @@ export class CatalogPage {
       },
     },
   ];
-
-  constructor() {
-    this.api.catalogSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen del catálogo.'),
-    });
-    this.loadDatasets();
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadDatasets();
-  }
-
-  clearFilters(): void {
-    this.filters.set({ q: '', freshness: '', observation: '', open: '', listed: '' });
-    this.page.set(0);
-    this.loadDatasets();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadDatasets();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadDatasets();
-  }
-
-  private loadDatasets(): void {
-    const query: Query = { page: this.page(), size: this.size, sort: this.sort(), ...this.filters() };
-    this.api.datasets(query).subscribe({
-      next: (response) => {
-        this.datasets.set(response.items);
-        this.total.set(response.page.totalElements);
-      },
-      error: (failure) => this.error.set(failure?.error?.detail ?? 'No se han podido leer las fichas.'),
-    });
-  }
 }

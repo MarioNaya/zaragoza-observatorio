@@ -8,11 +8,11 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
 }
-
-<obs-stats [data]="stats()" />
 
 <section class="panel">
   <header>
@@ -23,10 +23,19 @@
     </p>
   </header>
 
-  @if (bars().length > 0) {
+  @if (aggregation.status() === 'ready' && axis() === 'year') {
     <obs-bar-chart [data]="bars()" title="Importe concedido por año" [format]="euroShort" />
+  } @else if (axis() !== 'year') {
+    <p class="note">
+      La serie por año vuelve al elegir el eje «Año» abajo: cada eje es una petición y no se guarda la anterior.
+    </p>
   } @else {
-    <p class="loading">Leyendo la serie…</p>
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
   }
 </section>
 
@@ -42,7 +51,14 @@
     </div>
   </header>
 
-  @if (axis() !== 'year') {
+  @if (aggregation.status() === 'failed') {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  } @else if (axis() !== 'year') {
     @if (axis() === 'beneficiary') {
       <p class="note">
         El identificador que se ve es el <strong>seudónimo que publica el propio ayuntamiento</strong>. Permite
@@ -63,28 +79,38 @@
 
   <obs-filters
     [defs]="filterDefs()"
-    [values]="filters()"
-    (changed)="setFilter($event)"
-    (cleared)="clearFilters()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
   />
 
-  <obs-data-table
-    [rows]="grants()"
-    [columns]="columns"
-    [total]="total()"
-    [page]="page()"
-    [size]="size"
-    [sort]="sort()"
-    unit="concesiones"
-    caption="Concesiones de subvención"
-    (sortChanged)="setSort($event)"
-    (pageChanged)="setPage($event)"
-  />
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="concesiones"
+      caption="Concesiones de subvención"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
 </section>
 
 <obs-colophon
-  [source]="source()"
-  [ingestedAt]="ingestedAt()"
-  [caveats]="caveats()"
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
   extra="La fuente municipal se contradice: enmascara el identificador fiscal de la persona física y a la vez publica su nombre y su DNI. Aquí no entra ninguno de los dos."
 />

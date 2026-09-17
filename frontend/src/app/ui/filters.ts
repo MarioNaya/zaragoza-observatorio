@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
+import { FilterValues } from '../core/state';
+
 export type FilterKind = 'text' | 'select' | 'date' | 'number';
 
 export interface FilterDef {
@@ -11,8 +13,6 @@ export interface FilterDef {
   placeholder?: string;
   hint?: string;
 }
-
-export type FilterValues = Record<string, string>;
 
 /**
  * La barra de filtros: una fila encima del contenido, como pide la guía de interacción.

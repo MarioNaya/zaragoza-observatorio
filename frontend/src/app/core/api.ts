@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { map, Observable, shareReplay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import {
@@ -24,6 +24,7 @@ import {
   GrantsSummary,
   Premises,
   ServiceRequest,
+  Source,
   SpendingAggregation,
   SpendingSummary,
   UrbanAggregation,
@@ -161,8 +162,22 @@ export class Observatory {
 
   // --- catalog --------------------------------------------------------------------------------------
 
-  catalogSummary(): Observable<CatalogSummary & { caveats: string[] }> {
-    return this.get<CatalogSummary & { caveats: string[] }>('/catalog/summary');
+  /**
+   * El resumen del catálogo es el único que llega **sin sobre**: sus cifras están en la raíz de la respuesta,
+   * con `source`, `ingestedAt` y `caveats` al lado. Se mete en el sobre común aquí, que es la pieza que conoce
+   * las formas de la API, para que ninguna pantalla tenga que llevar su propio estado por esto (ADR-022 §5).
+   */
+  catalogSummary(): Observable<ApiItem<CatalogSummary>> {
+    return this.get<CatalogSummary & { source: Source; ingestedAt: string | null; caveats: string[] }>(
+      '/catalog/summary',
+    ).pipe(
+      map((response) => ({
+        source: response.source,
+        ingestedAt: response.ingestedAt,
+        caveats: response.caveats,
+        item: response,
+      })),
+    );
   }
 
   datasets(query: Query): Observable<CatalogPage<Dataset>> {

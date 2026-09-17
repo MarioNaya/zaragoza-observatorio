@@ -7,11 +7,11 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
 }
-
-<obs-stats [data]="stats()" />
 
 <section class="panel">
   <header>
@@ -22,7 +22,7 @@
     </p>
   </header>
 
-  @if (bars().length > 0) {
+  @if (aggregation.status() === 'ready' && axis() === 'year') {
     <obs-bar-chart
       [data]="bars()"
       title="Importe licitado y adjudicado por año"
@@ -30,8 +30,18 @@
       [legend]="['Licitado', 'Adjudicado']"
       hint="Pasa el ratón por un año para leer los dos importes."
     />
+  } @else if (axis() !== 'year') {
+    <p class="note">
+      La serie por año se vuelve a pedir al elegir el eje «Año» arriba: cada eje es una petición distinta y no
+      se guarda la anterior, porque entonces la pantalla enseñaría cifras de antes sin poder decir de cuándo.
+    </p>
   } @else {
-    <p class="loading">Leyendo la serie…</p>
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
   }
 </section>
 
@@ -47,7 +57,14 @@
     </div>
   </header>
 
-  @if (axis() !== 'year') {
+  @if (aggregation.status() === 'failed') {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
+  } @else if (axis() !== 'year') {
     <div class="switch figures">
       @for (option of figures; track option.key) {
         <button type="button" [class.on]="figure() === option.key" (click)="setFigure(option.key)">
@@ -82,28 +99,38 @@
 
   <obs-filters
     [defs]="filterDefs"
-    [values]="filters()"
-    (changed)="setFilter($event)"
-    (cleared)="clearFilters()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
   />
 
-  <obs-data-table
-    [rows]="processes()"
-    [columns]="columns"
-    [total]="total()"
-    [page]="page()"
-    [size]="size"
-    [sort]="sort()"
-    unit="procesos"
-    caption="Procesos de contratación"
-    (sortChanged)="setSort($event)"
-    (pageChanged)="setPage($event)"
-  />
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="procesos"
+      caption="Procesos de contratación"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
 </section>
 
 <obs-colophon
-  [source]="source()"
-  [ingestedAt]="ingestedAt()"
-  [caveats]="caveats()"
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
   extra="Del adjudicatario se guarda el NIF de las empresas y nada de las personas físicas: la adjudicación sigue contando con su importe y lo que desaparece es quién."
 />

@@ -30,7 +30,7 @@ export interface Column<T> {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './data-table.css',
   template: `
-    <div class="scroll">
+    <div class="scroll" [class.busy]="busy()" [attr.aria-busy]="busy()">
       <table>
         <caption class="sr-only">{{ caption() }}</caption>
         <thead>
@@ -66,8 +66,14 @@ export interface Column<T> {
               }
             </tr>
           } @empty {
+            <!--
+              Vacío y cargando no son lo mismo, y decir «ningún registro» mientras se pregunta es afirmar algo
+              que no se sabe (ADR-022 §5). Si la petición falló, esta tabla no se pinta: la sustituye el aviso.
+            -->
             <tr class="empty">
-              <td [attr.colspan]="columns().length">Ningún registro casa con estos filtros.</td>
+              <td [attr.colspan]="columns().length">
+                {{ busy() ? 'Leyendo…' : 'Ningún registro casa con estos filtros.' }}
+              </td>
             </tr>
           }
         </tbody>
@@ -106,6 +112,8 @@ export class DataTable<T> {
   readonly sort = input<string>('');
   readonly unit = input('registros');
   readonly caption = input('Registros');
+  /** Mientras se vuelve a pedir, la tabla sigue en su sitio y lo dice: `aria-busy` y la página atenuada. */
+  readonly busy = input(false);
 
   readonly sortChanged = output<string>();
   readonly pageChanged = output<number>();

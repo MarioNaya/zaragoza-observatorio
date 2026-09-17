@@ -1,16 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { byKey, date, integer, keyOf, labelOf, percent } from '../core/format';
-import { Premises, Source, UrbanAggregation, UrbanSummary } from '../core/types';
-import { BarChart, Bar } from '../ui/bar-chart';
+import { Explorer, FilterValues, Loaded } from '../core/state';
+import { ApiPage, Premises } from '../core/types';
+import { Bar, BarChart } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
 
 type Axis = 'activity' | 'licence_year' | 'district' | 'licence_type' | 'status';
+
+const FILTERS: FilterValues = { iaeSection: '', statusCode: '', assignment: '', licenceYear: '' };
 
 /**
  * Actividad urbana privada: locales con licencia y sus licencias. Es la fuente territorial con **mejor
@@ -20,28 +24,31 @@ type Axis = 'activity' | 'licence_year' | 'district' | 'licence_type' | 'status'
 @Component({
   selector: 'obs-urban',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './urban.html',
 })
 export class UrbanPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<UrbanSummary | null>(null);
-  readonly aggregation = signal<UrbanAggregation | null>(null);
-  readonly premises = signal<Premises[]>([]);
-  readonly total = signal(0);
-  readonly caveats = signal<string[]>([]);
-  readonly source = signal<Source | null>(null);
-  readonly ingestedAt = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
+  readonly summary = new Loaded(() => this.api.urbanSummary(), 'el resumen de actividad urbana');
 
   readonly axis = signal<Axis>('activity');
-  readonly page = signal(0);
-  readonly sort = signal('createdAt,desc');
-  readonly filters = signal<FilterValues>({ iaeSection: '', statusCode: '', assignment: '', licenceYear: '' });
+
+  readonly aggregation = new Loaded(
+    () => this.api.urbanAggregation(this.axis()),
+    'el reparto de la actividad urbana',
+  );
+
+  readonly explorer = new Explorer<Premises, ApiPage<Premises>>({
+    request: (query) => this.api.urbanPremises(query),
+    rows: (response) => response.items,
+    total: (response) => response.total,
+    sort: 'createdAt,desc',
+    filters: FILTERS,
+    what: 'los locales',
+  });
 
   protected readonly integer = integer;
-  protected readonly size = 25;
   protected readonly axes: { key: Axis; label: string }[] = [
     { key: 'activity', label: 'Actividad' },
     { key: 'licence_year', label: 'Año de licencia' },
@@ -85,7 +92,7 @@ export class UrbanPage {
   ];
 
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -115,10 +122,10 @@ export class UrbanPage {
     ];
   });
 
-  readonly unit = computed(() => this.aggregation()?.unit ?? 'premises');
+  readonly unit = computed(() => this.aggregation.value()?.unit ?? 'premises');
 
   readonly bars = computed<Bar[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by !== 'licence_year') {
       return [];
     }
@@ -133,7 +140,7 @@ export class UrbanPage {
   });
 
   readonly ranking = computed<RankRow[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by === 'licence_year') {
       return [];
     }
@@ -174,63 +181,8 @@ export class UrbanPage {
     { key: 'zone', label: 'Zona saturada', get: (row) => row.saturatedZone ?? '—' },
   ];
 
-  constructor() {
-    this.api.urbanSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response.item);
-        this.source.set(response.source ?? null);
-        this.ingestedAt.set(response.ingestedAt ?? null);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen de actividad urbana.'),
-    });
-    this.loadAggregation();
-    this.loadPremises();
-  }
-
   setAxis(axis: Axis): void {
     this.axis.set(axis);
-    this.loadAggregation();
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadPremises();
-  }
-
-  clearFilters(): void {
-    this.filters.set({ iaeSection: '', statusCode: '', assignment: '', licenceYear: '' });
-    this.page.set(0);
-    this.loadPremises();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadPremises();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadPremises();
-  }
-
-  private loadAggregation(): void {
-    this.api.urbanAggregation(this.axis()).subscribe({
-      next: (response) => this.aggregation.set(response.item),
-      error: () => this.error.set('No se ha podido leer la agregación de actividad urbana.'),
-    });
-  }
-
-  private loadPremises(): void {
-    const query: Query = { page: this.page(), size: this.size, sort: this.sort(), ...this.filters() };
-    this.api.urbanPremises(query).subscribe({
-      next: (response) => {
-        this.premises.set(response.items);
-        this.total.set(response.total);
-      },
-      error: (failure) => this.error.set(failure?.error?.detail ?? 'No se han podido leer los locales.'),
-    });
+    this.aggregation.reload();
   }
 }

@@ -1,16 +1,27 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { byKey, date, euro, euroShort, integer, keyOf, labelOf } from '../core/format';
-import { ContractingProcess, Source, SpendingAggregation, SpendingSummary } from '../core/types';
-import { BarChart, Bar } from '../ui/bar-chart';
+import { Explorer, FilterValues, Loaded } from '../core/state';
+import { ApiPage, ContractingProcess } from '../core/types';
+import { Bar, BarChart } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
 
 type Axis = 'year' | 'supplier' | 'procuring_entity' | 'category' | 'cpv' | 'stage' | 'release_status';
+
+const FILTERS: FilterValues = {
+  q: '',
+  year: '',
+  category: '',
+  stage: '',
+  inDocumentedList: '',
+  procuringEntity: '',
+};
 
 const AXES: { key: Axis; label: string }[] = [
   { key: 'year', label: 'Año' },
@@ -54,32 +65,29 @@ const STAGE_LABELS: Record<string, string> = {
 @Component({
   selector: 'obs-contracts',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './contracts.html',
 })
 export class ContractsPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<SpendingSummary | null>(null);
-  readonly aggregation = signal<SpendingAggregation | null>(null);
-  readonly processes = signal<ContractingProcess[]>([]);
-  readonly total = signal(0);
-  readonly caveats = signal<string[]>([]);
-  readonly source = signal<Source | null>(null);
-  readonly ingestedAt = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
+  readonly summary = new Loaded(() => this.api.spendingSummary(), 'el resumen de contratación');
 
   readonly axis = signal<Axis>('year');
   readonly figure = signal<FigureKey>('awardedAmount');
-  readonly page = signal(0);
-  readonly sort = signal('publishedAt,desc');
-  readonly filters = signal<FilterValues>({
-    q: '',
-    year: '',
-    category: '',
-    stage: '',
-    inDocumentedList: '',
-    procuringEntity: '',
+
+  readonly aggregation = new Loaded(
+    () => this.api.spendingAggregation(this.axis()),
+    'el reparto de la contratación',
+  );
+
+  readonly explorer = new Explorer<ContractingProcess, ApiPage<ContractingProcess>>({
+    request: (query) => this.api.processes(query),
+    rows: (response) => response.items,
+    total: (response) => response.total,
+    sort: 'publishedAt,desc',
+    filters: FILTERS,
+    what: 'los procesos',
   });
 
   protected readonly axes = AXES;
@@ -119,7 +127,7 @@ export class ContractsPage {
   ];
 
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -161,7 +169,7 @@ export class ContractsPage {
   });
 
   readonly bars = computed<Bar[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by !== 'year') {
       return [];
     }
@@ -177,7 +185,7 @@ export class ContractsPage {
   });
 
   readonly ranking = computed<RankRow[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by === 'year') {
       return [];
     }
@@ -235,59 +243,15 @@ export class ContractsPage {
     },
   ];
 
-  constructor() {
-    this.api.spendingSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response.item);
-        this.source.set(response.source ?? null);
-        this.ingestedAt.set(response.ingestedAt ?? null);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen de contratación.'),
-    });
-    this.loadAggregation();
-    this.loadProcesses();
-  }
-
-  readonly overlapping = computed(() => this.aggregation()?.overlapping ?? false);
+  readonly overlapping = computed(() => this.aggregation.value()?.overlapping ?? false);
 
   setAxis(axis: Axis): void {
     this.axis.set(axis);
-    this.loadAggregation();
+    this.aggregation.reload();
   }
 
   setFigure(figure: FigureKey): void {
     this.figure.set(figure);
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadProcesses();
-  }
-
-  clearFilters(): void {
-    this.filters.set({
-      q: '',
-      year: '',
-      category: '',
-      stage: '',
-      inDocumentedList: '',
-      procuringEntity: '',
-    });
-    this.page.set(0);
-    this.loadProcesses();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadProcesses();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadProcesses();
   }
 
   /** En el eje de etapa el nulo tiene nombre propio: es el hecho de que el documento no la sostiene. */
@@ -296,23 +260,5 @@ export class ContractsPage {
       return bucket.key ? (STAGE_LABELS[bucket.key] ?? bucket.key) : 'Sin etapa (el documento no la sostiene)';
     }
     return labelOf(bucket);
-  }
-
-  private loadAggregation(): void {
-    this.api.spendingAggregation(this.axis()).subscribe({
-      next: (response) => this.aggregation.set(response.item),
-      error: () => this.error.set('No se ha podido leer la agregación de contratación.'),
-    });
-  }
-
-  private loadProcesses(): void {
-    const query: Query = { page: this.page(), size: this.size, sort: this.sort(), ...this.filters() };
-    this.api.processes(query).subscribe({
-      next: (response) => {
-        this.processes.set(response.items);
-        this.total.set(response.total);
-      },
-      error: (failure) => this.error.set(failure?.error?.detail ?? 'No se han podido leer los procesos.'),
-    });
   }
 }

@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { byKey, euro, euroCents, euroShort, integer, keyOf, labelOf } from '../core/format';
-import { BudgetAggregation, BudgetLine, BudgetSummary, Source } from '../core/types';
-
+import { Explorer, FilterValues, Loaded } from '../core/state';
+import { ApiPage, BudgetLine } from '../core/types';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { LineChart, Series } from '../ui/line-chart';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
 
 type Axis = 'year' | 'chapter' | 'area' | 'programme' | 'organ';
@@ -19,6 +20,8 @@ const AXES: { key: Axis; label: string }[] = [
   { key: 'programme', label: 'Programa' },
   { key: 'organ', label: 'Órgano' },
 ];
+
+const FILTERS: FilterValues = { chapter: '', area: '', programme: '', organ: '', q: '' };
 
 /** Las cuatro cifras que importan del ciclo, en su orden contable. Ninguna se llama «gasto» a secas. */
 const FIGURES = [
@@ -41,51 +44,66 @@ type FigureKey = (typeof FIGURES)[number]['key'];
 @Component({
   selector: 'obs-budget',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, LineChart, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, LineChart, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './budget.html',
 })
 export class BudgetPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<BudgetSummary | null>(null);
-  readonly aggregation = signal<BudgetAggregation | null>(null);
+  readonly summary = new Loaded(() => this.api.budgetSummary(), 'el resumen del presupuesto');
+
+  readonly axis = signal<Axis>('chapter');
+
+  readonly aggregation = new Loaded(
+    () => this.api.budgetAggregation(this.axis()),
+    'el reparto del presupuesto',
+  );
+
   /**
    * La serie por ejercicio va **aparte** del eje que elige quien lee: el gráfico de arriba enseña siempre los
    * veinte ejercicios y el selector de abajo cambia el reparto dentro de una instantánea. Son dos preguntas
    * distintas y antes compartían una sola petición, así que elegir «Capítulo» dejaba el gráfico vacío.
    */
-  readonly years = signal<BudgetAggregation | null>(null);
-  readonly lines = signal<BudgetLine[]>([]);
-  readonly lineTotal = signal(0);
-  readonly snapshotDate = signal<string | null>(null);
-  readonly caveats = signal<string[]>([]);
-  readonly source = signal<Source | null>(null);
-  readonly ingestedAt = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
-  readonly loading = signal(true);
+  readonly years = new Loaded(() => this.api.budgetAggregation('year'), 'la serie por ejercicio');
 
-  readonly axis = signal<Axis>('chapter');
+  readonly explorer = new Explorer<BudgetLine, ApiPage<BudgetLine>>({
+    request: (query) => this.api.budgetLines(query),
+    rows: (response) => response.items,
+    total: (response) => response.total,
+    sort: 'obligations,desc',
+    filters: FILTERS,
+    what: 'las partidas',
+  });
+
   readonly figure = signal<FigureKey>('obligations');
-  readonly page = signal(0);
-  readonly sort = signal('obligations,desc');
-  readonly filters = signal<FilterValues>({ chapter: '', area: '', programme: '', organ: '', q: '' });
 
   protected readonly axes = AXES;
   protected readonly figures = FIGURES;
   protected readonly euroShort = euroShort;
-  protected readonly size = 25;
+
+  /**
+   * Las opciones del filtro de capítulo salen de la propia agregación por capítulo: un filtro que no existe en
+   * el backend no puede existir en la pantalla, y los capítulos no son una lista que se pueda escribir aquí.
+   */
+  private readonly chapters = new Loaded(() => this.api.budgetAggregation('chapter'), 'los capítulos');
 
   readonly filterDefs = computed<FilterDef[]>(() => [
     { key: 'q', label: 'Buscar en la partida', kind: 'text', placeholder: 'alumbrado, biblioteca, IBI…' },
-    { key: 'chapter', label: 'Capítulo', kind: 'select', options: this.chapterOptions() },
+    {
+      key: 'chapter',
+      label: 'Capítulo',
+      kind: 'select',
+      options: (this.chapters.value()?.items ?? [])
+        // El capítulo sin clave no es una opción de filtro: no se puede filtrar por «ninguno».
+        .filter((bucket): bucket is typeof bucket & { key: string } => !!bucket.key)
+        .map((bucket) => ({ value: bucket.key, label: `${bucket.key} — ${bucket.label ?? ''}` })),
+    },
     { key: 'programme', label: 'Programa', kind: 'text', placeholder: 'código, p. ej. 4411' },
     { key: 'organ', label: 'Órgano', kind: 'text', placeholder: 'código, p. ej. MOV' },
   ]);
 
-  private readonly chapterOptions = signal<{ value: string; label: string }[]>([]);
-
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -122,7 +140,7 @@ export class BudgetPage {
 
   /** Las cuatro etapas a lo largo de los ejercicios. Una sola escala: son todas euros. */
   readonly series = computed<Series[]>(() => {
-    const aggregation = this.years();
+    const aggregation = this.years.value();
     if (!aggregation) {
       return [];
     }
@@ -138,7 +156,7 @@ export class BudgetPage {
   });
 
   readonly ranking = computed<RankRow[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation) {
       return [];
     }
@@ -153,6 +171,9 @@ export class BudgetPage {
       .sort((a, b) => b.value - a.value)
       .slice(0, 18);
   });
+
+  readonly snapshotDate = computed(() => this.aggregation.value()?.snapshotDate ?? null);
+  readonly lineSnapshot = computed(() => this.explorer.response()?.snapshotDate ?? null);
 
   readonly columns = computed<Column<BudgetLine>[]>(() => [
     {
@@ -189,87 +210,12 @@ export class BudgetPage {
 
   readonly figureLabel = computed(() => FIGURES.find((f) => f.key === this.figure())?.label ?? '');
 
-  constructor() {
-    this.api.budgetSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response.item);
-        this.source.set(response.source ?? null);
-        this.ingestedAt.set(response.ingestedAt ?? null);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen del presupuesto.'),
-    });
-    this.api.budgetAggregation('chapter').subscribe({
-      next: (response) =>
-        this.chapterOptions.set(
-          response.item.items
-            // El capítulo sin clave no es una opción de filtro: no se puede filtrar por «ninguno».
-            .filter((bucket): bucket is typeof bucket & { key: string } => !!bucket.key)
-            .map((bucket) => ({ value: bucket.key, label: `${bucket.key} — ${bucket.label ?? ''}` })),
-        ),
-      error: () => undefined,
-    });
-    this.api.budgetAggregation('year').subscribe({
-      next: (response) => this.years.set(response.item),
-      error: () => this.error.set('No se ha podido leer la serie por ejercicio.'),
-    });
-    this.loadAggregation();
-    this.loadLines();
-  }
-
   setAxis(axis: Axis): void {
     this.axis.set(axis);
-    this.loadAggregation();
+    this.aggregation.reload();
   }
 
   setFigure(figure: FigureKey): void {
     this.figure.set(figure);
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadLines();
-  }
-
-  clearFilters(): void {
-    this.filters.set({ chapter: '', area: '', programme: '', organ: '', q: '' });
-    this.page.set(0);
-    this.loadLines();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadLines();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadLines();
-  }
-
-  private loadAggregation(): void {
-    this.api.budgetAggregation(this.axis()).subscribe({
-      next: (response) => this.aggregation.set(response.item),
-      error: () => this.error.set('No se ha podido leer la agregación del presupuesto.'),
-    });
-  }
-
-  private loadLines(): void {
-    this.loading.set(true);
-    const query: Query = { page: this.page(), size: this.size, sort: this.sort(), ...this.filters() };
-    this.api.budgetLines(query).subscribe({
-      next: (response) => {
-        this.lines.set(response.items);
-        this.lineTotal.set(response.total);
-        this.snapshotDate.set(response.snapshotDate ?? null);
-        this.loading.set(false);
-      },
-      error: (failure) => {
-        this.loading.set(false);
-        this.error.set(failure?.error?.detail ?? 'No se han podido leer las partidas.');
-      },
-    });
   }
 }

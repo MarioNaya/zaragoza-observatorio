@@ -8,37 +8,37 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+
+  <div class="cols-2">
+    <section class="panel">
+      <header>
+        <h2>Lo que el publicador declara</h2>
+        <p class="aside">Compara la fecha que dice la ficha con la periodicidad que promete.</p>
+      </header>
+      <obs-ranking [data]="byFreshness()" [format]="integer" />
+      <p class="note">
+        «No evaluable» es el grupo mayor y ese <strong>es el hallazgo</strong>: la mayoría del catálogo no
+        declara una periodicidad con la que se pueda juzgar nada.
+      </p>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>Lo que se puede observar</h2>
+        <p class="aside">Qué método permite medir algo en cada ficha, preguntando de verdad al servicio.</p>
+      </header>
+      <obs-ranking [data]="byMethod()" [format]="integer" />
+      <p class="note">
+        Los dos ejes <strong>no se cruzan ni se mezclan en una nota</strong>. Hacerlo exigiría una serie larga y
+        una decisión escrita, y de momento hay medidas, no categorías.
+      </p>
+    </section>
+  </div>
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
 }
-
-<obs-stats [data]="stats()" />
-
-<div class="cols-2">
-  <section class="panel">
-    <header>
-      <h2>Lo que el publicador declara</h2>
-      <p class="aside">Compara la fecha que dice la ficha con la periodicidad que promete.</p>
-    </header>
-    <obs-ranking [data]="byFreshness()" [format]="integer" />
-    <p class="note">
-      «No evaluable» es el grupo mayor y ese <strong>es el hallazgo</strong>: la mayoría del catálogo no declara
-      una periodicidad con la que se pueda juzgar nada.
-    </p>
-  </section>
-
-  <section class="panel">
-    <header>
-      <h2>Lo que se puede observar</h2>
-      <p class="aside">Qué método permite medir algo en cada ficha, preguntando de verdad al servicio.</p>
-    </header>
-    <obs-ranking [data]="byMethod()" [format]="integer" />
-    <p class="note">
-      Los dos ejes <strong>no se cruzan ni se mezclan en una nota</strong>. Hacerlo exigiría una serie larga y
-      una decisión escrita, y de momento hay medidas, no categorías.
-    </p>
-  </section>
-</div>
 
 <section class="panel">
   <header>
@@ -51,26 +51,38 @@
 
   <obs-filters
     [defs]="filterDefs"
-    [values]="filters()"
-    (changed)="setFilter($event)"
-    (cleared)="clearFilters()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
   />
 
-  <obs-data-table
-    [rows]="datasets()"
-    [columns]="columns"
-    [total]="total()"
-    [page]="page()"
-    [size]="size"
-    [sort]="sort()"
-    unit="fichas"
-    caption="Fichas del catálogo municipal"
-    (sortChanged)="setSort($event)"
-    (pageChanged)="setPage($event)"
-  />
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="fichas"
+      caption="Fichas del catálogo municipal"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
 </section>
 
 <obs-colophon
-  [caveats]="caveats()"
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
   extra="El catálogo publica servicios que no existen o no son públicos: ocho endpoints con 404, veintitrés distribuciones de intranet y alguna URL mal escrita. El monitor los enseña como error de observación en vez de esconderlos."
 />

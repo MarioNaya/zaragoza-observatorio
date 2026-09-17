@@ -640,15 +640,47 @@ select:focus-visible {
   border-top: 1px solid var(--border);
 }
 
+/*
+ * En el documento va primero la etiqueta y luego el valor —el par término-definición que se lee en voz alta—
+ * y en la pantalla al contrario, porque la cifra es la protagonista. Lo invierte la rejilla.
+ */
+.sumario dl > div {
+  display: grid;
+  grid-template-rows: auto auto;
+}
+
 .sumario dd {
+  grid-row: 1;
   margin: 0;
   font-size: 1.15rem;
   font-weight: 500;
 }
 
 .sumario dt {
+  grid-row: 2;
   font-size: 0.7rem;
   color: var(--text-3);
+}
+
+/* Una cifra que no se pudo leer se dice con palabras, no con un guion (ADR-022 §5). */
+.unread {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin: var(--s2) 0 0;
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+
+.unread button {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
 }
 
 .manifesto ul {

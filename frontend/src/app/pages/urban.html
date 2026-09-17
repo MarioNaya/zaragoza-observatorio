@@ -8,11 +8,11 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
 }
-
-<obs-stats [data]="stats()" />
 
 <section class="panel">
   <header>
@@ -26,8 +26,8 @@
     </div>
   </header>
 
-  @if (axis() === 'licence_year') {
-    @if (bars().length > 0) {
+  @if (aggregation.status() === 'ready') {
+    @if (axis() === 'licence_year') {
       <obs-bar-chart
         [data]="bars()"
         title="Licencias concedidas por año"
@@ -35,14 +35,19 @@
         hint="Desde 1990. La fuente trae alguna licencia con fecha imposible, incluida una de 2033."
       />
     } @else {
-      <p class="loading">Leyendo la serie…</p>
+      <p class="note">
+        Esta agregación cuenta <strong>{{ unit() === 'licences' ? 'licencias' : 'locales' }}</strong>, que lo dice
+        la propia respuesta de la API. No son intercambiables y por eso cada fila trae también la otra cifra.
+      </p>
+      <obs-ranking [data]="ranking()" [format]="integer" />
     }
   } @else {
-    <p class="note">
-      Esta agregación cuenta <strong>{{ unit() === 'licences' ? 'licencias' : 'locales' }}</strong>, que lo dice
-      la propia respuesta de la API. No son intercambiables y por eso cada fila trae también la otra cifra.
-    </p>
-    <obs-ranking [data]="ranking()" [format]="integer" />
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
   }
 </section>
 
@@ -57,28 +62,38 @@
 
   <obs-filters
     [defs]="filterDefs"
-    [values]="filters()"
-    (changed)="setFilter($event)"
-    (cleared)="clearFilters()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
   />
 
-  <obs-data-table
-    [rows]="premises()"
-    [columns]="columns"
-    [total]="total()"
-    [page]="page()"
-    [size]="size"
-    [sort]="sort()"
-    unit="locales"
-    caption="Locales con licencia"
-    (sortChanged)="setSort($event)"
-    (pageChanged)="setPage($event)"
-  />
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="locales"
+      caption="Locales con licencia"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
 </section>
 
 <obs-colophon
-  [source]="source()"
-  [ingestedAt]="ingestedAt()"
-  [caveats]="caveats()"
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
   extra="Esta fuente no declara junta, así que no hay contraste entre la junta resuelta y la declarada: solo la geométrica, y la ausencia se dice en vez de fabricarse cruzando el portal contra el callejero."
 />

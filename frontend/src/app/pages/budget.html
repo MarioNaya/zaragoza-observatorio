@@ -8,11 +8,11 @@
   </p>
 </header>
 
-@if (error()) {
-  <p class="error" role="alert">{{ error() }}</p>
+@if (summary.status() === 'ready') {
+  <obs-stats [data]="stats()" />
+} @else {
+  <obs-state [status]="summary.status()" [error]="summary.error()" [what]="summary.what" (retry)="summary.reload()" />
 }
-
-<obs-stats [data]="stats()" />
 
 <section class="panel">
   <header>
@@ -23,7 +23,7 @@
     </p>
   </header>
 
-  @if (series().length > 0) {
+  @if (years.status() === 'ready') {
     <obs-line-chart
       [series]="series()"
       title="Crédito definitivo, comprometido, obligación neta y pago neto por ejercicio"
@@ -31,7 +31,7 @@
       hint="Cada ejercicio toma su última instantánea. Pasa el ratón para leer los cuatro importes de un año."
     />
   } @else {
-    <p class="loading">Leyendo la serie…</p>
+    <obs-state [status]="years.status()" [error]="years.error()" [what]="years.what" (retry)="years.reload()" />
   }
 
   <p class="note">
@@ -63,9 +63,18 @@
       Ordenado por <strong>{{ figureLabel() }}</strong>. Cambiar de cifra cambia el orden, y eso es lo que hay
       que ver: un capítulo puede tener mucho crédito y poco ejecutado.
     </p>
-  <obs-ranking [data]="ranking()" [format]="euroShort" />
-  @if (aggregation()?.snapshotDate; as snapshot) {
-    <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
+  @if (aggregation.status() === 'ready') {
+    <obs-ranking [data]="ranking()" [format]="euroShort" />
+    @if (snapshotDate(); as snapshot) {
+      <p class="note">Todos estos grupos salen de una sola instantánea: la de {{ snapshot }}.</p>
+    }
+  } @else {
+    <obs-state
+      [status]="aggregation.status()"
+      [error]="aggregation.error()"
+      [what]="aggregation.what"
+      (retry)="aggregation.reload()"
+    />
   }
 </section>
 
@@ -73,7 +82,7 @@
   <header>
     <h2>Explorar las partidas</h2>
     <p class="aside">
-      @if (snapshotDate(); as snapshot) {
+      @if (lineSnapshot(); as snapshot) {
         Partidas de la instantánea del <strong>{{ snapshot }}</strong>, que es la más reciente cargada.
       }
     </p>
@@ -81,28 +90,38 @@
 
   <obs-filters
     [defs]="filterDefs()"
-    [values]="filters()"
-    (changed)="setFilter($event)"
-    (cleared)="clearFilters()"
+    [values]="explorer.filters()"
+    (changed)="explorer.setFilter($event)"
+    (cleared)="explorer.clearFilters()"
   />
 
-  <obs-data-table
-    [rows]="lines()"
-    [columns]="columns()"
-    [total]="lineTotal()"
-    [page]="page()"
-    [size]="size"
-    [sort]="sort()"
-    unit="partidas"
-    caption="Partidas del presupuesto de gastos"
-    (sortChanged)="setSort($event)"
-    (pageChanged)="setPage($event)"
-  />
+  @if (explorer.status() === 'failed') {
+    <obs-state
+      [status]="explorer.status()"
+      [error]="explorer.error()"
+      [what]="explorer.what"
+      (retry)="explorer.reload()"
+    />
+  } @else {
+    <obs-data-table
+      [rows]="explorer.rows()"
+      [columns]="columns()"
+      [total]="explorer.total()"
+      [page]="explorer.page()"
+      [size]="explorer.size"
+      [sort]="explorer.sort()"
+      [busy]="explorer.status() === 'loading'"
+      unit="partidas"
+      caption="Partidas del presupuesto de gastos"
+      (sortChanged)="explorer.setSort($event)"
+      (pageChanged)="explorer.setPage($event)"
+    />
+  }
 </section>
 
 <obs-colophon
-  [source]="source()"
-  [ingestedAt]="ingestedAt()"
-  [caveats]="caveats()"
+  [source]="summary.source()"
+  [ingestedAt]="summary.ingestedAt()"
+  [caveats]="summary.caveats()"
   extra="El endpoint de origen se llama «gasto corriente» y es el presupuesto de gastos entero: trae inversiones reales y los capítulos financieros."
 />

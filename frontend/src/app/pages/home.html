@@ -18,12 +18,22 @@
         <dl>
           @for (figure of card.figures; track figure.label) {
             <div>
-              <dd class="num">{{ figure.value }}</dd>
               <dt>{{ figure.label }}</dt>
+              <dd class="num">{{ figure.value }}</dd>
             </div>
           }
         </dl>
       </a>
+      <!--
+        Que una cifra no esté y que no se haya podido leer no son lo mismo, y el guion solo no lo distingue.
+        El botón va fuera del enlace de la tarjeta: dentro, pulsarlo navegaría.
+      -->
+      @if (card.status === 'failed') {
+        <p class="unread" role="alert">
+          No se ha podido leer {{ card.title.toLowerCase() }}.
+          <button type="button" (click)="card.reload()">Volver a intentarlo</button>
+        </p>
+      }
     </li>
   }
 </ul>

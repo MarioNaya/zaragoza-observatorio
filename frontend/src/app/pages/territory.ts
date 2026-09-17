@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { map } from 'rxjs';
 
 import { Observatory } from '../core/api';
 import { decimal, integer, percent, toDay, toInstant } from '../core/format';
+import { Loaded } from '../core/state';
 import {
   ALL_MEASURES,
-  CrossTab,
   CrossTabQuery,
   Denominator,
-  DistrictBoundaries,
-  DistrictCard,
   MEASURE_LABELS,
   MeasureColumn,
   MeasureId,
@@ -21,6 +20,7 @@ import {
   classify,
 } from '../map/classification';
 import { Colophon } from '../ui/colophon';
+import { State } from '../ui/state';
 import { DistrictCardView } from './district-card';
 import { Matrix } from './matrix';
 
@@ -33,7 +33,7 @@ import { Matrix } from './matrix';
 @Component({
   selector: 'obs-territory',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Choropleth, Matrix, DistrictCardView, Colophon],
+  imports: [Choropleth, Matrix, DistrictCardView, Colophon, State],
   templateUrl: './territory.html',
 })
 export class TerritoryPage {
@@ -50,12 +50,17 @@ export class TerritoryPage {
   readonly painted = signal<MeasureId | null>(null);
   readonly selected = signal<number | null>(null);
 
-  readonly tab = signal<CrossTab | null>(null);
-  readonly caveats = signal<string[]>([]);
-  readonly boundaries = signal<DistrictBoundaries | null>(null);
-  readonly card = signal<DistrictCard | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  readonly tab = new Loaded(() => this.api.crossTab(this.query()), 'el cruce territorial');
+  /** Los contornos se piden una sola vez por sesión: 373 KB que no cambian entre ingestas. */
+  readonly boundaries = new Loaded(
+    () => this.api.boundaries().pipe(map((item) => ({ caveats: [], item }))),
+    'los contornos de las 29 juntas',
+  );
+  readonly card = new Loaded(
+    () => this.api.district(this.selected() ?? 0, this.query()),
+    'la ficha de la junta',
+    false,
+  );
 
   protected readonly allMeasures = ALL_MEASURES;
   protected readonly measureLabels = MEASURE_LABELS;
@@ -66,17 +71,9 @@ export class TerritoryPage {
   protected readonly percent = percent;
   protected readonly toDay = toDay;
 
-  constructor() {
-    this.api.boundaries().subscribe({
-      next: (boundaries) => this.boundaries.set(boundaries),
-      error: () => this.error.set('No se han podido leer los contornos de las juntas.'),
-    });
-    this.reload();
-  }
-
   /** La columna que pinta el mapa: por defecto **la mejor cubierta**, que es una regla y no una preferencia. */
   readonly paintedMeasure = computed<MeasureColumn | null>(() => {
-    const tab = this.tab();
+    const tab = this.tab.value();
     if (!tab || tab.measures.length === 0) {
       return null;
     }
@@ -91,7 +88,7 @@ export class TerritoryPage {
   readonly perThousand = computed(() => this.denominator() === 'population');
 
   readonly classification = computed(() => {
-    const tab = this.tab();
+    const tab = this.tab.value();
     const measure = this.paintedMeasure();
     if (!tab || !measure) {
       return classify([], this.method());
@@ -112,7 +109,7 @@ export class TerritoryPage {
   });
 
   readonly populationYears = computed(() => {
-    const tab = this.tab();
+    const tab = this.tab.value();
     if (!tab) {
       return [];
     }
@@ -122,7 +119,7 @@ export class TerritoryPage {
   });
 
   readonly withoutDenominator = computed(() => {
-    const tab = this.tab();
+    const tab = this.tab.value();
     if (!tab || this.denominator() === 'none') {
       return 0;
     }
@@ -195,12 +192,12 @@ export class TerritoryPage {
       return;
     }
     this.selected.set(districtId);
-    this.loadCard(districtId);
+    this.card.reload();
   }
 
   closeCard(): void {
     this.selected.set(null);
-    this.card.set(null);
+    this.card.value.set(null);
   }
 
   private query(): CrossTabQuery {
@@ -214,30 +211,11 @@ export class TerritoryPage {
     };
   }
 
-  private loadCard(districtId: number): void {
-    this.api.district(districtId, this.query()).subscribe({
-      next: (response) => this.card.set(response.item),
-      error: () => this.error.set('No se ha podido leer la ficha de la junta.'),
-    });
-  }
-
+  /** Cada cambio de la consulta vuelve a pedir: lo que se ve es exactamente lo que se pidió. */
   private reload(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.api.crossTab(this.query()).subscribe({
-      next: (response) => {
-        this.tab.set(response.item);
-        this.caveats.set(response.caveats);
-        this.loading.set(false);
-        const open = this.selected();
-        if (open !== null) {
-          this.loadCard(open);
-        }
-      },
-      error: (failure) => {
-        this.loading.set(false);
-        this.error.set(failure?.error?.detail ?? 'No se ha podido leer el cruce territorial.');
-      },
-    });
+    this.tab.reload();
+    if (this.selected() !== null) {
+      this.card.reload();
+    }
   }
 }

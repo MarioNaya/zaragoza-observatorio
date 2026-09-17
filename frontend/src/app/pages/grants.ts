@@ -1,16 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { byKey, date, euro, euroShort, integer, keyOf, percent } from '../core/format';
-import { Grant, GrantAggregation, GrantsSummary, Source } from '../core/types';
-import { BarChart, Bar } from '../ui/bar-chart';
+import { Explorer, FilterValues, Loaded } from '../core/state';
+import { ApiPage, Grant } from '../core/types';
+import { Bar, BarChart } from '../ui/bar-chart';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
 
 type Axis = 'year' | 'beneficiary' | 'call' | 'line' | 'type' | 'manager' | 'classification';
+
+const FILTERS: FilterValues = { q: '', year: '', classification: '', naturalPerson: '' };
 
 const AXES: { key: Axis; label: string }[] = [
   { key: 'year', label: 'Año' },
@@ -30,25 +34,29 @@ const AXES: { key: Axis; label: string }[] = [
 @Component({
   selector: 'obs-grants',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, BarChart, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './grants.html',
 })
 export class GrantsPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<GrantsSummary | null>(null);
-  readonly aggregation = signal<GrantAggregation | null>(null);
-  readonly grants = signal<Grant[]>([]);
-  readonly total = signal(0);
-  readonly caveats = signal<string[]>([]);
-  readonly source = signal<Source | null>(null);
-  readonly ingestedAt = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
+  readonly summary = new Loaded(() => this.api.grantsSummary(), 'el resumen de subvenciones');
 
   readonly axis = signal<Axis>('year');
-  readonly page = signal(0);
-  readonly sort = signal('granted,desc');
-  readonly filters = signal<FilterValues>({ q: '', year: '', classification: '', naturalPerson: '' });
+
+  readonly aggregation = new Loaded(
+    () => this.api.grantAggregation(this.axis()),
+    'el reparto de las subvenciones',
+  );
+
+  readonly explorer = new Explorer<Grant, ApiPage<Grant>>({
+    request: (query) => this.api.grants(query),
+    rows: (response) => response.items,
+    total: (response) => response.total,
+    sort: 'granted,desc',
+    filters: FILTERS,
+    what: 'las concesiones',
+  });
 
   protected readonly axes = AXES;
   protected readonly euroShort = euroShort;
@@ -61,7 +69,7 @@ export class GrantsPage {
       key: 'classification',
       label: 'Clasificación',
       kind: 'select',
-      options: Object.keys(this.summary()?.byClassification ?? {})
+      options: Object.keys(this.summary.value()?.byClassification ?? {})
         .filter((key) => key !== '(sin beneficiario)')
         .map((key) => ({ value: key, label: key.replace(/-/g, ' ') })),
     },
@@ -78,7 +86,7 @@ export class GrantsPage {
   ]);
 
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -114,7 +122,7 @@ export class GrantsPage {
   });
 
   readonly bars = computed<Bar[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by !== 'year') {
       return [];
     }
@@ -124,7 +132,7 @@ export class GrantsPage {
   });
 
   readonly ranking = computed<RankRow[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by === 'year') {
       return [];
     }
@@ -167,68 +175,13 @@ export class GrantsPage {
     { key: 'granted', label: 'Concedido', numeric: true, sortable: 'granted', get: (row) => euro(row.granted) },
   ];
 
-  constructor() {
-    this.api.grantsSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response.item);
-        this.source.set(response.source ?? null);
-        this.ingestedAt.set(response.ingestedAt ?? null);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen de subvenciones.'),
-    });
-    this.loadAggregation();
-    this.loadGrants();
-  }
-
   readonly naturalShare = computed(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     return summary ? percent(summary.naturalPersonGrants / summary.grants) : '—';
   });
 
   setAxis(axis: Axis): void {
     this.axis.set(axis);
-    this.loadAggregation();
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadGrants();
-  }
-
-  clearFilters(): void {
-    this.filters.set({ q: '', year: '', classification: '', naturalPerson: '' });
-    this.page.set(0);
-    this.loadGrants();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadGrants();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadGrants();
-  }
-
-  private loadAggregation(): void {
-    this.api.grantAggregation(this.axis()).subscribe({
-      next: (response) => this.aggregation.set(response.item),
-      error: () => this.error.set('No se ha podido leer la agregación de subvenciones.'),
-    });
-  }
-
-  private loadGrants(): void {
-    const query: Query = { page: this.page(), size: this.size, sort: this.sort(), ...this.filters() };
-    this.api.grants(query).subscribe({
-      next: (response) => {
-        this.grants.set(response.items);
-        this.total.set(response.total);
-      },
-      error: (failure) => this.error.set(failure?.error?.detail ?? 'No se han podido leer las concesiones.'),
-    });
+    this.aggregation.reload();
   }
 }

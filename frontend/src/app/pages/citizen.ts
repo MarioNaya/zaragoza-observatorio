@@ -1,16 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { Observatory, Query } from '../core/api';
+import { Observatory } from '../core/api';
 import { byKey, date, hours, integer, keyOf, labelOf, month, percent } from '../core/format';
-import { CitizenAggregation, CitizenSummary, ServiceRequest, Source, YearCoverage } from '../core/types';
+import { Explorer, FilterValues, Loaded } from '../core/state';
+import {
+  ApiPage,
+  CitizenAggregation,
+  CitizenSummary,
+  ServiceRequest,
+  YearCoverage,
+} from '../core/types';
 import { Colophon } from '../ui/colophon';
 import { Column, DataTable } from '../ui/data-table';
-import { FilterDef, FilterValues, Filters } from '../ui/filters';
+import { FilterDef, Filters } from '../ui/filters';
 import { LineChart, Series } from '../ui/line-chart';
 import { Ranking, RankRow } from '../ui/ranking';
+import { State } from '../ui/state';
 import { Stat, Stats } from '../ui/stats';
 
 type Axis = 'month' | 'category' | 'district';
+
+const FILTERS: FilterValues = { status: '', assignment: '', internal: '', from: '', to: '' };
 
 /**
  * Quejas y sugerencias. Dos hechos gobiernan la lectura y van escritos en la propia pantalla: **el texto de la
@@ -20,29 +30,52 @@ type Axis = 'month' | 'category' | 'district';
 @Component({
   selector: 'obs-citizen',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Stats, LineChart, Ranking, DataTable, Filters, Colophon],
+  imports: [Stats, LineChart, Ranking, DataTable, Filters, Colophon, State],
   templateUrl: './citizen.html',
 })
 export class CitizenPage {
   private readonly api = inject(Observatory);
 
-  readonly summary = signal<CitizenSummary | null>(null);
-  readonly aggregation = signal<CitizenAggregation | null>(null);
-  readonly requests = signal<ServiceRequest[]>([]);
-  readonly total = signal(0);
-  readonly caveats = signal<string[]>([]);
-  readonly source = signal<Source | null>(null);
-  readonly ingestedAt = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
+  readonly summary = new Loaded(() => this.api.citizenSummary(), 'el resumen de quejas');
 
   readonly axis = signal<Axis>('month');
-  readonly page = signal(0);
-  readonly sort = signal('requestedAt,desc');
-  readonly filters = signal<FilterValues>({ status: '', assignment: '', internal: '', from: '', to: '' });
+
+  readonly aggregation = new Loaded(
+    () => this.api.citizenAggregation(this.axis()),
+    'el reparto de quejas',
+  );
+
+  readonly explorer = new Explorer<ServiceRequest, ApiPage<ServiceRequest>>({
+    request: (query) => this.api.citizenRequests(query),
+    rows: (response) => response.items,
+    total: (response) => response.total,
+    sort: 'requestedAt,desc',
+    filters: FILTERS,
+    // Las dos fechas se piden como instantes: la API los espera así y el control da un día suelto.
+    parameters: (values) => ({
+      ...values,
+      from: values['from'] ? `${values['from']}T00:00:00Z` : '',
+      to: values['to'] ? `${values['to']}T00:00:00Z` : '',
+    }),
+    what: 'las quejas',
+  });
+
+  /**
+   * La cobertura de punto de cada año entero, que es la cifra que permite comparar dos años (ADR-015).
+   *
+   * **No viene con el eje por junta**: la API la manda solo en el eje de serie `district_year`, así que se pide
+   * aparte y solo cuando hace falta. Antes se leía del mismo cuerpo que el reparto por junta, donde llega
+   * siempre vacía a propósito, y el panel entero no se pintaba nunca aunque la pantalla lo prometiera dos
+   * párrafos antes.
+   */
+  readonly coverage = new Loaded(
+    () => this.api.citizenAggregation('district_year'),
+    'la cobertura por año',
+    false,
+  );
 
   protected readonly integer = integer;
   protected readonly percent = percent;
-  protected readonly size = 25;
   protected readonly axes: { key: Axis; label: string }[] = [
     { key: 'month', label: 'Por mes' },
     { key: 'category', label: 'Por categoría' },
@@ -90,7 +123,7 @@ export class CitizenPage {
   ];
 
   readonly stats = computed<Stat[]>(() => {
-    const summary = this.summary();
+    const summary = this.summary.value();
     if (!summary) {
       return [];
     }
@@ -121,7 +154,7 @@ export class CitizenPage {
   });
 
   readonly series = computed<Series[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by !== 'month') {
       return [];
     }
@@ -139,7 +172,7 @@ export class CitizenPage {
   });
 
   readonly ranking = computed<RankRow[]>(() => {
-    const aggregation = this.aggregation();
+    const aggregation = this.aggregation.value();
     if (!aggregation || aggregation.by === 'month') {
       return [];
     }
@@ -156,6 +189,8 @@ export class CitizenPage {
       .sort((a, b) => b.value - a.value)
       .slice(0, 20);
   });
+
+  readonly coverageByYear = computed<YearCoverage[]>(() => this.coverage.value()?.coverageByYear ?? []);
 
   readonly columns: Column<ServiceRequest>[] = [
     { key: 'id', label: 'Nº', numeric: true, sortable: 'id', get: (row) => String(row.id) },
@@ -181,93 +216,11 @@ export class CitizenPage {
     },
   ];
 
-  constructor() {
-    this.api.citizenSummary().subscribe({
-      next: (response) => {
-        this.summary.set(response.item);
-        this.source.set(response.source ?? null);
-        this.ingestedAt.set(response.ingestedAt ?? null);
-        this.caveats.set(response.caveats);
-      },
-      error: () => this.error.set('No se ha podido leer el resumen de quejas.'),
-    });
-    this.loadAggregation();
-    this.loadRequests();
-  }
-
-  /**
-   * La cobertura de punto de cada año entero, que es la cifra que permite comparar dos años (ADR-015).
-   *
-   * **No viene con el eje por junta**: la API la manda solo en el eje de serie `district_year`, así que se pide
-   * aparte. Antes se leía del mismo cuerpo que el reparto por junta, donde llega siempre vacía a propósito, y
-   * el panel entero no se pintaba nunca aunque la pantalla lo prometiera dos párrafos antes.
-   */
-  readonly coverageByYear = signal<YearCoverage[]>([]);
-
   setAxis(axis: Axis): void {
     this.axis.set(axis);
-    this.loadAggregation();
-    if (axis === 'district' && this.coverageByYear().length === 0) {
-      this.loadCoverage();
+    this.aggregation.reload();
+    if (axis === 'district' && this.coverage.value() === null) {
+      this.coverage.reload();
     }
-  }
-
-  setFilter(change: { key: string; value: string }): void {
-    this.filters.update((current) => ({ ...current, [change.key]: change.value }));
-    this.page.set(0);
-    this.loadRequests();
-  }
-
-  clearFilters(): void {
-    this.filters.set({ status: '', assignment: '', internal: '', from: '', to: '' });
-    this.page.set(0);
-    this.loadRequests();
-  }
-
-  setSort(sort: string): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.loadRequests();
-  }
-
-  setPage(page: number): void {
-    this.page.set(page);
-    this.loadRequests();
-  }
-
-  private loadAggregation(): void {
-    this.api.citizenAggregation(this.axis()).subscribe({
-      next: (response) => this.aggregation.set(response.item),
-      error: () => this.error.set('No se ha podido leer la agregación de quejas.'),
-    });
-  }
-
-  /** Una petición más, solo cuando hace falta: el eje de serie pesa 90 KB y no se pide al entrar. */
-  private loadCoverage(): void {
-    this.api.citizenAggregation('district_year').subscribe({
-      next: (response) => this.coverageByYear.set(response.item.coverageByYear),
-      error: () => this.error.set('No se ha podido leer la cobertura por año.'),
-    });
-  }
-
-  private loadRequests(): void {
-    const values = this.filters();
-    const query: Query = {
-      page: this.page(),
-      size: this.size,
-      sort: this.sort(),
-      status: values['status'],
-      assignment: values['assignment'],
-      internal: values['internal'],
-      from: values['from'] ? `${values['from']}T00:00:00Z` : '',
-      to: values['to'] ? `${values['to']}T00:00:00Z` : '',
-    };
-    this.api.citizenRequests(query).subscribe({
-      next: (response) => {
-        this.requests.set(response.items);
-        this.total.set(response.total);
-      },
-      error: (failure) => this.error.set(failure?.error?.detail ?? 'No se han podido leer las quejas.'),
-    });
   }
 }
